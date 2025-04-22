@@ -64,7 +64,7 @@ public class SecurityConfig {
             .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
         .authenticationProvider(authenticationProvider())
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/", "/home", "/login", "/register/**", "/css/**", "/js/**", "/image/**", "/favicon.ico",
+            .requestMatchers("/", "/home", "/login", "/register/**", "/css/**", "/js/**", "/image/**", "/images/**", "/favicon.ico",
                 "/json/**", "/pages/**", "/api/**", "/api/proxy/**")
             .permitAll()
             .requestMatchers("/member/mypage", "/member/update", "/member/update/**").authenticated() // ✅ 마이페이지는 로그인

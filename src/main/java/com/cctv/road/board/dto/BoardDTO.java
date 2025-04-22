@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.cctv.road.board.entity.Board;
+import com.cctv.road.board.entity.BoardImage;
 
 import lombok.Data;
 

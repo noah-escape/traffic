@@ -20,7 +20,8 @@
   <!-- ✅ 프로젝트 전용 CSS & JS -->
   <link rel="stylesheet" th:href="@{/css/home.css}">
   <link rel="stylesheet" th:href="@{/css/board/update.css}">
-  <script th:src="@{/js/home.js}"></script>
+  <script th:src="@{/js/home.js}" defer></script>
+  <script th:src="@{/js/file-upload.js}" defer></script>
 </head>
 
 <body class="d-flex flex-column min-vh-100">
@@ -31,25 +32,27 @@
       <span class="navbar-toggler-icon"></span>
     </button>
 
-<!-- 웹(데스크톱)용 로고 -->
-<a class="navbar-brand d-none d-lg-block position-absolute top-0 mt-2 ms-3" style="z-index: 1020;" th:href="@{/}">kakao</a>
+    <!-- 웹(데스크톱)용 로고 -->
+    <a class="navbar-brand d-none d-lg-block position-absolute top-0 mt-2 ms-3" style="z-index: 1020;"
+      th:href="@{/}">kakao</a>
 
-<div class="position-absolute end-0 top-0 mt-2 me-3 d-flex align-items-center gap-2">
-  <th:block sec:authorize="isAuthenticated()">
-    <div class="dropdown">
-      <button class="btn login-btn dropdown-toggle rounded-pill px-3 py-2" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-        <i class="bi bi-person-circle me-1"></i> 내정보
-      </button>
-      <ul class="dropdown-menu dropdown-menu-end my-2 auth-dropdown" aria-labelledby="userDropdown">
-        <li><a class="dropdown-item" th:href="@{/member/mypage}">마이페이지</a></li>
-        <li>
-          <form th:action="@{/logout}" method="post">
-            <button type="submit" class="dropdown-item">로그아웃</button>
-          </form>
-        </li>
-      </ul>
-    </div>
-  </th:block>
+    <div class="position-absolute end-0 top-0 mt-2 me-3 d-flex align-items-center gap-2">
+      <th:block sec:authorize="isAuthenticated()">
+        <div class="dropdown">
+          <button class="btn login-btn dropdown-toggle rounded-pill px-3 py-2" type="button" id="userDropdown"
+            data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-person-circle me-1"></i> 내정보
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end my-2 auth-dropdown" aria-labelledby="userDropdown">
+            <li><a class="dropdown-item" th:href="@{/member/mypage}">마이페이지</a></li>
+            <li>
+              <form th:action="@{/logout}" method="post">
+                <button type="submit" class="dropdown-item">로그아웃</button>
+              </form>
+            </li>
+          </ul>
+        </div>
+      </th:block>
       <th:block sec:authorize="isAnonymous()">
         <a th:href="@{/auth/login}" class="btn login-btn rounded-pill px-3 py-2">
           <i class="bi bi-person-circle me-1"></i> 로그인
@@ -59,11 +62,11 @@
     </div>
 
     <!-- 모바일 메뉴 안에 있는 로고 -->
-<div class="collapse navbar-collapse justify-content-center" id="mobileMenu">
-  <div class="d-lg-none text-center w-100">
-    <a class="navbar-brand fw-bold text-white fs-4 mt-2 text-decoration-none" th:href="@{/}">kakao</a>
-    <hr/>
-  </div>
+    <div class="collapse navbar-collapse justify-content-center" id="mobileMenu">
+      <div class="d-lg-none text-center w-100">
+        <a class="navbar-brand fw-bold text-white fs-4 mt-2 text-decoration-none" th:href="@{/}">kakao</a>
+        <hr />
+      </div>
 
       <ul class="navbar-nav text-center">
         <li class="nav-item position-relative">
@@ -111,25 +114,37 @@
       </div>
       <h3>기존 첨부 이미지</h3>
       <!-- 이미지가 있을 때만 출력 -->
-      <div th:if="${post.imageFileNames != null and !#lists.isEmpty(post.imageFileNames)}">
-        <div th:each="image : ${post.imageFileNames}">
-          <div th:if="${image.imagePath != null and !#strings.isEmpty(image.imagePath)}">
-            <img th:src="@{${image.imagePath}}" alt="기존 이미지" width="200">
-            <label>
-              <input type="checkbox" name="deleteImages" th:value="${image.imageId}">
-              삭제
-            </label>
-          </div>
+<div th:if="${post.imageFileNames != null and !#lists.isEmpty(post.imageFileNames)}">
+  <div th:each="image : ${post.imageFileNames}">
+    <div th:if="${image.imagePath != null and !#strings.isEmpty(image.imagePath)}" style="margin-bottom: 10px;">
+      <img th:src="@{${image.imagePath}}" alt="기존 이미지" width="200">
+      <label style="margin-left: 10px;">
+        <input type="checkbox" name="deleteImages" th:value="${image.imageId}">
+        선택
+      </label>
+    </div>
+  </div>
+
+  <!-- 이미지 선택 후 삭제 버튼 -->
+  <div class="mt-3">
+    <button type="button" class="btn btn-danger" onclick="removeSelectedImages()">선택한 이미지 삭제</button>
+  </div>
+</div>
+
+<!-- 이미지가 없을 때 메시지 출력 -->
+<div th:unless="${post.imageFileNames != null and !#lists.isEmpty(post.imageFileNames)}">
+  <p>첨부된 이미지가 없습니다.</p>
+</div>
+
+      <div class="mb-3">
+        <label for="newImages" class="form-label fw-semibold">이미지 업로드</label>
+        <div class="d-flex align-items-center gap-2">
+          <input type="file" class="form-control flex-grow-1" id="newImages" name="newImages" multiple>
+          <label for="newImages" class="btn btn-outline-secondary m-0 d-flex align-items-center">
+            <i class="bi bi-upload"></i>
+          </label>
         </div>
       </div>
-
-      <!-- 이미지가 없을 때 메시지 출력 -->
-      <div th:unless="${post.imageFileNames != null and !#lists.isEmpty(post.imageFileNames)}">
-        <p>첨부된 이미지가 없습니다.</p>
-      </div>
-
-      <h3>새 이미지 추가</h3>
-      <input type="file" name="newImages" multiple>
 
       <!-- ✅ 공지글 체크박스: 관리자만 -->
       <div class="form-group" sec:authorize="hasRole('ADMIN')">
@@ -159,22 +174,22 @@
   <footer class="footer">
     ⓒ 2025 Kakao Corp. All rights reserved.
   </footer>
-  
+
+  <script>
+    // ✅ 체크박스 비활성화 막기
+    document.addEventListener("DOMContentLoaded", function () {
+      const checkbox = document.getElementById("notice-checkbox");
+      let prevValue = checkbox.checked;
+
+      checkbox.addEventListener("change", function (e) {
+        if (!checkbox.checked) {
+          alert("⚠️ 공지글은 수정 또는 삭제만 가능합니다.");
+          checkbox.checked = true; // 다시 체크
+        }
+      });
+    });
+  </script>
+
 </body>
 
 </html>
-
-<script>
-  // ✅ 체크박스 비활성화 막기
-  document.addEventListener("DOMContentLoaded", function () {
-    const checkbox = document.getElementById("notice-checkbox");
-    let prevValue = checkbox.checked;
-
-    checkbox.addEventListener("change", function (e) {
-      if (!checkbox.checked) {
-        alert("⚠️ 공지글은 수정 또는 삭제만 가능합니다.");
-        checkbox.checked = true; // 다시 체크
-      }
-    });
-  });
-</script>
