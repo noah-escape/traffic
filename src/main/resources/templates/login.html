@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+  <meta charset="UTF-8">
+  <title>로그인</title>
+
+  <!-- ✅ Bootstrap & 외부 공통 리소스 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css"
+    rel="stylesheet">
+
+  <!-- ✅ jQuery (항상 Bootstrap JS보다 먼저!) -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <!-- ✅ Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- ✅ 프로젝트 전용 CSS & JS -->
+  <link rel="stylesheet" th:href="@{/css/home.css}">
+  <link rel="stylesheet" th:href="@{/css/login.css}">
+  <script th:src="@{/js/home.js}"></script>
+
+</head>
+
+<body class="d-flex flex-column min-vh-100">
+  <!-- ✅ 네브바 -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4 position-relative">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mobileMenu"
+      aria-controls="mobileMenu" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+<!-- 웹(데스크톱)용 로고 -->
+<a class="navbar-brand d-none d-lg-block position-absolute top-0 mt-2 ms-3" style="z-index: 1020;" th:href="@{/}">kakao</a>
+
+<div class="position-absolute end-0 top-0 mt-2 me-3 d-flex align-items-center gap-2">
+  <th:block sec:authorize="isAuthenticated()">
+    <div class="dropdown">
+      <button class="btn login-btn dropdown-toggle rounded-pill px-3 py-2" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="bi bi-person-circle me-1"></i> 내정보
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end my-2 auth-dropdown" aria-labelledby="userDropdown">
+        <li><a class="dropdown-item" th:href="@{/member/mypage}">마이페이지</a></li>
+        <li>
+          <form th:action="@{/logout}" method="post">
+            <button type="submit" class="dropdown-item">로그아웃</button>
+          </form>
+        </li>
+      </ul>
+    </div>
+  </th:block>
+      <th:block sec:authorize="isAnonymous()">
+        <a th:href="@{/auth/login}" class="btn login-btn rounded-pill px-3 py-2">
+          <i class="bi bi-person-circle me-1"></i> 로그인
+        </a>
+      </th:block>
+      <button id="toggle-mode" class="btn btn-outline-light">🌙</button>
+    </div>
+
+    <!-- 모바일 메뉴 안에 있는 로고 -->
+<div class="collapse navbar-collapse justify-content-center" id="mobileMenu">
+  <div class="d-lg-none text-center w-100">
+    <a class="navbar-brand fw-bold text-white fs-4 mt-2 text-decoration-none" th:href="@{/}">kakao</a>
+    <hr/>
+  </div>
+
+      <ul class="navbar-nav text-center">
+        <li class="nav-item position-relative">
+          <a class="nav-link d-flex align-items-center justify-content-center" href="#" id="mobileBoardDropdown"
+            data-bs-toggle="collapse" data-bs-target="#boardDropdownMenu" aria-expanded="false"
+            aria-controls="boardDropdownMenu">
+            게시판
+            <i class="bi bi-chevron-down ms-2 arrow-icon"></i>
+          </a>
+          </a>
+          <div class="collapse" id="boardDropdownMenu">
+            <ul class="list-unstyled ps-0">
+              <li><a class="dropdown-item text-center" th:href="@{/board/list(categoryId=2)}">자유게시판</a></li>
+              <li><a class="dropdown-item text-center" th:href="@{/board/list(categoryId=3)}">민원게시판</a></li>
+            </ul>
+          </div>
+        </li>
+        <li class="nav-item"><a class="nav-link" href="#tech">Tech & Service</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/pages/map/traffic}">지도</a></li>
+        <li class="nav-item"><a class="nav-link" href="#news">News</a></li>
+        <li class="nav-item"><a class="nav-link" href="#ir">IR</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- ✅ 로그인 폼 본문 -->
+  <main class="main-content d-flex justify-content-center align-items-center" style="min-height: calc(100vh - 150px);">
+    <div class="login-container">
+      <h1 class="text-center mb-4">로그인</h1>
+
+      <form th:action="@{/login}" method="post">
+        <div class="mb-3">
+          <label for="username" class="form-label">아이디:</label>
+          <input type="text" class="form-control" id="username" name="username">
+        </div>
+        <div class="mb-3">
+          <label for="password" class="form-label">비밀번호:</label>
+          <input type="password" class="form-control" id="password" name="password">
+        </div>
+        <button type="submit" class="btn btn-dark w-100 my-3">로그인</button>
+
+        <!-- 메시지 -->
+        <div th:if="${param.error}" class="error">아이디 또는 비밀번호가 올바르지 않습니다.</div>
+        <div th:if="${param.registered}" class="success">회원가입이 완료되었습니다. 로그인해주세요.</div>
+        <div th:if="${param.social}" class="error">소셜 로그인에 실패했습니다. 다시 시도해주세요.</div>
+        <div th:if="${param.social_info}" class="error">소셜 로그인 정보를 가져오는 데 실패했습니다.</div>
+        <div class="alert-warning" th:if="${param.socialExists}">
+          이미 소셜 인증된 사용자입니다. 로그인 후 이용해주세요.
+        </div>
+      </form>
+
+      <hr>
+
+      <div class="social-section">
+        <label class="signup-label">회원가입</label>
+        <div class="social-buttons">
+          <a th:href="@{/oauth2/authorization/naver}">
+            <img th:src="@{/image/naver-logo.png}" alt="네이버 로그인" />
+          </a>
+          <a th:href="@{/oauth2/authorization/kakao}">
+            <img th:src="@{/image/kakao-logo.png}" alt="카카오 로그인" />
+          </a>
+          <a th:href="@{/oauth2/authorization/google}">
+            <img th:src="@{/image/google-logo.png}" alt="구글 로그인" />
+          </a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ✅ 푸터 -->
+  <footer class="footer">
+    ⓒ 2025 Kakao Corp. All rights reserved.
+  </footer>
+
+  <!-- ✅ 경고용 alert -->
+  <script th:if="${param.error}">
+    alert('아이디 또는 비밀번호가 일치하지 않습니다.');
+  </script>
+</body>
+
+</html>

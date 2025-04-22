@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+  <meta charset="UTF-8">
+  <title>교통 정보 지도</title>
+
+  <!-- ✅ CSS -->
+  <link rel="stylesheet" th:href="@{/css/traffic.css}">
+  <link rel="stylesheet" th:href="@{/css/home.css}">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <!-- ✅ JS -->
+  <script src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=zlh7cem9or"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script th:src="@{/js/home.js}" defer></script>
+  <script th:inline="javascript">
+    /*<![CDATA[*/
+    const ITS_API_KEY = /*[[${itsApiKey}]]*/ '';
+    window.ITS_API_KEY = ITS_API_KEY;
+    /*]]>*/
+  </script>
+
+</head>
+
+<body th:class="${darkMode != null and darkMode ? 'dark-mode' : 'light-mode'}">
+
+  <!-- ✅ 네비게이션 바 -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4 position-relative">
+    <a class="navbar-brand" th:href="@{/}">kakao</a>
+    <div class="position-absolute end-0 top-0 mt-2 me-3 d-flex align-items-center gap-2">
+      <th:block sec:authorize="isAuthenticated()">
+        <div class="dropdown">
+          <button class="btn btn-secondary dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown">내정보</button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" th:href="@{/member/mypage}">마이페이지</a></li>
+            <li>
+              <form th:action="@{/logout}" method="post">
+                <button type="submit" class="dropdown-item">로그아웃</button>
+              </form>
+            </li>
+          </ul>
+        </div>
+      </th:block>
+      <th:block sec:authorize="isAnonymous()">
+        <a th:href="@{/auth/login}" class="btn btn-outline-light">로그인</a>
+      </th:block>
+      <button id="toggle-mode" class="btn btn-outline-light">🌙</button>
+    </div>
+  </nav>
+
+  <!-- ✅ 본문 -->
+  <div class="main-content d-flex">
+    <!-- 사이드바 버튼 -->
+    <aside class="sidebar">
+      <button onclick="toggleLayer('vms')" title="전광판"><i class="fas fa-bolt"></i></button>
+      <button id="sidebarCctvBtn" title="CCTV"><i class="fas fa-video"></i></button>
+      <button id="sidebarTrafficBtn" title="실시간 교통"><i class="fas fa-car-crash"></i></button>
+      <button id="sidebarEventBtn" title="도로 이벤트"><i class="fas fa-triangle-exclamation"></i></button>
+      <button id="sidebarBusBtn" title="버스 위치"><i class="fas fa-bus"></i></button>
+      <button id="sidebarRouteBtn" title="길찾기"><i class="fas fa-route"></i></button>
+      <button id="sidebarBikeBtn" title="따릉이 대여소"><i class="fas fa-bicycle"></i></button>
+    </aside>
+
+    <!-- 지도 -->
+    <div id="map" style="width: 100%; height: 100vh;"></div>
+
+    <!-- CCTV 영상창 -->
+    <div id="videoContainer" style="display: none;">
+      <div class="video-header">
+        <span id="videoTitle" class="video-title"></span>
+        <button id="closeVideoBtn" class="video-close-btn">X</button>
+      </div>
+      <video id="cctvVideo" controls autoplay muted></video>
+      <div class="video-footer">
+        <button id="fullscreenBtn" class="video-bottom-btn">전체화면</button>
+        <button id="openNewTabBtn" class="video-bottom-btn">새창</button>
+      </div>
+    </div>
+
+    <!-- CCTV 검색 패널 -->
+    <div id="cctvFilterPanel" style="display: none;">
+      <div class="mb-2">
+        <label for="roadSearchInput" class="form-label">도로명 검색</label>
+        <div class="input-group">
+          <input id="roadSearchInput" class="form-control" type="text" placeholder="도로명 입력">
+          <button class="btn btn-outline-secondary" onclick="applyCctvFilter()">검색</button>
+        </div>
+      </div>
+      <div class="mb-3">
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="roadType" id="highway" checked>
+          <label class="form-check-label" for="highway">고속도로</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="roadType" id="normalroad">
+          <label class="form-check-label" for="normalroad">국도</label>
+        </div>
+      </div>
+      <ul id="roadList" class="list-group"></ul>
+    </div>
+
+    <!-- 🚌 버스 검색 패널 -->
+    <div id="busFilterPanel" style="display: none;">
+      <div class="input-group mb-3">
+        <input id="busStopInput" class="form-control" placeholder="정류장 이름 입력 (예: 시청)" />
+        <button class="btn btn-primary" onclick="searchBusStops()">정류장 검색</button>
+      </div>
+      <ul id="busSearchResults" class="list-group"></ul>
+    </div>
+
+    <!-- 길찾기 패널 -->
+    <div id="routeFilterPanel" style="display:none;">
+      <h5>🧭 길찾기</h5>
+      <!-- 출발지 -->
+      <div class="mb-3 position-relative">
+        <label class="form-label">🚩 출발지</label>
+        <input type="text" id="startPointLabel" class="form-control" placeholder="출발지를 입력하세요" autocomplete="off">
+        <ul id="startResultList" class="list-group position-absolute w-100"
+          style="z-index: 999; top: 100%; display: none;">
+        </ul>
+      </div>
+
+      <!-- 도착지 -->
+      <div class="mb-3 position-relative">
+        <label class="form-label">🎯 도착지</label>
+        <input type="text" id="goalPointLabel" class="form-control" placeholder="도착지를 입력하세요" autocomplete="off">
+        <ul id="goalResultList" class="list-group position-absolute w-100"
+          style="z-index: 999; top: 100%; display: none;">
+        </ul>
+      </div>
+      <button class="btn btn-danger mt-2" onclick="resetRoutePanel()">🔁 초기화</button>
+    </div>
+
+    <!-- ✅ 교통속도 범례 박스 (기본은 숨김) -->
+    <div id="trafficLegendBox" class="position-absolute bottom-0 end-0 m-3 p-2 bg-white shadow-sm rounded"
+      style="display: none; z-index: 1000;">
+      <strong>🚦 교통속도 범례</strong><br />
+      <span style="color:#00C851;">●</span> 빠름 (60km/h 이상)<br />
+      <span style="color:#ffbb33;">●</span> 보통 (30~60km/h)<br />
+      <span style="color:#ff4444;">●</span> 느림 (30km/h 이하)
+    </div>
+
+    <!-- 이벤트 정보 박스 -->
+    <div id="eventInfoBox" class="position-absolute bottom-0 start-0 w-100 bg-white border-top shadow p-3" style="z-index: 1050; display: none;">
+      <button class="btn-close float-end" onclick="document.getElementById('eventInfoBox').style.display = 'none'"></button>
+      <div id="eventInfoContent" class="pe-4" style="max-height: 220px; overflow-y: auto;"></div>
+    </div>    
+
+    <!-- 로딩 스피너 -->
+    <div id="loadingSpinner" class="text-center my-3" style="display: none;">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+  </div>
+
+</body>
+<script type="module" src="/js/cctv.js"></script>
+<script type="module" src="/js/bus.js"></script>
+<script type="module" src="/js/bike.js"></script>
+<script type="module" src="/js/direction.js"></script>
+<script type="module" src="/js/event-layer.js"></script>
+<script src="/js/realtime-traffic.js" defer></script>
+<script src="/js/traffic.js" defer></script> <!-- 메인 -->
+
+</html>
