@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+  <title>회원 가입</title>
+  <!-- ✅ Google Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=swap" rel="stylesheet">
+
+  <!-- ✅ Bootstrap & 외부 공통 리소스 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+  <!-- ✅ jQuery (항상 Bootstrap JS보다 위에!) -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <!-- ✅ Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- ✅ 프로젝트 CSS & JS -->
+  <link rel="stylesheet" th:href="@{/css/home.css}">
+  <script th:src="@{/js/home.js}"></script>
+
+</head>
+
+<body th:class="${darkMode != null and darkMode ? 'dark-mode' : 'light-mode'}">
+
+  <!-- ✅ 네브바 -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4 position-relative">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+      aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <a class="navbar-brand d-none d-lg-block" th:href="@{/}">kakao</a>
+
+    <div class="position-absolute end-0 top-0 mt-2 me-3 d-flex align-items-center gap-2">
+      <th:block sec:authorize="isAuthenticated()">
+        <div class="dropdown">
+          <button class="btn btn-secondary dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown"
+            aria-expanded="false">
+            내정보
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+            <li><a class="dropdown-item" th:href="@{/member/mypage}">마이페이지</a></li>
+            <li>
+              <form th:action="@{/logout}" method="post">
+                <button type="submit" class="dropdown-item">로그아웃</button>
+              </form>
+            </li>
+          </ul>
+        </div>
+      </th:block>
+      <th:block sec:authorize="isAnonymous()">
+        <a th:href="@{/auth/login}" class="btn btn-outline-light">로그인</a>
+      </th:block>
+      <button id="toggle-mode" class="btn btn-outline-light">🌙</button>
+    </div>
+
+    <div class="collapse navbar-collapse justify-content-center" id="navbarContent">
+      <!-- 모바일 로고 -->
+      <div class="d-lg-none text-center w-100">
+        <a class="fw-bold text-white fs-4 mt-2 text-decoration-none" th:href="@{/}">kakao</a>
+        <hr class="bg-light my-2">
+      </div>
+
+      <ul class="navbar-nav text-center">
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="boardDropdown" role="button" data-bs-toggle="dropdown"
+            aria-expanded="false">
+            게시판
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="boardDropdown">
+            <li><a class="dropdown-item" th:href="@{/board/list(categoryId=2)}">자유게시판</a></li>
+            <li><a class="dropdown-item" th:href="@{/board/list(categoryId=3)}">민원게시판</a></li>
+          </ul>
+        </li>
+
+        <li class="nav-item"><a class="nav-link" href="#tech">Tech & Service</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/pages/map/traffic}">지도</a></li>
+        <li class="nav-item"><a class="nav-link" href="#news">News</a></li>
+        <li class="nav-item"><a class="nav-link" href="#ir">IR</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="oauth2-register-container">
+    <h1>회원 가입</h1>
+    <form th:action="@{/register/oauth2/submit}" th:object="${memberDTO}" method="post">
+      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+      <input type="hidden" th:field="*{oauthProvider}">
+      <input type="hidden" th:field="*{oauthId}">
+
+      <div>
+        <label for="userId">아이디:</label>
+        <input type="text" id="userId" th:field="*{userId}">
+        <span th:if="${#fields.hasErrors('userId')}" th:errors="*{userId}" class="error"></span>
+        <button type="button" id="checkDuplicate">중복 확인</button>
+        <span id="duplicateMessage" class="duplicate-message" style="display:none;"></span>
+      </div>
+
+      <div>
+        <label for="password">비밀번호:</label>
+        <input type="password" id="password" th:field="*{password}">
+        <span th:if="${#fields.hasErrors('password')}" th:errors="*{password}" class="error"></span>
+        <small>8 ~ 12자 사이의 영문, 숫자, 특수문자를 포함해야 합니다.</small>
+      </div>
+
+      <div>
+        <label for="confirmPassword">비밀번호 확인:</label>
+        <input type="password" id="confirmPassword" th:field="*{confirmPassword}">
+        <span id="passwordMatchMessage" class="error"></span>
+        <span th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}" class="error"></span>
+      </div>
+
+      <div>
+        <label for="nickName">닉네임:</label>
+        <input type="text" id="nickName" th:field="*{nickName}">
+        <span th:if="${#fields.hasErrors('nickName')}" th:errors="*{nickName}" class="error"></span>
+        <button type="button" id="checkNickNameDuplicate">중복 확인</button>
+        <span id="nickNameDuplicateMessage" class="duplicate-message" style="display:none;"></span>
+      </div>
+
+      <div>
+        <label for="name">이름:</label>
+        <input type="text" id="name" th:field="*{name}" th:attr="readonly=${memberDTO.name != null}" />
+      </div>
+
+      <div>
+        <label for="birthDate">생년월일:</label>
+        <input type="date" id="birthDate" th:field="*{birthDate}">
+        <span th:if="${#fields.hasErrors('birthDate')}" th:errors="*{birthDate}" class="error"></span>
+      </div>
+
+      <div>
+        <label for="phoneNumber">전화번호:</label>
+        <input type="text" id="phoneNumber" th:field="*{phoneNumber}"
+          th:attr="readonly=${memberDTO.phoneNumber != null}" />
+      </div>
+
+      <div>
+        <label for="email">이메일:</label>
+        <input type="email" id="email" th:field="*{email}" readonly>
+      </div>
+
+      <!-- 주소 입력 부분 -->
+      <div>
+        <label for="address">주소:</label>
+        <button type="button" onclick="execDaumPostcode()">주소 검색</button>
+
+        <div class="address-group" style="margin-top:10px;">
+          <input type="text" id="addressCity" th:field="*{addressCity}" placeholder="시/도" readonly>
+          <input type="text" id="addressDistrict" th:field="*{addressDistrict}" placeholder="구/군" readonly>
+          <input type="text" id="addressRoad" th:field="*{addressRoad}" placeholder="도로명" readonly>
+          <input type="text" id="addressNumber" th:field="*{addressNumber}" placeholder="건물번호" readonly>
+          <input type="text" id="addressDetail" th:field="*{addressDetail}" placeholder="상세주소">
+        </div>
+
+        <span th:if="${#fields.hasErrors('addressCity')}" th:errors="*{addressCity}" class="error"></span>
+        <span th:if="${#fields.hasErrors('addressDistrict')}" th:errors="*{addressDistrict}" class="error"></span>
+        <span th:if="${#fields.hasErrors('addressRoad')}" th:errors="*{addressRoad}" class="error"></span>
+        <span th:if="${#fields.hasErrors('addressNumber')}" th:errors="*{addressNumber}" class="error"></span>
+        <span th:if="${#fields.hasErrors('addressDetail')}" th:errors="*{addressDetail}" class="error"></span>
+      </div>
+
+      <button type="submit">회원 가입</button>
+
+      <div style="margin-top: 20px;">
+        <a th:href="@{/login}" class="btn btn-secondary">돌아가기</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- 다음 주소 검색 API -->
+  <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+
+  <script th:inline="javascript">
+    $(document).ready(function () {
+      let isIdAvailable = false;
+
+      $("#checkDuplicate").click(function () {
+        const userId = $("#userId").val(); // ✅ userId 로 변경
+        if (!userId) {
+          $("#duplicateMessage").text("아이디를 입력해주세요.").css("color", "red").show();
+          return;
+        }
+
+        $.get("/register/checkIdDuplicate?userId=" + userId, function (data) {
+          if (data) {
+            $("#duplicateMessage").text("이미 사용 중인 아이디입니다.").css("color", "red").show();
+            isIdAvailable = false;
+            $("#userId").focus(); // ✅ focus 대상도 변경
+          } else {
+            $("#duplicateMessage").text("사용 가능한 아이디입니다.").css("color", "green").show();
+            isIdAvailable = true;
+          }
+        });
+      });
+
+
+      $("form").submit(function () {
+        if (!isIdAvailable) {
+          alert("아이디 중복 확인을 해주세요.");
+          return false;
+        }
+
+        if (!isNickNameAvailable) {
+          alert("닉네임 중복 확인을 해주세요.");
+          return false;
+        }
+      });
+
+      $("#password, #confirmPassword").on("keyup", function () {
+        const password = $("#password").val();
+        const confirmPassword = $("#confirmPassword").val();
+
+        if (!password || !confirmPassword) {
+          $("#passwordMatchMessage").text("").hide();
+          return;
+        }
+
+        if (password === confirmPassword) {
+          $("#passwordMatchMessage").text("비밀번호가 일치합니다.").css("color", "green").show();
+        } else {
+          $("#passwordMatchMessage").text("비밀번호가 일치하지 않습니다.").css("color", "red").show();
+        }
+      });
+
+
+    });
+
+    let isNickNameAvailable = false;
+
+    $("#checkNickNameDuplicate").click(function () {
+      const nickName = $("#nickName").val();
+      if (!nickName) {
+        $("#nickNameDuplicateMessage").text("닉네임을 입력해주세요.").css("color", "red").show();
+        return;
+      }
+
+      $.get("/register/checkNickNameDuplicate?nickName=" + nickName, function (data) {
+        if (data) {
+          $("#nickNameDuplicateMessage").text("이미 사용 중인 닉네임입니다.").css("color", "red").show();
+          isNickNameAvailable = false;
+          $("#nickName").focus();
+        } else {
+          $("#nickNameDuplicateMessage").text("사용 가능한 닉네임입니다.").css("color", "green").show();
+          isNickNameAvailable = true;
+        }
+      });
+    });
+
+
+    function execDaumPostcode() {
+      new daum.Postcode({
+        oncomplete: function (data) {
+          let fullRoad = data.roadAddress;
+          if (!fullRoad) {
+            alert("도로명 주소를 찾을 수 없습니다.");
+            return;
+          }
+
+          const split = fullRoad.split(" ");
+          if (split.length < 4) {
+            alert("주소 형식이 예상과 다릅니다.");
+            return;
+          }
+
+          document.getElementById("addressCity").value = split[0];
+          document.getElementById("addressDistrict").value = split[1];
+          document.getElementById("addressRoad").value = split[2];
+          document.getElementById("addressNumber").value = split[3];
+          document.getElementById("addressDetail").value = "";
+          document.getElementById("addressDetail").focus();
+        }
+      }).open();
+    }
+  </script>
+
+</body>
+
+</html>
