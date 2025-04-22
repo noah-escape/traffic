@@ -1,0 +1,68 @@
+.login-container {
+    width: 100%;
+    max-width: 400px;
+    margin: 50px auto;
+    background-color: white;
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+/* 폼 요소 간 간격 */
+.login-container .form-label {
+    font-weight: 600;
+}
+
+.login-container .form-control {
+    padding: 10px 15px;
+    font-size: 1rem;
+}
+
+/* 메시지 스타일 */
+.login-container .error {
+    margin-top: 10px;
+    color: #dc3545;
+    font-weight: 500;
+}
+
+.login-container .success {
+    margin-top: 10px;
+    color: #28a745;
+    font-weight: 500;
+}
+
+.login-container .alert-warning {
+    margin-top: 10px;
+    color: #856404;
+    background-color: #fff3cd;
+    border-radius: 4px;
+    padding: 8px 12px;
+}
+
+/* 소셜 로그인 구역 */
+.social-section {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.social-section .signup-label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.social-buttons a {
+    display: inline-block;
+    margin: 0 8px;
+}
+
+.social-buttons img {
+    height: 40px;
+    transition: transform 0.2s ease;
+}
+
+.social-buttons img:hover {
+    transform: scale(1.05);
+}
+
