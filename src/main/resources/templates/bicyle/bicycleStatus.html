@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>따릉이 대여 현황</title>
+  <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=4bdb3a392268dc34a601ad5246ca2fdd&libraries=services,clusterer"></script>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: 'Noto Sans KR', sans-serif;
+    }
+
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 20px;
+      background: #000000;
+      color: white;
+    }
+
+    .navbar .logo {
+      font-size: 20px;
+      font-weight: bold;
+      text-decoration: none;
+      color: white;
+    }
+
+    .nav-links {
+      list-style: none;
+      display: flex;
+      gap: 20px;
+    }
+
+    .nav-links li { display: inline; }
+    .nav-links a { text-decoration: none; color: white; font-size: 14px; }
+    #toggle-mode { background: none; border: none; color: white; font-size: 18px; cursor: pointer; }
+
+    .container {
+      display: flex;
+      height: calc(100vh - 120px);
+      margin-right: 3cm;
+    }
+
+    .login-section {
+      flex: 0 0 300px;
+      padding: 20px;
+      background-color: #ffffff;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+      border-radius: 15px;
+    }
+
+    .login-section h2 { text-align: center; color: #333; margin-bottom: 20px; }
+    .login-section input, .login-section button {
+      width: 100%; padding: 10px; margin: 5px 0; border-radius: 5px; font-size: 14px;
+    }
+
+    .login-section button {
+      background-color: #4CAF50; color: white; border: none; cursor: pointer;
+    }
+
+    .login-section button:hover { background-color: #45a049; }
+    .login-section a { display: block; text-align: center; margin-top: 10px; font-size: 14px; color: #007bff; text-decoration: none; }
+    .login-section a:hover { text-decoration: underline; }
+
+    #map {
+      flex-grow: 1;
+      height: 80%;
+      width: 70%;
+      border-radius: 15px;
+    }
+
+    #station-info {
+      background-color: #ffffff;
+      padding: 20px;
+      margin: 20px auto 10px auto;
+      border-radius: 15px;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+      font-size: 16px;
+      color: #333;
+      width: 90%;
+      max-width: 800px;
+    }
+
+    .station-info strong { font-size: 20px; color: #4CAF50; }
+
+    .loading {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 18px;
+      color: #4CAF50;
+      display: none;
+    }
+
+    .dark-mode { background: #1c1c1c; color: white; }
+    .light-mode { background: #f0f8ff; color: black; }
+
+    @media (max-width: 768px) {
+      .container { flex-direction: column; }
+      .login-section { flex: 0 0 100%; margin-bottom: 20px; }
+      #map { height: 400px; width: 100%; }
+      #station-info { width: 95%; }
+    }
+
+    #locate-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      z-index: 10;
+    }
+
+    #locate-btn:hover {
+      background-color: #45a049;
+    }
+
+    .route-btn {
+      padding: 10px 15px;
+      font-size: 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+
+    .route-btn:hover {
+      background-color: #45a049;
+    }
+  </style>
+</head>
+<body class="light-mode">
+  <nav class="navbar">
+    <a href="/" class="logo">home</a>
+    <ul class="nav-links">
+      <li><a href="#about">About</a></li>
+      <li><a href="#tech">Tech & Service</a></li>
+      <li><a href="#responsibility">Responsibility</a></li>
+      <li><a href="#news">News</a></li>
+      <li><a href="#ir">IR</a></li>
+    </ul>
+    <div class="nav-buttons">
+      <button id="toggle-mode">🌙</button>
+    </div>
+  </nav>
+
+  <h1 style="text-align: left; color: #4CAF50; margin-left: 20px;">따릉이 대여 현황</h1>
+  
+  <div class="container">
+    <div class="login-section">
+      <p>홍따릉릉을 즐기다<br>누구나 쉽고 편리하게<br>이용할 수 있는 저탄소 이동수단<br>서울자 .전거 홍홍따릉이</p>
+      <button>로그인</button>
+      <a href="https://www.sisul.or.kr/open_content/traffic/bike_course/index.html" target="_blank">따릉이길 안내페이지 바로가기</a>
+    </div>
+    <div id="map"></div>
+  </div>
+
+  <div style="text-align: center; margin-bottom: 10px;">
+    <button onclick="recommendNearestStation()" style="padding: 10px 15px; font-size: 16px;">가까운 대여소 추천</button>
+  </div>
+
+  <div id="station-info" class="station-info">
+    <p>대여소 정보를 클릭하거나, 가까운 대여소를 추천받아보세요.</p>
+  </div>
+
+  <div id="loading" class="loading">데이터를 불러오는 중입니다...</div>
+
+  <button id="locate-btn" onclick="moveToMyLocation()">내 위치로 이동</button>
+
+  <div style="text-align: center;">
+    <button class="route-btn" onclick="goToKakaoRoute()">길찾기</button>
+  </div>
+
+  <script>
+    var mapContainer = document.getElementById('map');
+    var mapOption = { center: new kakao.maps.LatLng(37.5665, 126.9780), level: 6 };
+    var map = new kakao.maps.Map(mapContainer, mapOption);
+    var clusterer = new kakao.maps.MarkerClusterer({
+      map: map,
+      averageCenter: true,
+      minLevel: 5
+    });
+
+    const apiUrl = 'http://openapi.seoul.go.kr:8088/75436b6c78776a643536507267774e/json/bikeList/1/1000/';
+    const stationInfoDiv = document.getElementById('station-info');
+    const loadingDiv = document.getElementById('loading');
+    let stationsData = [];
+    let userPositionMarker = null;
+    let recommendedStation = null;
+
+    // 대여소 이름에서 숫자와 점 제거
+    function cleanStationName(name) {
+      return name.replace(/^\d+\.\s*/, '');
+    }
+
+    // 대여소 데이터 로드
+    function loadBikeStations() {
+      loadingDiv.style.display = 'block';
+
+      fetch(apiUrl)
+        .then(response => response.json())
+        .then(data => {
+          if (!data.rentBikeStatus || !data.rentBikeStatus.row) {
+            stationInfoDiv.innerHTML = '<p>대여소 데이터가 없습니다.</p>';
+            return;
+          }
+
+          const stations = data.rentBikeStatus.row;
+          stationsData = stations;
+
+          const markers = [];
+
+          stations.forEach(station => {
+            const lat = parseFloat(station.stationLatitude);
+            const lng = parseFloat(station.stationLongitude);
+            if (isNaN(lat) || isNaN(lng)) return;
+
+            const cleanName = cleanStationName(station.stationName); // 정제된 이름 사용
+
+            var marker = new kakao.maps.Marker({
+              position: new kakao.maps.LatLng(lat, lng),
+              map: map,
+              title: cleanName, // 마커 타이틀에 정제된 이름
+            });
+
+            // 마커 클릭 시 대여소 정보 표시 및 도착지 설정
+            kakao.maps.event.addListener(marker, 'click', function() {
+              stationInfoDiv.innerHTML = ` 
+                <strong>${cleanName}</strong><br/>
+                총 자전거 수: ${station.rackTotCnt}<br/>
+                잔여 자전거 수: ${station.parkingBikeTotCnt}<br/>
+                공유 자전거 수: ${station.shared}
+              `;
+              recommendedStation = { ...station, stationName: cleanName }; // 정제된 이름으로 저장
+            });
+
+            markers.push(marker);
+          });
+
+          clusterer.addMarkers(markers);
+        })
+        .catch(error => {
+          console.error('API 오류:', error);
+          stationInfoDiv.innerHTML = '<p>데이터를 불러오는 데 실패했습니다.</p>';
+        })
+        .finally(() => {
+          loadingDiv.style.display = 'none';
+        });
+    }
+
+    loadBikeStations();
+
+    // 다크/라이트 모드 전환
+    const toggleModeButton = document.getElementById('toggle-mode');
+    toggleModeButton.addEventListener('click', () => {
+      const body = document.body;
+      if (body.classList.contains('light-mode')) {
+        body.classList.replace('light-mode', 'dark-mode');
+        toggleModeButton.textContent = '🌙';
+      } else {
+        body.classList.replace('dark-mode', 'light-mode');
+        toggleModeButton.textContent = '🌞';
+      }
+    });
+
+    // 거리 계산 함수
+    function getDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) *
+        Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c * 1000; // meters
+    }
+
+    // 가까운 대여소 추천
+    function recommendNearestStation() {
+      if (!navigator.geolocation) {
+        alert("브라우저에서 위치 정보를 지원하지 않습니다.");
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(pos => {
+        const userLat = pos.coords.latitude;
+        const userLng = pos.coords.longitude;
+
+        if (userPositionMarker) {
+          userPositionMarker.setMap(null);
+        }
+
+        var marker = new kakao.maps.Marker({
+          position: new kakao.maps.LatLng(userLat, userLng),
+          map: map,
+          title: '내 위치'
+        });
+
+        userPositionMarker = marker;
+
+        const nearbyStations = stationsData
+          .map(st => {
+            const lat = parseFloat(st.stationLatitude);
+            const lng = parseFloat(st.stationLongitude);
+            return { ...st, distance: getDistance(userLat, userLng, lat, lng) };
+          })
+          .filter(st => st.parkingBikeTotCnt >= 3 && st.distance <= 500)
+          .sort((a, b) => a.distance - b.distance);
+
+        if (nearbyStations.length === 0) {
+          stationInfoDiv.innerHTML = `<p>500m 이내에 추천 가능한 대여소가 없습니다.</p>`;
+          return;
+        }
+
+        const best = nearbyStations[0];
+        const cleanName = cleanStationName(best.stationName); // 정제된 이름
+        recommendedStation = { ...best, stationName: cleanName }; // 정제된 이름으로 저장
+        stationInfoDiv.innerHTML = ` 
+          <strong>추천 대여소: ${cleanName}</strong><br/>
+          거리: ${Math.round(best.distance)}m<br/>
+          잔여 자전거: ${best.parkingBikeTotCnt}<br/>
+          총 거치대 수: ${best.rackTotCnt}<br/>
+          <em>※ 현재 위치 기준으로 추천되었습니다.</em>
+        `;
+
+        map.setCenter(new kakao.maps.LatLng(parseFloat(best.stationLatitude), parseFloat(best.stationLongitude)));
+      }, err => {
+        alert("위치 정보를 가져올 수 없습니다.");
+      });
+    }
+
+    // 내 위치로 이동
+    function moveToMyLocation() {
+      if (!navigator.geolocation) {
+        alert("위치 정보를 지원하지 않습니다.");
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(pos => {
+        const userLat = pos.coords.latitude;
+        const userLng = pos.coords.longitude;
+
+        map.setCenter(new kakao.maps.LatLng(userLat, userLng));
+
+        if (userPositionMarker) {
+          userPositionMarker.setMap(null);
+        }
+
+        userPositionMarker = new kakao.maps.Marker({
+          position: new kakao.maps.LatLng(userLat, userLng),
+          map: map,
+          title: '내 위치'
+        });
+      }, err => {
+        alert("위치 정보를 가져올 수 없습니다.");
+      });
+    }
+
+    // 카카오 길찾기
+    function goToKakaoRoute() {
+      if (!navigator.geolocation) {
+        alert("위치 정보를 지원하지 않습니다.");
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(pos => {
+        const userLat = pos.coords.latitude;
+        const userLng = pos.coords.longitude;
+
+        // 추천 또는 클릭한 대여소가 있으면 사용, 없으면 기본값(명동)
+        let destLat, destLng, destName;
+        if (recommendedStation) {
+          destLat = parseFloat(recommendedStation.stationLatitude);
+          destLng = parseFloat(recommendedStation.stationLongitude);
+          destName = recommendedStation.stationName; // 이미 정제된 이름
+        } else {
+          destLat = 37.5651; // 명동
+          destLng = 126.9896;
+          destName = "명동";
+        }
+
+        // 카카오맵 길찾기 URL (자전거 경로)
+        const kakaoRouteUrl = `https://map.kakao.com/?sName=내%20위치&sx=${userLng}&sy=${userLat}&eName=${encodeURIComponent(destName)}&ex=${destLng}&ey=${destLat}&by=BIKE`;
+
+        window.open(kakaoRouteUrl, "_blank");
+      }, err => {
+        alert("위치 정보를 가져올 수 없습니다.");
+      });
+    }
+  </script>
+</body>
+</html>
+

@@ -1,0 +1,520 @@
+/* 기본 스타일 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* 다크 모드 & 라이트 모드 */
+.dark-mode {
+  background: #000;
+  color: white;
+}
+
+.light-mode {
+  background: white;
+  color: black;
+}
+
+/* 다크 모드 bg-light 텍스트 강제 검정 */
+.dark-mode .bg-light {
+  background-color: #f8f9fa !important;
+  color: #000 !important;
+}
+
+.dark-mode .bg-light h1,
+.dark-mode .bg-light h2,
+.dark-mode .bg-light p,
+.dark-mode .bg-light span,
+.dark-mode .bg-light div {
+  color: #000 !important;
+}
+
+/* 네비게이션 바 */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background: black;
+  color: white;
+}
+
+.navbar .logo {
+  font-size: 20px;
+  font-weight: bold;
+  text-decoration: none;
+  color: white;
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 20px;
+}
+
+.nav-links li {
+  display: inline;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: white;
+  font-size: 14px;
+}
+
+#toggle-mode {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+/* 메인 배너 */
+.hero {
+  text-align: center;
+  padding: 80px 20px;
+}
+
+.hero-text h1 {
+  font-size: 32px;
+  font-weight: bold;
+}
+
+.view-more {
+  margin-top: 20px;
+  padding: 10px 15px;
+  border: none;
+  background: white;
+  color: black;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* 정보 카드 */
+.info-section {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 30px;
+}
+
+.info-card {
+  padding: 15px 20px;
+  border-radius: 10px;
+  background: #333;
+  color: white;
+  width: 200px;
+  text-align: center;
+}
+
+.yellow {
+  background: yellow;
+  color: black;
+}
+
+/* 푸터 */
+.footer {
+  text-align: center;
+  margin-top: 50px;
+  padding: 20px;
+  font-size: 14px;
+}
+
+.login-btn {
+  padding: 10px 20px;
+  font-size: 16px;
+  border: none;
+  background: yellow;
+  color: black;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+/* 로그인 페이지 스타일 */
+.login-container {
+  max-width: 400px;
+  margin: 50px auto;
+  padding: 30px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.login-container h1 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.login-container div {
+  margin-bottom: 15px;
+}
+
+.login-container label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #555;
+}
+
+.login-container input[type="text"],
+.login-container input[type="password"] {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 16px;
+}
+
+.login-container button[type="submit"] {
+  width: 100%;
+  padding: 12px;
+  background-color: #000;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.login-container button[type="submit"]:hover {
+  background-color: #333;
+}
+
+.login-container .error {
+  color: red;
+  margin-top: 10px;
+}
+
+.login-container .success {
+  color: green;
+  margin-top: 10px;
+}
+
+.login-container hr {
+  margin-top: 25px;
+  margin-bottom: 20px;
+  border: 0;
+  border-top: 1px solid #eee;
+}
+
+.login-container a {
+  display: block;
+  text-align: center;
+  margin-top: 15px;
+  color: #007bff;
+  text-decoration: none;
+}
+
+.login-container a:hover {
+  text-decoration: underline;
+}
+
+.login-container .social-login {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.login-container .social-login a {
+  display: inline-block;
+  margin: 0 10px;
+}
+
+.login-container .social-login img {
+  height: 30px;
+}
+
+.login-container .signup-link {
+  text-align: center;
+  margin-top: 15px;
+}
+
+/* 회원가입 페이지 공통 스타일 */
+.register-container,
+.oauth2-register-container {
+  max-width: 600px;
+  margin: 50px auto;
+  padding: 30px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.register-container h1,
+.oauth2-register-container h1 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.register-container div,
+.oauth2-register-container div {
+  margin-bottom: 15px;
+}
+
+.register-container label,
+.oauth2-register-container label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #555;
+}
+
+.register-container input[type="text"],
+.register-container input[type="password"],
+.register-container input[type="email"],
+.register-container input[type="date"],
+.oauth2-register-container input[type="text"],
+.oauth2-register-container input[type="password"],
+.oauth2-register-container input[type="email"] {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 16px;
+}
+
+.oauth2-register-container input[readonly] {
+  background-color: #eee;
+  cursor: not-allowed;
+}
+
+.register-container .address-group,
+.oauth2-register-container .address-group {
+  display: flex;
+  gap: 10px;
+}
+
+.register-container .address-group input[type="text"],
+.oauth2-register-container .address-group input[type="text"] {
+  flex: 1;
+}
+
+.register-container button[type="submit"],
+.oauth2-register-container button[type="submit"],
+.oauth2-register-container button[type="button"] {
+  width: 100%;
+  padding: 12px;
+  background-color: #000;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+  margin-top: 20px;
+}
+
+.register-container button[type="submit"]:hover,
+.oauth2-register-container button[type="submit"]:hover,
+.oauth2-register-container button[type="button"]:hover {
+  background-color: #333;
+}
+
+.register-container .error,
+.oauth2-register-container .error {
+  color: red;
+  font-size: 14px;
+  margin-top: 5px;
+}
+
+.register-container .duplicate-message,
+.oauth2-register-container .duplicate-message {
+  color: orange;
+  font-size: 14px;
+  margin-top: 5px;
+}
+
+.register-container a,
+.oauth2-register-container a {
+  display: block;
+  text-align: center;
+  margin-top: 15px;
+  color: #007bff;
+  text-decoration: none;
+}
+
+.register-container a:hover,
+.oauth2-register-container a:hover {
+  text-decoration: underline;
+}
+
+/* 유틸리티 스타일 */
+html {
+  scroll-behavior: smooth;
+}
+
+.btn-black {
+  background-color: #000;
+  color: #fff;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-black:hover {
+  background-color: #333;
+}
+
+.btn-danger {
+  background-color: red;
+  color: white;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-danger:hover {
+  background-color: #cc0000;
+}
+
+.error {
+  font-size: 0.85em;
+  margin-top: 5px;
+}
+
+.btn-gray {
+  background-color: #888;
+  color: white;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-gray:hover {
+  background-color: #666;
+}
+
+.button-group-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 30px;
+}
+
+.full-btn {
+  width: 100%;
+  padding: 12px 0;
+  font-size: 16px;
+  font-weight: bold;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.black-btn {
+  background-color: #000;
+  color: #fff;
+}
+
+.red-btn {
+  background-color: #ff1a1a !important;
+  color: #fff !important;
+}
+
+.gray-btn {
+  background-color: #999;
+  color: #fff;
+  text-decoration: none;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 991.98px) {
+  .navbar .position-absolute.end-0 {
+    z-index: 1051;
+  }
+}
+
+/* 로그인 페이지 추가 스타일 */
+.login-container {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.social-section {
+  text-align: center;
+  margin-top: 40px;
+}
+
+.signup-label {
+  font-weight: bold;
+  font-size: 18px;
+  display: block;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.social-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+}
+
+.social-buttons a img {
+  width: 48px;
+  height: 48px;
+  transition: transform 0.2s ease;
+  border-radius: 8px;
+}
+
+.social-buttons a:hover img {
+  transform: scale(1.08);
+}
+
+.alert-warning {
+  color: #856404;
+  background-color: #fff3cd;
+  border: 1px solid #ffeeba;
+  padding: 10px;
+  margin-top: 10px;
+}
+
+/* 다크모드 대응 */
+.dark-mode .login-container {
+  background-color: #1e1e1e;
+  color: #fff;
+}
+
+.dark-mode .form-control {
+  background-color: #2a2a2a;
+  color: #fff;
+  border: 1px solid #444;
+}
+
+/* 레이아웃 스타일 */
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  flex: 1;
+}
+
+.footer {
+  position: sticky;
+  top: 100%;
+}
+
+.navbar-nav .dropdown-menu {
+  right: 0;
+  left: auto;
+}
