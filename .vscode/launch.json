@@ -1,0 +1,14 @@
+{
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Spring Boot-RoadApplication<road>",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "mainClass": "com.cctv.road.RoadApplication",
+      "projectName": "road",
+      "args": "",
+      "envFile": "${workspaceFolder}/.env"
+    }
+  ]
+}
