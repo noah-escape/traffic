@@ -1,142 +1,26 @@
-/* 기본 스타일 */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: Arial, sans-serif;
-  transition: background 0.3s, color 0.3s;
-}
-
-/* 전체 폼 컨테이너 */
-.write-container {
-  width: 800px;
-  margin: 80px auto;
-  padding: 25px;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-/* 다크 모드 & 라이트 모드 */
-.dark-mode {
-  background: #000;
-  color: white;
-}
-
-.light-mode {
-  background: white;
-  color: black;
-}
-
-/* 네비게이션 바 */
-.navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px 20px;
-  background: black;
-  color: white;
-}
-
-.navbar .logo {
-  font-size: 20px;
-  font-weight: bold;
-  text-decoration: none;
-  color: white;
-}
-
-.nav-links {
-  list-style: none;
-  display: flex;
-  gap: 20px;
-}
-
-.nav-links li {
-  display: inline;
-}
-
-.nav-links a {
-  text-decoration: none;
-  color: white;
-  font-size: 14px;
-}
-
-#toggle-mode {
-  background: none;
-  border: none;
-  color: white;
-  font-size: 18px;
-  cursor: pointer;
-}
-
-/* 드롭다운 메뉴 스타일 */
-.dropdown {
-  position: relative;
-}
-
-.dropdown-menu {
-  display: none;
-  position: absolute;
-  background-color: #222;
-  min-width: 150px;
-  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
-  z-index: 1;
-  border-radius: 4px;
-  top: 100%;
-  left: 0;
-}
-
-.dropdown-menu li {
-  display: block;
-}
-
-.dropdown-menu a {
-  color: white;
-  padding: 10px 15px;
-  display: block;
-  text-decoration: none;
-  font-size: 14px;
-}
-
-.dropdown-menu a:hover {
-  background-color: #444;
-}
-
-/* 드롭다운 보이게 */
-.dropdown:hover .dropdown-menu {
-  display: block;
-}
-
-.login-btn {
-  padding: 10px 20px;
-  font-size: 16px;
-  border: none;
-  background: yellow;
-  color: black;
-  cursor: pointer;
-  border-radius: 5px;
-}
-
-/* 상세보기 컨테이너 */
 .view-container {
-  width: 800px;
-  margin: 80px auto;
-  padding: 25px;
+  width: 100%;
+  max-width: 900px;
+  margin: 50px auto;
   background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
 /* 제목 */
 .view-container h2 {
+  font-size: 1.8rem;
+  color: #343a40;
   text-align: center;
-  font-size: 26px;
+  margin-bottom: 10px;
+}
+
+.view-container h3 {
+  font-size: 2rem;
+  color: #343a40;
+  text-align: center;
   margin-bottom: 20px;
-  color: #222;
 }
 
 /* 메타 정보 */
@@ -158,40 +42,127 @@ body {
   margin-bottom: 30px;
 }
 
-/* 버튼 영역 */
+/* 이미지 스타일 */
+.view-container img {
+  width: 100%;
+  max-width: 600px;
+  display: block;
+  margin: 10px auto;
+  border-radius: 8px;
+}
+
+/* 공통 버튼 그룹 정렬 */
 .button-group {
-  text-align: center;
-}
-
-.button-group button {
-  padding: 10px 20px;
-  background-color: #4CAF50;
-  border: none;
-  color: white;
-  font-size: 14px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.button-group button:hover {
-  background-color: #45a049;
-}
-
-/* 푸터 */
-.wrapper {
   display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
-.footer {
-  background: black;
-  padding: 15px;
-  text-align: center;
-  font-size: 14px;
+/* 버튼 기본 스타일 */
+.button-group .btn {
+  padding: 0.5rem 1.2rem;
+  font-size: 0.95rem;
+  border-radius: 50px;
+  transition: all 0.2s ease-in-out;
+}
+
+/* 수정/삭제/댓글/목록 버튼 각각 구분감 있게 */
+.button-group .btn-primary {
+  background-color: #007bff;
+  border: none;
+}
+
+.button-group .btn-primary:hover {
+  background-color: #0069d9;
+}
+
+.button-group .btn-danger {
+  background-color: #dc3545;
+  border: none;
+}
+
+.button-group .btn-danger:hover {
+  background-color: #c82333;
+}
+
+.button-group .btn-secondary {
+  background-color: #6c757d;
+  border: none;
+}
+
+.button-group .btn-secondary:hover {
+  background-color: #5a6268;
+}
+
+.button-group .btn-outline-success {
+  color: #28a745;
+  border-color: #28a745;
+}
+
+.button-group .btn-outline-success:hover {
+  background-color: #28a745;
   color: white;
 }
 
-.main-content {
-  flex: 1;
+/* 댓글 폼 */
+#comment-form {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+#comment-form textarea {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  margin-bottom: 20px;
+  font-size: 1rem;
+}
+
+#comment-form button {
+  background-color: #28a745;
+  color: #fff;
+  padding: 0.5rem 1.2rem;
+  font-size: 0.95rem;
+  border-radius: 50px;
+  transition: all 0.2s ease-in-out;
+}
+
+#comment-form button:hover {
+  background-color: #218838;
+}
+
+.comment-submit {
+  text-align: right;
+}
+
+/* 댓글 리스트 */
+.reply-list {
+  margin-top: 40px;
+}
+
+.reply-list h5 {
+  color: #343a40;
+  font-size: 1.4rem;
+  margin-bottom: 20px;
+}
+
+.reply-list .border-top {
+  border-top: 1px solid #ddd;
+}
+
+.reply-list .py-3 {
+  padding-top: 15px;
+  padding-bottom: 15px;
+}
+
+.reply-list p {
+  margin: 5px 0;
+}
+
+.reply-list .text-muted {
+  color: #6c757d;
+  font-size: 0.9rem;
 }
