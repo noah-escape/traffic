@@ -10,7 +10,7 @@ public class WebConfig implements WebMvcConfigurer {
   @Override
   public void addResourceHandlers(ResourceHandlerRegistry registry) {
     // ✅ 정적 이미지 경로
-    registry.addResourceHandler("/image/**")
+    registry.addResourceHandler("/image/**", "/images/**")
         .addResourceLocations("classpath:/static/image/", "file:/C:/project/upload/images/");
 
     // ✅ /api/** 경로는 정적 리소스로 빠지지 않도록 방지
