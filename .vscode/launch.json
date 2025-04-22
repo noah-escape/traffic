@@ -9,6 +9,16 @@
       "projectName": "road",
       "args": "",
       "envFile": "${workspaceFolder}/.env"
+    },
+    {
+      "type": "java",
+      "name": "Spring Boot-RoadApplication<trafficRoad>",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "mainClass": "com.cctv.road.RoadApplication",
+      "projectName": "trafficRoad",
+      "args": "",
+      "envFile": "${workspaceFolder}/.env"
     }
   ]
 }
