@@ -7,12 +7,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -52,22 +47,20 @@ public class BoardController {
   public String writeSubmit(@ModelAttribute BoardDTO boardDTO,
       @RequestParam("images") List<MultipartFile> images,
       @AuthenticationPrincipal CustomUserDetails userDetails) {
-    log.info("🔥 글쓰기 요청 받음");
-    log.info("🔎 notice: {}", boardDTO.isNotice());
+    log.info("🔥 글쓰기 요청 받음 - notice: {}", boardDTO.isNotice());
+
     if (userDetails == null) {
       return "redirect:/login";
     }
 
-    // 회원 정보 가져오기
     Member member = userDetails.getMember();
     boardDTO.setNickName(member.getNickName());
 
-    // 게시글 작성 (이미지 포함)
     try {
       boardService.writeBoardWithImages(boardDTO, member.getUserId(), images);
     } catch (Exception e) {
-      e.printStackTrace();
-      return "error"; // 오류 페이지 (예: "error.html")
+      log.error("게시글 작성 중 오류 발생", e);
+      return "error";
     }
 
     return "redirect:/board/list?categoryId=" + boardDTO.getCategoryId();
@@ -79,7 +72,6 @@ public class BoardController {
       Model model) {
 
     List<BoardDTO> notices = boardService.getNoticeList();
-
     int totalCount = boardService.getTotalCountByCategory(categoryId);
     PageList pageList = new PageList(totalCount, currentPage, 10);
     List<BoardDTO> posts = boardService.getPagedPosts(categoryId, pageList.getStartNo(), pageList.getPageSize());
@@ -110,15 +102,13 @@ public class BoardController {
     boardService.increaseHit(boardNum);
     BoardDTO post = boardService.getBoard(boardNum);
 
-    // 이미지 경로 확인
-    System.out.println("이미지 개수: " + post.getImageFileNames().size());
-    post.getImageFileNames().forEach(image -> System.out.println("이미지: " + image));
-    // 댓글 목록
+    log.info("🔍 이미지 개수: {}", post.getImageFileNames().size());
+    post.getImageFileNames().forEach(image -> log.info("📷 {}", image));
+
     List<Reply> replies = replyService.getReplies(post.getBoardNum());
 
-    // 원래 있던 게시판 ID 저장 (공지글일 경우에도 필요)
     if (originCategoryId == null) {
-      originCategoryId = post.getCategoryId(); // 일반 글일 경우 fallback
+      originCategoryId = post.getCategoryId();
     }
 
     model.addAttribute("post", post);
@@ -136,19 +126,19 @@ public class BoardController {
       RedirectAttributes redirectAttributes) {
 
     BoardDTO post = boardService.getBoard(boardNum);
-    boardService.deletePostWithReplies(boardNum); // ✅ 수정된 부분
+    boardService.deletePostWithReplies(boardNum);
 
     redirectAttributes.addAttribute("categoryId", post.getCategoryId());
     redirectAttributes.addAttribute("currentPage", currentPage);
     return "redirect:/board/list";
   }
 
-  // ✅ boardNum이 아닌 boardSeq 기반으로 조회
   @GetMapping("/update/{categoryId}/{boardSeq}")
   public String showUpdateForm(@PathVariable("categoryId") int categoryId,
       @PathVariable("boardSeq") int boardSeq,
       @RequestParam(name = "currentPage", defaultValue = "1") int currentPage,
       Model model) {
+
     BoardDTO post = boardService.getBoardBySeq(categoryId, boardSeq);
     if (post == null) {
       throw new IllegalArgumentException("해당 게시글이 존재하지 않습니다.");
@@ -159,7 +149,6 @@ public class BoardController {
     return "board/update";
   }
 
-  // ✅ boardNum이 아닌 boardSeq로 업데이트 처리
   @PostMapping("/update/{categoryId}/{boardSeq}")
   public String updatePost(@PathVariable("categoryId") int categoryId,
       @PathVariable("boardSeq") int boardSeq,
@@ -169,14 +158,15 @@ public class BoardController {
       @RequestParam(value = "newImages", required = false) List<MultipartFile> newImages,
       RedirectAttributes redirectAttributes) {
 
-    log.info("🔄 수정 요청 받은 notice: {}", boardDTO.isNotice());
+    log.info("🔄 수정 요청 받음 - notice: {}", boardDTO.isNotice());
+
     try {
       boardService.updatePostBySeq(categoryId, boardSeq, boardDTO, deleteImages, newImages);
-  } catch (IOException e) {
+    } catch (IOException e) {
       log.error("파일 저장 중 오류 발생: {}", e.getMessage());
       redirectAttributes.addFlashAttribute("error", "파일 업로드 중 오류가 발생했습니다.");
-      return "redirect:/board/update/" + categoryId + "/" + boardSeq; // 오류 발생 시 수정 화면으로 돌아감
-  }
+      return "redirect:/board/update/" + categoryId + "/" + boardSeq;
+    }
 
     BoardDTO updated = boardService.getBoardBySeq(categoryId, boardSeq);
     redirectAttributes.addAttribute("currentPage", currentPage);
@@ -184,4 +174,3 @@ public class BoardController {
     return "redirect:/board/view/" + updated.getBoardNum();
   }
 }
-
