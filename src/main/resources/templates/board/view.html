@@ -110,7 +110,7 @@
     <div class="view-content" th:text="${post.content}">내용</div>
 
     <!-- 항상 표시되는 제목 -->
-    <h5 class="mb-3">첨부 이미지</h5>
+    <h5>첨부 이미지</h5>
 
     <!-- 유효한 이미지가 1개 이상 있을 때만 출력 -->
     <div th:if="${post.imageFileNames != null and 
@@ -122,7 +122,7 @@
 
     <!-- 유효한 이미지가 하나도 없을 때 -->
     <div th:unless="${post.imageFileNames != null and 
-    !post.imageFileNames.?[imagePath != null].isEmpty()}">
+     !post.imageFileNames.?[imagePath != null].isEmpty()}">
       <p>첨부된 이미지가 없습니다.</p>
     </div>
 
@@ -154,7 +154,7 @@
     <!-- ✅ 댓글 리스트 -->
     <div class="reply-list mt-4">
       <!-- 제목 + 버튼 한 줄로 만들기 -->
-      <div class="button-group d-flex justify-content-between align-items-center mb-2">
+      <div class="button-group d-flex justify-content-between align-items-center mb-3">
         <h5 class="mb-0">댓글</h5>
         <th:block sec:authorize="isAuthenticated()">
           <button type="button" id="comment-toggle-btn" onclick="toggleCommentForm()" class="btn btn-outline-success">
