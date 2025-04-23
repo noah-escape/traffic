@@ -134,8 +134,7 @@
 
       <!-- 이미지 아이콘을 아이콘 크기만큼만 차지 -->
       <!-- 유효한 이미지(imagePath 있는 이미지)가 하나라도 있으면 아이콘 표시 -->
-      <div th:if="${post.imageFileNames != null and 
-  !post.imageFileNames.?[imagePath != null and !#strings.isEmpty(imagePath)].isEmpty()}"
+      <div th:if="${post.imageFileNames != null and !post.imageFileNames.?[imagePath != null and !#strings.isEmpty(imagePath)].isEmpty()}"
         class="image-indicator d-flex align-items-center">
         <i class="bi bi-image me-2" style="font-size: 1.2rem;"></i>
       </div>

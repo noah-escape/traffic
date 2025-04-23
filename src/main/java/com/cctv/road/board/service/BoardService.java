@@ -187,21 +187,26 @@ public class BoardService {
     board.setNotice(isNotice);
 
     // 기존 이미지 삭제
-    if (deleteImages != null) {
-      for (Long imageId : deleteImages) {
-          BoardImage image = boardImageRepository.findById(imageId)
-              .orElseThrow(() -> new RuntimeException("이미지 없음"));
+if (deleteImages != null) {
+  // ✅ 여기서 null 요소 제거 (바로 아래 코드 추가!)
+  deleteImages = deleteImages.stream()
+      .filter(java.util.Objects::nonNull)
+      .collect(Collectors.toList());
 
-          // 1. DB 관계에서 제거
-          board.getImages().remove(image);
-          boardImageRepository.delete(image);
+  for (Long imageId : deleteImages) {
+      BoardImage image = boardImageRepository.findById(imageId)
+          .orElseThrow(() -> new RuntimeException("이미지 없음"));
 
-          // 2. 파일 삭제 - BoardService 내부에서 직접
-          String path = image.getImagePath();
-          File file = new File("/your/upload/path", path.substring(path.lastIndexOf("/") + 1));
-          if (file.exists()) file.delete();
-      }
+      // 1. DB 관계에서 제거
+      board.getImages().remove(image);
+      boardImageRepository.delete(image);
+
+      // 2. 파일 삭제
+      String path = image.getImagePath();
+      File file = new File("/your/upload/path", path.substring(path.lastIndexOf("/") + 1));
+      if (file.exists()) file.delete();
   }
+}
 
   // 새 이미지 추가
   if (newImages != null) {
