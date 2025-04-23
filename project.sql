@@ -17,6 +17,8 @@ CREATE TABLE users (
     UNIQUE KEY nick_name (nick_name)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '회원가입 데이터 베이스'
 
+
+
 -- roads 테이블
 CREATE TABLE roads (
     road_id INT AUTO_INCREMENT PRIMARY KEY COMMENT '도로 고유 ID',

@@ -68,3 +68,15 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 });
+
+function removeSelectedImages() {
+    const checkboxes = document.querySelectorAll('input[name="deleteImages"]:checked');
+  
+    checkboxes.forEach(checkbox => {
+      // 부모 div는 화면에서 숨기기만 (실제로는 제거 안 함)
+      const imageDiv = checkbox.closest('div');
+      if (imageDiv) {
+        imageDiv.style.display = 'none';
+      }
+    });
+  }
