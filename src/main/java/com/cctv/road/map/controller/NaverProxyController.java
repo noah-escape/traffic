@@ -251,4 +251,31 @@ public class NaverProxyController {
         })
         .bodyToMono(String.class);
   }
+
+  @GetMapping("/road-event-all")
+  public Mono<String> getAllRoadEvents() {
+    WebClient eventClient = WebClient.builder()
+        .baseUrl("https://openapi.its.go.kr:9443")
+        .exchangeStrategies(ExchangeStrategies.builder()
+            .codecs(config -> config.defaultCodecs().maxInMemorySize(5 * 1024 * 1024))
+            .build())
+        .build();
+  
+    return eventClient.get()
+        .uri(uriBuilder -> uriBuilder
+            .path("/eventInfo")
+            .queryParam("apiKey", itsApiKey)
+            .queryParam("type", "all")
+            .queryParam("eventType", "all")
+            .queryParam("getType", "json")
+            .build())
+        .accept(MediaType.APPLICATION_JSON)
+        .retrieve()
+        .onStatus(status -> status.isError(), res ->
+            res.bodyToMono(String.class).flatMap(body -> {
+              System.err.println("❌ ITS API 오류: " + body);
+              return Mono.error(new RuntimeException("ITS API 오류"));
+            }))
+        .bodyToMono(String.class);
+  }  
 }
