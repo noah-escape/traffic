@@ -8,6 +8,12 @@
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
+.write-container h2 {
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
 .write-container .form-group {
   margin-bottom: 1.5rem;
 }
@@ -52,16 +58,15 @@ input[type="file"].form-control {
 /* ✅ 버튼 그룹 */
 .button-group {
   display: flex;
-  gap: 10px;
   flex-wrap: wrap;
-  justify-content: center;
+  gap: 0.75rem;
+  justify-content: flex-end;
 }
 
 .button-group .btn {
-  padding: 0.5rem 1.2rem;
-  font-size: 0.95rem;
-  border-radius: 50px;
-  transition: all 0.2s ease-in-out;
+  min-width: 100px;
+  font-weight: 500;
+  border-radius: 0.5rem;
 }
 
 .button-group .btn-primary {
@@ -69,65 +74,15 @@ input[type="file"].form-control {
   border: none;
 }
 
-.button-group .btn-primary:hover {
-  background-color: #0069d9;
-}
-
 .button-group .btn-secondary {
   background-color: #6c757d;
   border: none;
 }
 
-.button-group .btn-secondary:hover {
-  background-color: #5a6268;
+/* ✅ 이미지 미리보기 */
+img[alt="기존 이미지"] {
+  border-radius: 8px;
+  margin: 0.5rem 0;
+  border: 1px solid #ddd;
+  display: block;
 }
-
-/* 폴라로이드 스타일 */
-.polaroid {
-  background-color: white;
-  box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.2);
-  margin: 10px;
-  display: inline-block;
-  text-align: center;
-  border-radius: 4px;
-  width: 186px;
-  box-sizing: border-box;
-  transition: transform 0.2s ease;
-}
-
-.polaroid img {
-  max-width: 100%;
-  height: 150px; /* 원하는 높이로 조절 가능 */
-  object-fit: contain; /* 이미지가 잘리지 않게 전체 보여줌 */
-  border-radius: 0.5rem;
-  background-color: #f8f9fa; /* 비어있는 부분 배경색 (선택) */
-}
-
-.polaroid label {
-  display: block; /* label을 블록 요소로 설정하여 이미지와 체크박스/텍스트를 세로로 배치 */
-  margin-top: 8px;
-  font-size: 0.9rem;
-  text-align: center;
-}
-
-.polaroid label input[type="checkbox"] {
-  margin-top: 8px; /* 체크박스와 텍스트 간격 */
-}
-
-.polaroid label span {
-  display: block; /* 텍스트를 새 줄에 표시 */
-  margin-top: 5px;
-}
-
-.polaroid:hover {
-  transform: scale(1.03);
-}
-
-.polaroid-container {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start; /* 왼쪽 정렬 */
-  gap: 10px; /* 이미지 간의 간격 */
-  margin-top: 10px;
-}
-
