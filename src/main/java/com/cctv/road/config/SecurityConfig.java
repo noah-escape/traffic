@@ -8,7 +8,6 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
@@ -61,15 +60,20 @@ public class SecurityConfig {
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     http
         .csrf(csrf -> csrf
+            .ignoringRequestMatchers(
+                new AntPathRequestMatcher("/api/proxy/road-event"),
+                new AntPathRequestMatcher("/api/proxy/road-event-all"))
             .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
         .authenticationProvider(authenticationProvider())
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/", "/home", "/login", "/register/**", "/css/**", "/js/**", "/image/**", "/favicon.ico",
-                "/json/**", "/pages/**", "/api/**", "/api/proxy/**")
+            .requestMatchers(
+                "/", "/home", "/login", "/register/**",
+                "/css/**", "/js/**", "/image/**", "/favicon.ico",
+                "/json/**", "/pages/**",
+                "/api/**", "/api/proxy/**")
             .permitAll()
-            .requestMatchers("/member/mypage", "/member/update", "/member/update/**").authenticated() // ✅ 마이페이지는 로그인
-                                                                                                      // 사용자만
-            .requestMatchers("/admin/**").hasRole("ADMIN") // ✅ 관리자 경로 예시
+            .requestMatchers("/member/mypage", "/member/update", "/member/update/**").authenticated()
+            .requestMatchers("/admin/**").hasRole("ADMIN")
             .anyRequest().authenticated())
         .formLogin(form -> form
             .loginPage("/login")
@@ -78,8 +82,7 @@ public class SecurityConfig {
             .permitAll())
         .oauth2Login(oauth2 -> oauth2
             .loginPage("/login")
-            .userInfoEndpoint(endpoint -> endpoint
-                .userService(customOAuth2UserService))
+            .userInfoEndpoint(endpoint -> endpoint.userService(customOAuth2UserService))
             .successHandler(oAuthSuccessHandler)
             .failureHandler(oAuthFailureHandler))
         .logout(logout -> logout
