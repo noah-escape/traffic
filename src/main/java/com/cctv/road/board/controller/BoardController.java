@@ -1,7 +1,11 @@
 package com.cctv.road.board.controller;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -150,18 +154,25 @@ public class BoardController {
   }
 
   @PostMapping("/update/{categoryId}/{boardSeq}")
-  public String updatePost(@PathVariable("categoryId") int categoryId,
-      @PathVariable("boardSeq") int boardSeq,
+  public String updatePost(@PathVariable int categoryId,
+      @PathVariable int boardSeq,
       @ModelAttribute BoardDTO boardDTO,
       @RequestParam(name = "currentPage", defaultValue = "1") int currentPage,
-      @RequestParam(value = "deleteImages", required = false) List<Long> deleteImages,
+      @RequestParam(value = "deleteImages", required = false) String deleteImages,
       @RequestParam(value = "newImages", required = false) List<MultipartFile> newImages,
       RedirectAttributes redirectAttributes) {
 
-    log.info("🔄 수정 요청 받음 - notice: {}", boardDTO.isNotice());
+    List<Long> deleteImageIds = new ArrayList<>();
+    if (deleteImages != null && !deleteImages.isEmpty()) {
+      deleteImageIds = Arrays.stream(deleteImages.split(","))
+          .map(String::trim)
+          .filter(s -> !s.isEmpty())
+          .map(Long::parseLong)
+          .collect(Collectors.toList());
+    }
 
     try {
-      boardService.updatePostBySeq(categoryId, boardSeq, boardDTO, deleteImages, newImages);
+      boardService.updatePostBySeq(categoryId, boardSeq, boardDTO, deleteImageIds, newImages);
     } catch (IOException e) {
       log.error("파일 저장 중 오류 발생: {}", e.getMessage());
       redirectAttributes.addFlashAttribute("error", "파일 업로드 중 오류가 발생했습니다.");
@@ -170,7 +181,6 @@ public class BoardController {
 
     BoardDTO updated = boardService.getBoardBySeq(categoryId, boardSeq);
     redirectAttributes.addAttribute("currentPage", currentPage);
-
     return "redirect:/board/view/" + updated.getBoardNum();
   }
 }
