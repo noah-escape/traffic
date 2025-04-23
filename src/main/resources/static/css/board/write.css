@@ -1,191 +1,111 @@
-/* 기본 스타일 */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: Arial, sans-serif;
-  transition: background 0.3s, color 0.3s;
-}
-
-/* 전체 폼 컨테이너 */
-.write-container {
-  width: 800px;
-  margin: 80px auto;
-  padding: 25px;
+/* ✅ 기본 컨테이너 스타일 */
+.container {
+  width: 100%;
+  max-width: 900px;
+  margin: 50px auto;
   background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
-/* 제목 */
-.write-container h2 {
+/* ✅ 헤더 스타일 */
+h2 {
   text-align: center;
-  margin-bottom: 20px;
-  color: #333;
+  color: var(--medium-blue);
+  margin-bottom: 40px;
 }
 
-/* form group 공통 */
+/* ✅ 폼 그룹 */
 .form-group {
   margin-bottom: 20px;
 }
 
-/* 다크 모드 & 라이트 모드 */
-.dark-mode {
-  background: #000;
-  color: white;
-}
-
-.light-mode {
-  background: white;
-  color: black;
-}
-
-/* 네비게이션 바 */
-.navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px 20px;
-  background: black;
-  color: white;
-}
-
-.navbar .logo {
-  font-size: 20px;
-  font-weight: bold;
-  text-decoration: none;
-  color: white;
-}
-
-.nav-links {
-  list-style: none;
-  display: flex;
-  gap: 20px;
-}
-
-.nav-links li {
-  display: inline;
-}
-
-.nav-links a {
-  text-decoration: none;
-  color: white;
-  font-size: 14px;
-}
-
-#toggle-mode {
-  background: none;
-  border: none;
-  color: white;
-  font-size: 18px;
-  cursor: pointer;
-}
-
-.form-group label {
-  font-size: 14px;
+label {
+  font-size: 1rem;
+  color: var(--navy);
+  margin-bottom: 5px;
   display: block;
-  margin-bottom: 6px;
-  font-weight: bold;
-  color: #444;
 }
 
-.form-group input[type="text"],
-.form-group textarea,
-.form-group select {
+/* ✅ 입력 필드 */
+input[type="text"],
+textarea {
   width: 100%;
   padding: 10px;
-  font-size: 14px;
+  border-radius: 8px;
   border: 1px solid #ccc;
-  border-radius: 4px;
+  font-size: 1rem;
+}
+
+textarea {
   resize: none;
 }
 
-/* 드롭다운 메뉴 스타일 */
-.dropdown {
-  position: relative;
-}
-
-.dropdown-menu {
-  display: none;
-  position: absolute;
-  background-color: #222;
-  min-width: 150px;
-  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
-  z-index: 1;
-  border-radius: 4px;
-  top: 100%;
-  left: 0;
-}
-
-.dropdown-menu li {
-  display: block;
-}
-
-.dropdown-menu a {
+/* ✅ 버튼 스타일 */
+button {
+  background-color: var(--dark-green);
   color: white;
-  padding: 10px 15px;
-  display: block;
-  text-decoration: none;
-  font-size: 14px;
-}
-
-.dropdown-menu a:hover {
-  background-color: #444;
-}
-
-/* 드롭다운 보이게 */
-.dropdown:hover .dropdown-menu {
-  display: block;
-}
-
-.login-btn {
   padding: 10px 20px;
-  font-size: 16px;
   border: none;
-  background: yellow;
-  color: black;
+  border-radius: 30px;
   cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  background-color: var(--medium-blue);
+}
+
+button[type="reset"] {
+  background-color: #f0f0f0;
+  color: var(--navy);
+}
+
+button[type="reset"]:hover {
+  background-color: #e0e0e0;
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+/* ✅ 파일 업로드 필드 및 버튼 아이콘 조정 */
+input[type="file"].form-control {
+  cursor: pointer;
+}
+
+.input-group-text {
+  margin-bottom: 0;
+}
+
+/* ✅ 추가: .write-container 안에서 input[type=file] 한 줄 정렬 */
+.write-container input[type="file"] {
+  width: auto; /* ✅ input-group 안에서 한 줄로 보이게 */
+  flex-grow: 1;
+}
+
+.write-container .d-flex input[type="file"] {
+  margin-bottom: 0;
+}
+
+/* #file-list .d-flex {
+  border: 1px solid #ddd;
+  padding: 8px;
   border-radius: 5px;
 }
 
-/* 버튼 영역 */
-.button-group {
-  text-align: center;
-}
-
-.button-group button {
-  padding: 10px 20px;
-  background-color: #4CAF50;
+#file-list .btn-danger {
+  background-color: #f44336;
   border: none;
   color: white;
-  font-size: 14px;
-  border-radius: 4px;
   cursor: pointer;
-}
-
-.button-group button:hover {
-  background-color: #45a049;
-}
-
-/* 푸터 */
-.wrapper {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
-.footer {
-  background: black;
-  padding: 15px;
-  text-align: center;
   font-size: 14px;
-  color: white;
 }
 
-.main-content {
-  flex: 1;
-}
+#file-list .btn-danger:hover {
+  background-color: #d32f2f;
+} */
