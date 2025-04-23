@@ -9,13 +9,6 @@
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
-/* ✅ 헤더 스타일 */
-h2 {
-  text-align: center;
-  color: var(--medium-blue);
-  margin-bottom: 40px;
-}
-
 /* ✅ 폼 그룹 */
 .form-group {
   margin-bottom: 20px;

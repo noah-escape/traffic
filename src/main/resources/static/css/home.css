@@ -13,6 +13,12 @@ body {
   background-color: var(--light-blue);
 }
 
+h2 {
+  text-align: center;
+  color: var(--medium-blue);
+  margin-bottom: 40px;
+}
+
 .navbar-brand {
   font-size: 1.5rem;
   color: white;
