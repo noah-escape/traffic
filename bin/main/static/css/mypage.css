@@ -1,0 +1,120 @@
+.mypage-container {
+    width: 100%;
+    max-width: 600px;
+    margin: 50px auto;
+    background-color: white;
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+h1 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+}
+
+/* 입력 필드 스타일 */
+input[type="text"],
+input[type="email"] {
+    width: 100%;
+    padding: 0.8rem;
+    margin-bottom: 1rem;
+    border-radius: 0.25rem;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+    box-sizing: border-box;
+}
+
+input[readonly] {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+}
+
+label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #495057;
+}
+
+/* 버튼 스타일 */
+.form-button-wrapper {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+  
+  .full-btn {
+    padding: 0.7rem;
+    font-size: 1rem;
+    text-align: center;
+    border: 2px solid transparent;
+    border-radius: 1rem; /* 둥근 모서리 */
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    width: auto;
+  }
+  
+  /* 수정 버튼 */
+  .black-btn {
+    background-color: #343a40;
+    color: white;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 부드러운 그림자 */
+  }
+  
+  .black-btn:hover {
+    background-color: #495057;
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
+    transform: translateY(-2px); /* 호버 시 살짝 올라가는 효과 */
+  }
+  
+  .black-btn:active {
+    background-color: #212529;
+    transform: translateY(0); /* 클릭 시 눌리는 효과 */
+  }
+  
+  /* 탈퇴 버튼 */
+  .red-btn {
+    background-color: #dc3545;
+    color: white;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .red-btn:hover {
+    background-color: #c82333;
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
+    transform: translateY(-2px);
+  }
+  
+  .red-btn:active {
+    background-color: #821d30;
+    transform: translateY(0);
+  }
+  
+  /* 돌아가기 버튼 */
+  .gray-btn {
+    background-color: #6c757d;
+    color: white;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-decoration: none;
+  }
+  
+  .gray-btn:hover {
+    background-color: #5a6268;
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
+    transform: translateY(-2px);
+  }
+  
+  .gray-btn:active {
+    background-color: #495057;
+    transform: translateY(0);
+  }
+  
+  button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }

@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>메인 페이지</title>
+  <title>마이페이지</title>
 
   <!-- ✅ Bootstrap & 외부 공통 리소스 -->
   <link href="https://fonts.googleapis.com/css2?family=Pretendard&display=swap" rel="stylesheet">
@@ -20,6 +20,7 @@
 
   <!-- ✅ 프로젝트 전용 CSS & JS -->
   <link rel="stylesheet" th:href="@{/css/home.css}">
+  <link rel="stylesheet" th:href="@{/css/mypage.css}">
   <script th:src="@{/js/home.js}"></script>
 
 </head>
@@ -32,25 +33,27 @@
       <span class="navbar-toggler-icon"></span>
     </button>
 
-<!-- 웹(데스크톱)용 로고 -->
-<a class="navbar-brand d-none d-lg-block position-absolute top-0 mt-2 ms-3" style="z-index: 1020;" th:href="@{/}">kakao</a>
+    <!-- 웹(데스크톱)용 로고 -->
+    <a class="navbar-brand d-none d-lg-block position-absolute top-0 mt-2 ms-3" style="z-index: 1020;"
+      th:href="@{/}">kakao</a>
 
-<div class="position-absolute end-0 top-0 mt-2 me-3 d-flex align-items-center gap-2">
-  <th:block sec:authorize="isAuthenticated()">
-    <div class="dropdown">
-      <button class="btn login-btn dropdown-toggle rounded-pill px-3 py-2" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-        <i class="bi bi-person-circle me-1"></i> 내정보
-      </button>
-      <ul class="dropdown-menu dropdown-menu-end my-2 auth-dropdown" aria-labelledby="userDropdown">
-        <li><a class="dropdown-item" th:href="@{/member/mypage}">마이페이지</a></li>
-        <li>
-          <form th:action="@{/logout}" method="post">
-            <button type="submit" class="dropdown-item">로그아웃</button>
-          </form>
-        </li>
-      </ul>
-    </div>
-  </th:block>
+    <div class="position-absolute end-0 top-0 mt-2 me-3 d-flex align-items-center gap-2">
+      <th:block sec:authorize="isAuthenticated()">
+        <div class="dropdown">
+          <button class="btn login-btn dropdown-toggle rounded-pill px-3 py-2" type="button" id="userDropdown"
+            data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-person-circle me-1"></i> 내정보
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end my-2 auth-dropdown" aria-labelledby="userDropdown">
+            <li><a class="dropdown-item" th:href="@{/member/mypage}">마이페이지</a></li>
+            <li>
+              <form th:action="@{/logout}" method="post">
+                <button type="submit" class="dropdown-item">로그아웃</button>
+              </form>
+            </li>
+          </ul>
+        </div>
+      </th:block>
       <th:block sec:authorize="isAnonymous()">
         <a th:href="@{/auth/login}" class="btn login-btn rounded-pill px-3 py-2">
           <i class="bi bi-person-circle me-1"></i> 로그인
@@ -60,11 +63,11 @@
     </div>
 
     <!-- 모바일 메뉴 안에 있는 로고 -->
-<div class="collapse navbar-collapse justify-content-center" id="mobileMenu">
-  <div class="d-lg-none text-center w-100">
-    <a class="navbar-brand fw-bold text-white fs-4 mt-2 text-decoration-none" th:href="@{/}">kakao</a>
-    <hr/>
-  </div>
+    <div class="collapse navbar-collapse justify-content-center" id="mobileMenu">
+      <div class="d-lg-none text-center w-100">
+        <a class="navbar-brand fw-bold text-white fs-4 mt-2 text-decoration-none" th:href="@{/}">kakao</a>
+        <hr />
+      </div>
 
       <ul class="navbar-nav text-center">
         <li class="nav-item position-relative">
@@ -90,37 +93,71 @@
     </div>
   </nav>
 
-  <!-- ✅ 메인 콘텐츠 -->
-  <main class="main-content">
-    <header class="hero text-center py-5">
-      <div class="hero-text">
-        <h1>Kakao | OpenAI<br>Strategic Collaboration</h1>
-        <p>AI services in my daily life</p>
-        <button class="btn btn-dark mt-3">View More →</button>
-      </div>
-    </header>
+  <main class="mypage-container">
+    <h1>마이페이지</h1>
 
-    <section class="info-section d-flex justify-content-center gap-3 my-5">
-      <div class="info-card p-3 bg-dark text-white rounded">kakaoImpact</div>
-      <div class="info-card p-3 bg-warning rounded text-black">
-        <span>Safety</span>
-        <p>How to avoid scams</p>
-      </div>
-      <div class="info-card p-3 bg-dark text-white rounded">🌍 Community</div>
-    </section>
+    <div class="form-button-wrapper d-flex justify-content-end mb-4">
+      <a href="javascript:history.back()" class="full-btn gray-btn">돌아가기</a>
+    </div>
 
-    <section id="responsibility" class="p-5 bg-light">
-      <div class="container">
-        <h2>Responsibility</h2>
-        <p>카카오는 기술과 서비스의 책임 있는 사용을 통해 사회적 가치를 창출하고자 노력합니다. 개인정보 보호, 사이버 윤리, 포용적 기술 구현 등 다양한 측면에서 책임을 다하고 있습니다.</p>
-      </div>
-    </section>
+    <div>
+      <label>아이디</label>
+      <input type="text" th:value="${memberDTO.userId}" readonly>
+    </div>
+
+    <div>
+      <label>닉네임</label>
+      <input type="text" th:value="${memberDTO.nickName}" readonly>
+    </div>
+
+    <div>
+      <label>이름</label>
+      <input type="text" th:value="${memberDTO.name}" readonly>
+    </div>
+
+    <div>
+      <label>이메일</label>
+      <input type="email" th:value="${memberDTO.email}" readonly>
+    </div>
+
+    <div>
+      <label>전화번호</label>
+      <input type="text" th:value="${memberDTO.phoneNumber}" readonly>
+    </div>
+
+    <div>
+      <label>생년월일</label>
+      <input type="text" th:value="${#temporals.format(memberDTO.birthDate, 'yyyy-MM-dd')}" readonly>
+    </div>
+
+    <div>
+      <label>주소</label>
+      <input type="text" th:value="${memberDTO.address}" readonly>
+    </div>
+
+    <div class="form-button-wrapper">
+      <form th:action="@{/register/update}" method="get">
+        <button type="submit" class="full-btn black-btn">회원정보 수정</button>
+      </form>
+      <form id="deleteForm" th:action="@{/register/delete}" method="post">
+        <button type="submit" class="full-btn red-btn">회원 탈퇴</button>
+      </form>
+    </div>
   </main>
+
+  <script>
+    document.getElementById('deleteForm').addEventListener('submit', function (e) {
+      const confirmed = confirm("정말 탈퇴하시겠습니까? 😥\n탈퇴하면 복구할 수 없습니다.");
+      if (!confirmed) {
+        e.preventDefault();
+      }
+    });
+  </script>
 
   <button id="scrollToTopBtn" class="btn btn-warning rounded-circle shadow">
     <i class="bi bi-arrow-up"></i>
   </button>
-  
+
   <!-- ✅ 푸터 -->
   <footer class="footer">
     ⓒ 2025 Kakao Corp. All rights reserved.
