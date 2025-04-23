@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>메인 페이지</title>
+  <title>게시판 글쓰기</title>
 
   <!-- ✅ Bootstrap & 외부 공통 리소스 -->
   <link href="https://fonts.googleapis.com/css2?family=Pretendard&display=swap" rel="stylesheet">
@@ -20,8 +20,8 @@
 
   <!-- ✅ 프로젝트 전용 CSS & JS -->
   <link rel="stylesheet" th:href="@{/css/home.css}">
+  <link rel="stylesheet" th:href="@{/css/board/write.css}">
   <script th:src="@{/js/home.js}"></script>
-
 </head>
 
 <body class="d-flex flex-column min-vh-100">
@@ -90,37 +90,55 @@
     </div>
   </nav>
 
-  <!-- ✅ 메인 콘텐츠 -->
-  <main class="main-content">
-    <header class="hero text-center py-5">
-      <div class="hero-text">
-        <h1>Kakao | OpenAI<br>Strategic Collaboration</h1>
-        <p>AI services in my daily life</p>
-        <button class="btn btn-dark mt-3">View More →</button>
-      </div>
-    </header>
+  <div class="container">
+    <h2>게시판 글쓰기</h2>
 
-    <section class="info-section d-flex justify-content-center gap-3 my-5">
-      <div class="info-card p-3 bg-dark text-white rounded">kakaoImpact</div>
-      <div class="info-card p-3 bg-warning rounded text-black">
-        <span>Safety</span>
-        <p>How to avoid scams</p>
-      </div>
-      <div class="info-card p-3 bg-dark text-white rounded">🌍 Community</div>
-    </section>
+    <form th:action="@{/board/write}" th:object="${boardDTO}" method="post" enctype="multipart/form-data">
 
-    <section id="responsibility" class="p-5 bg-light">
-      <div class="container">
-        <h2>Responsibility</h2>
-        <p>카카오는 기술과 서비스의 책임 있는 사용을 통해 사회적 가치를 창출하고자 노력합니다. 개인정보 보호, 사이버 윤리, 포용적 기술 구현 등 다양한 측면에서 책임을 다하고 있습니다.</p>
+      <!-- 게시판 종류 ID -->
+      <input type="hidden" th:field="*{categoryId}" />
+
+      <div class="form-group">
+        <label for="subject" class="mb-2">제목</label>
+        <input type="text" id="subject" th:field="*{subject}" required />
       </div>
-    </section>
-  </main>
+
+      <div class="form-group">
+        <label for="content" class="mb-2">내용</label>
+        <textarea id="content" th:field="*{content}" rows="10" required></textarea>
+      </div>
+
+      <!-- ✅ 공지글 체크박스: 관리자만 -->
+      <div class="form-group" sec:authorize="hasRole('ADMIN')">
+        <label>
+          <!-- 체크되면 true 전달 -->
+          <input type="checkbox" th:field="*{notice}" value="true" /> 공지글
+        </label>
+      </div>
+
+      <!-- ✅ 이미지 업로드 -->
+      <div class="mb-3">
+        <label for="images" class="form-label fw-semibold">이미지 업로드</label>
+        
+        <div class="input-group">
+          <input class="form-control" type="file" id="images" name="images" multiple>
+          <label class="input-group-text" for="images"><i class="bi bi-upload"></i></label>
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button type="submit">등록하기</button>
+        <button type="reset">다시입력</button>
+        <button type="button" th:onclick="|location.href='/board/list?categoryId=${categoryId}'|">작성취소</button>
+      </div>
+
+    </form>
+  </div>
 
   <button id="scrollToTopBtn" class="btn btn-warning rounded-circle shadow">
     <i class="bi bi-arrow-up"></i>
   </button>
-  
+
   <!-- ✅ 푸터 -->
   <footer class="footer">
     ⓒ 2025 Kakao Corp. All rights reserved.
