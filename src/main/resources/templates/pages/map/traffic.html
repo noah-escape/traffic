@@ -209,6 +209,91 @@
     </div>
   </div>
 
+
+<!--따릉이 상세정보 왼쪽 패널 -->
+<div id="stationDetailPanel" class="info-panel" style="display: none;">
+  <h4 id="detailStationName">🚲 대여소 이름</h4>
+  <p id="detailStationInfo">여기에 상세 설명이 들어갑니다.</p>
+  <p id="detailStationDistance">거리: 계산 중...</p>
+
+
+  <!-- 따릉이 안내 / 취소 버튼 -->
+  <div class="btn-group mt-3 w-100">
+    <button class="btn btn-primary w-100" onclick="goToNaverRoute()">🧭 안내</button>
+    <button class="btn btn-secondary w-100" onclick="cancelBikeRoute()">❌ 취소</button>
+  </div>
+
+  <!-- 따릉이 추천 / 위치 이동 버튼 -->
+  <div class="btn-group mt-3 w-100">
+    <button id="recommendBtn" class="btn btn-outline-success w-100">🚲 추천 대여소 보기</button>
+    <button id="moveToMyLocation" class="btn btn-outline-primary w-100">📍 내 위치로 이동</button>
+  </div>
+
+  <!-- 따릉이 ! -->
+  <div style="margin-top: 12px; text-align: right;">
+    <button id="closeDetailPanel" class="close-btn">닫기</button>
+  </div>
+</div>
+
+  <style>
+#stationDetailPanel {
+  position: absolute;
+  top: 65px; /* 상단 바 높이에 맞게 조정 */
+  left: 60px;
+  width: 300px;
+  height: calc(100% - 65px); /* 패널이 전체 높이에서 상단 바만큼 빠지도록 */
+  background: #fff;
+  z-index: 1000;
+  padding: 20px;
+  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+  transition: transform 0.3s ease;
+}
+
+.close-btn {
+  background-color: #aaa;
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.close-btn:hover {
+  background-color: #888;
+}
+  </style>
+
+<!-- 다른 사이드 패널 클릭시 따릉이 패널 닫힘  -->
+<script>
+  function hideStationDetailPanel() {
+    const panel = document.getElementById("stationDetailPanel");
+    if (panel) {
+      panel.style.display = "none";
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const sidebarButtons = document.querySelectorAll(".sidebar button");
+
+    sidebarButtons.forEach(button => {
+      button.addEventListener("click", () => {
+        hideStationDetailPanel();
+      });
+    });
+  });
+</script>
+
+
+
+  
+  
+
+
+
+
+
+
+
 </body>
 <script type="module" src="/js/cctv.js"></script>
 <script type="module" src="/js/bus.js"></script>
