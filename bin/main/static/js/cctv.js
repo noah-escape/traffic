@@ -10,11 +10,13 @@ function extractRoadName(name) {
   return match ? match[1].trim() : '';
 }
 
+// ✅ 도로 이름 필터링
 function applyCctvFilter() {
   const keyword = document.getElementById('roadSearchInput').value.trim();
   if (!keyword) loadRoadList();
 }
 
+// ✅ CCTV 레이어 필터
 function filterCctvLayer(roadName, roadType, onComplete) {
   clearCctvMarkers();
   const bounds = map.getBounds();
@@ -30,8 +32,8 @@ function filterCctvLayer(roadName, roadType, onComplete) {
 
       const markerImage = {
         url: '/image/cctv-icon.png',
-        size: new naver.maps.Size(44, 70),
-        anchor: new naver.maps.Point(22, 70)
+        size: new naver.maps.Size(44, 44),
+        anchor: new naver.maps.Point(22, 38) // 📌 중심에 anchor 설정 → 줌 아웃 시에도 위치 유지
       };
 
       cctvs.forEach(item => {
@@ -68,11 +70,13 @@ function filterCctvLayer(roadName, roadType, onComplete) {
     .finally(() => typeof onComplete === 'function' && onComplete());
 }
 
+// ✅ 마커 제거
 function clearCctvMarkers() {
   cctvMarkers.forEach(marker => marker.setMap(null));
   cctvMarkers = [];
 }
 
+// ✅ 도로 리스트 불러오기
 function loadRoadList() {
   const keyword = document.getElementById('roadSearchInput').value.trim();
   const selectedType = document.getElementById('highway').checked ? 'ex' : 'its';
@@ -117,6 +121,8 @@ function loadRoadList() {
     .catch(console.error);
 }
 
+// ✅ 영상 재생
+// ✅ 영상 재생 + 팝업 위치 보정
 function playVideo(url, name, position) {
   const videoContainer = document.getElementById('videoContainer');
   const cctvVideo = document.getElementById('cctvVideo');
@@ -124,7 +130,10 @@ function playVideo(url, name, position) {
 
   videoTitle.textContent = name || '영상 없음';
 
+  // ✅ 기존 HLS 종료
   if (hls) hls.destroy();
+
+  // ✅ 새로 재생
   hls = new Hls();
   hls.loadSource(url);
   hls.attachMedia(cctvVideo);
@@ -132,16 +141,38 @@ function playVideo(url, name, position) {
     cctvVideo.play().catch(console.warn);
   });
 
+  // ✅ 팝업 표시
   videoContainer.style.display = 'block';
   cctvVideo.style.display = 'block';
 
+  // ✅ 지도 좌표 → 화면 좌표
   const point = map.getProjection().fromCoordToOffset(position);
-  videoContainer.style.left = `${point.x + 10}px`;
-  videoContainer.style.top = `${point.y + 10}px`;
 
-  makeVideoContainerDraggable();
+  const containerWidth = videoContainer.offsetWidth || 480;
+  const containerHeight = videoContainer.offsetHeight || 300;
+
+  // ✅ 좌표 계산 (화면 밖 벗어나지 않게 조정)
+  let left = point.x + 10;
+  let top = point.y + 10;
+
+  if (left + containerWidth > window.innerWidth) {
+    left = window.innerWidth - containerWidth - 10;
+  }
+  if (top + containerHeight > window.innerHeight) {
+    top = window.innerHeight - containerHeight - 10;
+  }
+
+  // ✅ 음수 방지
+  left = Math.max(0, left);
+  top = Math.max(0, top);
+
+  videoContainer.style.left = `${left}px`;
+  videoContainer.style.top = `${top}px`;
+
+  makeVideoContainerDraggable(); // ✅ 드래그 유지
 }
 
+// ✅ 영상 숨기기
 function hideVideo() {
   if (hls) hls.destroy();
   hls = null;
@@ -151,6 +182,7 @@ function hideVideo() {
   document.getElementById('videoContainer').style.display = 'none';
 }
 
+// ✅ 영상창 드래그 가능하게
 function makeVideoContainerDraggable() {
   const container = document.getElementById('videoContainer');
   let offsetX = 0, offsetY = 0, isDragging = false;
@@ -174,15 +206,15 @@ function makeVideoContainerDraggable() {
   });
 }
 
+// ✅ 로딩 스피너
 function showSpinner() {
   document.getElementById('loadingSpinner').style.display = 'block';
 }
-
 function hideSpinner() {
   document.getElementById('loadingSpinner').style.display = 'none';
 }
 
-// ✅ 전역 노출
+// ✅ 전역 등록
 window.playVideo = playVideo;
 window.hideVideo = hideVideo;
 window.applyCctvFilter = applyCctvFilter;
