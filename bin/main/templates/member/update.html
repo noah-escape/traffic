@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>회원정보 수정</title>
+  <!-- ✅ Google Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=swap" rel="stylesheet">
+
+  <!-- ✅ Bootstrap & 외부 리소스 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+  <!-- ✅ jQuery (Bootstrap JS보다 먼저) -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <!-- ✅ Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- ✅ 프로젝트 전용 CSS/JS -->
+  <link rel="stylesheet" th:href="@{/css/home.css}">
+  <script th:src="@{/js/home.js}"></script>
+
+</head>
+
+<body th:class="${darkMode != null and darkMode ? 'dark-mode' : 'light-mode'}">
+
+  <!-- ✅ 네브바 -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4 position-relative">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+      aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <a class="navbar-brand d-none d-lg-block" th:href="@{/}">kakao</a>
+
+    <div class="position-absolute end-0 top-0 mt-2 me-3 d-flex align-items-center gap-2">
+      <th:block sec:authorize="isAuthenticated()">
+        <div class="dropdown">
+          <button class="btn btn-secondary dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown"
+            aria-expanded="false">
+            내정보
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+            <li><a class="dropdown-item" th:href="@{/member/mypage}">마이페이지</a></li>
+            <li>
+              <form th:action="@{/logout}" method="post">
+                <button type="submit" class="dropdown-item">로그아웃</button>
+              </form>
+            </li>
+          </ul>
+        </div>
+      </th:block>
+      <th:block sec:authorize="isAnonymous()">
+        <a th:href="@{/auth/login}" class="btn btn-outline-light">로그인</a>
+      </th:block>
+      <button id="toggle-mode" class="btn btn-outline-light">🌙</button>
+    </div>
+
+    <div class="collapse navbar-collapse justify-content-center" id="navbarContent">
+      <!-- 모바일 로고 -->
+      <div class="d-lg-none text-center w-100">
+        <a class="fw-bold text-white fs-4 mt-2 text-decoration-none" th:href="@{/}">kakao</a>
+        <hr class="bg-light my-2">
+      </div>
+
+      <ul class="navbar-nav text-center">
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="boardDropdown" role="button" data-bs-toggle="dropdown"
+            aria-expanded="false">
+            게시판
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="boardDropdown">
+            <li><a class="dropdown-item" th:href="@{/board/list(categoryId=2)}">자유게시판</a></li>
+            <li><a class="dropdown-item" th:href="@{/board/list(categoryId=3)}">민원게시판</a></li>
+          </ul>
+        </li>
+
+        <li class="nav-item"><a class="nav-link" href="#tech">Tech & Service</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/pages/map/traffic}">지도</a></li>
+        <li class="nav-item"><a class="nav-link" href="#news">News</a></li>
+        <li class="nav-item"><a class="nav-link" href="#ir">IR</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="register-container">
+    <h1>회원정보 수정</h1>
+
+    <form th:action="@{/register/update}" method="post" th:object="${memberDTO}" id="updateForm">
+      <div>
+        <label>아이디</label>
+        <input type="text" th:field="*{userId}" readonly>
+      </div>
+
+      <div>
+        <label>닉네임</label>
+        <input type="text" th:field="*{nickName}" id="nickName">
+        <button type="button" id="checkNickNameBtn" class="btn-black">중복 확인</button>
+        <span id="nickNameMessage" class="error"></span>
+      </div>
+
+      <div>
+        <label>이름</label>
+        <input type="text" th:field="*{name}" required>
+      </div>
+
+      <div>
+        <label>이메일</label>
+        <input type="email" th:field="*{email}" required>
+      </div>
+
+      <div>
+        <label>전화번호</label>
+        <input type="text" th:field="*{phoneNumber}">
+      </div>
+
+      <div>
+        <label>생년월일</label>
+        <input type="date" th:field="*{birthDate}">
+      </div>
+
+      <div>
+        <label>주소</label>
+        <div class="address-group">
+          <input type="text" th:field="*{address}" readonly>
+          <button type="button" onclick="execDaumPostcode()" class="btn-black">주소 검색</button>
+        </div>
+      </div>
+
+      <input type="hidden" th:field="*{addressCity}">
+      <input type="hidden" th:field="*{addressDistrict}">
+      <input type="hidden" th:field="*{addressRoad}">
+      <input type="hidden" th:field="*{addressNumber}">
+      <input type="hidden" th:field="*{addressDetail}">
+
+      <div class="button-group-vertical">
+        <button type="submit" class="full-btn black-btn">수정 완료</button>
+
+        <form id="deleteForm" th:action="@{/register/delete}" method="post">
+          <button type="submit" class="full-btn red-btn">회원 탈퇴</button>
+        </form>
+
+        <button type="button" class="full-btn gray-btn" onclick="history.back()">돌아가기</button>
+      </div>
+
+    </form>
+
+    <!-- 탈퇴 전송 form -->
+    <form id="deleteForm" th:action="@{/register/delete}" method="post"></form>
+  </main>
+
+  <!-- 주소 검색 API -->
+  <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+
+  <script>
+    function execDaumPostcode() {
+      new daum.Postcode({
+        oncomplete: function (data) {
+          const fullRoad = data.roadAddress;
+          if (!fullRoad) {
+            alert("도로명 주소를 찾을 수 없습니다.");
+            return;
+          }
+          const split = fullRoad.split(" ");
+          if (split.length < 4) {
+            alert("주소 형식이 예상과 다릅니다.");
+            return;
+          }
+          document.querySelector('[name="addressCity"]').value = split[0];
+          document.querySelector('[name="addressDistrict"]').value = split[1];
+          document.querySelector('[name="addressRoad"]').value = split[2];
+          document.querySelector('[name="addressNumber"]').value = split[3];
+          document.querySelector('[name="addressDetail"]').value = "";
+          document.querySelector('[name="address"]').value = fullRoad;
+        }
+      }).open();
+    }
+
+    function confirmDelete() {
+      if (confirm("정말 탈퇴하시겠습니까? 😥\n탈퇴하면 복구할 수 없습니다.")) {
+        document.getElementById('deleteForm').submit();
+      }
+    }
+
+    let originalNickName = $("#nickName").val();
+    let isNickNameAvailable = true;
+
+    $("#checkNickNameBtn").on("click", function () {
+      const nickName = $("#nickName").val();
+      if (!nickName) {
+        $("#nickNameMessage").text("닉네임을 입력해주세요.").css("color", "red").show();
+        return;
+      }
+
+      $.get("/register/checkNickNameDuplicate?nickName=" + nickName, function (data) {
+        if (data && nickName !== originalNickName) {
+          $("#nickNameMessage").text("이미 사용 중인 닉네임입니다.").css("color", "red").show();
+          isNickNameAvailable = false;
+        } else {
+          $("#nickNameMessage").text("사용 가능한 닉네임입니다.").css("color", "green").show();
+          isNickNameAvailable = true;
+        }
+      });
+    });
+
+    $("#updateForm").submit(function () {
+      const currentNickName = $("#nickName").val();
+      if (currentNickName !== originalNickName && !isNickNameAvailable) {
+        alert("닉네임 중복 확인을 해주세요.");
+        return false;
+      }
+    });
+  </script>
+
+</body>
+
+</html>

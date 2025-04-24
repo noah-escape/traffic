@@ -287,7 +287,7 @@ body.dark-mode #videoContainer .video-bottom-btn {
   background: white;
   border: 1px solid #ccc;
   padding: 8px 12px;
-  border-radius: 10px;
+  border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   font-size: 13px;
   z-index: 9999;
@@ -295,4 +295,3 @@ body.dark-mode #videoContainer .video-bottom-btn {
   min-width: 240px;
   word-break: break-word; /* ✅ 긴 단어도 줄바꿈 */
 }
-

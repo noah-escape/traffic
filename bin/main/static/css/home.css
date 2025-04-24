@@ -1,0 +1,150 @@
+:root {
+  --blue-gray: #7A98BF;
+  --navy: #141E26;
+  --medium-blue: #4D6F8C;
+  --light-blue: #A3C9D9;
+  --dark-green: #2B402A;
+  --golden-yellow: #E1B85D;
+  --blue-gray-light: #AEBED2;
+}
+
+body {
+  font-family: 'Pretendard', sans-serif;
+  background-color: var(--light-blue);
+}
+
+.navbar-brand {
+  font-size: 1.5rem;
+  color: white;
+  padding-top: 0.5rem !important;
+}
+
+.nav-link {
+  color: white !important;
+  font-size: 1.2rem;
+  font-weight: 600;
+  padding: 10px 15px;
+}
+
+.nav-link:hover {
+  color: #6495ED !important;
+}
+
+.dropdown-menu {
+  border-radius: 0.5rem;
+}
+
+.dropdown-item {
+  font-size: 0.85rem;
+  padding: 0.55rem 1rem;
+  border-radius: 0.5rem;
+  color: white;
+  width: 100%;  /* 드롭다운 항목이 전체 너비를 채우도록 설정 */
+  text-align: center;  /* 텍스트를 가운데 정렬 */
+}
+
+.dropdown-item:hover {
+  color: #6495ED;
+}
+
+.auth-dropdown .dropdown-item {
+  font-size: 0.9rem;
+  padding: 0.6rem 1.2rem;
+  color: var(--navy);
+}
+
+.auth-dropdown .dropdown-item:hover {
+  background-color: transparent !important; /* 호버 상태에서 배경색을 투명으로 설정 */
+  color: #6495ED !important;
+}
+
+.arrow-icon {
+  transition: transform 0.3s ease;
+}
+
+.arrow-icon.rotate {
+  transform: rotate(180deg);
+}
+
+.login-btn {
+  background-color: transparent;
+  color: white;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.login-btn:hover {
+  background-color: white;
+}
+
+.btn.login-btn:focus,
+.btn.login-btn:active,
+.btn.login-btn.show {
+  background-color: #fff !important;
+  color: #000 !important;
+  box-shadow: none !important;
+}
+
+.dropdown-toggle {
+  background-color: transparent;
+  color: white;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.dropdown-toggle:hover {
+  background-color: white;
+}
+
+.dropdown-toggle:focus, .dropdown-toggle:active {
+  background-color: transparent;
+  color: white;
+  border: none;
+}
+
+hr {
+  background-color: white;
+  height: 3px;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+  #mobileBoardDropdown .dropdown-menu {
+    width: auto;
+    max-width: 90vw;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+.footer {
+  background-color: var(--navy);
+  color: white;
+  text-align: center;
+  padding: 20px 0;
+  font-size: 0.95rem;
+  margin-top: auto;
+}
+
+#scrollToTopBtn {
+  position: fixed;
+  bottom: 40px;
+  right: 40px;
+  z-index: 999;
+  width: 55px;
+  height: 55px;
+  font-size: 1.6rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #2F5597;
+  color: white;
+  border: none;
+  border-radius: 50%;
+}
+
+#scrollToTopBtn:hover {
+  background-color: #24497D;
+  color: white;
+}
