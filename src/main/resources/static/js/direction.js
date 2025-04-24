@@ -30,10 +30,7 @@ window.setStartToCurrentLocation = function () {
     myLocationMarker = new naver.maps.Marker({
       position,
       map,
-      icon: {
-        content: `<div style="font-size: 24px;">🧍</div>`,
-        anchor: new naver.maps.Point(12, 12)
-      },
+      // ✅ icon 제거: 기본 마커 사용
       title: "내 위치"
     });
 
