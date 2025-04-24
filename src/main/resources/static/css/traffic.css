@@ -9,10 +9,10 @@
   --background: #f8f9fa;
   --card-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
   --card-radius: 16px;
+  --background-dark: #2c2c2c;
 }
 
-html,
-body {
+html, body {
   height: 100%;
   margin: 0;
   font-family: 'Noto Sans KR', sans-serif;
@@ -20,10 +20,9 @@ body {
   overflow: hidden;
 }
 
-/* 사이드 패널들을 가로 정렬 */
 .main-content {
   display: flex;
-  flex-direction: row; /* ✅ 가로 정렬로 변경 */
+  flex-direction: row;
   height: 100%;
   position: relative;
 }
@@ -70,33 +69,113 @@ aside.sidebar {
   height: 100vh;
 }
 
-/* ✅ 패널 공통 스타일 */
+/* ✅ 공통 사이드 패널 */
 #cctvFilterPanel,
 #busFilterPanel,
 #routeFilterPanel,
+#stationDetailPanel,
 #eventListPanel {
   position: fixed;
   top: var(--navbar-height);
   left: var(--sidebar-width);
   width: 320px;
   height: calc(100vh - var(--navbar-height));
-  display: none; /* 초기 숨김 */
+  display: none;
   background-color: white;
   border-right: 1px solid #ddd;
-  padding: 30px;
+  padding: 24px;
   box-shadow: var(--card-shadow);
   z-index: 1050;
   overflow-y: auto;
+  border-radius: 0 16px 16px 0;
 }
 
-/* ✅ 다크모드도 동일 적용 */
+/* ✅ 다크모드 대응 */
 body.dark-mode #cctvFilterPanel,
 body.dark-mode #busFilterPanel {
   background-color: var(--background-dark);
   color: white;
 }
 
-/* ✅ 카드 UI */
+/* ✅ CCTV 패널 내부 요소 정리 */
+#cctvFilterPanel label {
+  font-weight: bold;
+  font-size: 15px;
+  margin-bottom: 8px;
+  display: block;
+  color: var(--navy);
+}
+
+#cctvFilterPanel .input-group {
+  display: flex;
+  gap: 8px;
+}
+
+#cctvFilterPanel input[type="text"] {
+  flex-grow: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+#cctvFilterPanel button {
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  border: 1px solid var(--medium-blue);
+  background-color: white;
+  color: var(--medium-blue);
+  transition: all 0.2s ease;
+}
+
+#cctvFilterPanel button:hover {
+  background-color: var(--medium-blue);
+  color: white;
+}
+
+#cctvFilterPanel .form-check {
+  margin-right: 12px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+}
+
+#cctvFilterPanel .form-check-input {
+  margin-right: 6px;
+}
+
+#roadList {
+  margin-top: 20px;
+  border-top: 1px solid #eee;
+  padding-top: 10px;
+  font-size: 14px;
+}
+
+#roadList .list-group-item {
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 6px;
+  border: 1px solid #ccc;
+  background-color: #f8f9fa;
+  transition: background 0.2s;
+}
+
+#roadList .list-group-item:hover {
+  background-color: var(--blue-gray);
+  cursor: pointer;
+}
+
+#roadList:empty::after {
+  content: '검색결과가 없습니다.';
+  display: block;
+  text-align: center;
+  color: #888;
+  margin-top: 20px;
+  font-size: 14px;
+}
+
+/* ✅ 이벤트 카드 */
 .event-card {
   padding: 15px 20px;
   margin-bottom: 10px;
@@ -110,7 +189,7 @@ body.dark-mode #busFilterPanel {
   background-color: var(--blue-gray);
 }
 
-/* ✅ 상세 팝업 박스 */
+/* ✅ 팝업 박스 */
 .custom-event-box {
   position: absolute;
   background-color: white;
@@ -121,6 +200,13 @@ body.dark-mode #busFilterPanel {
   font-size: 14px;
   max-width: 320px;
   z-index: 9999;
+  white-space: normal;
+}
+
+/* ✅ 따릉이 팝업 (같은 스타일로 확장) */
+.custom-event-box.bike-popup {
+  font-size: 14px;
+  line-height: 1.6;
 }
 
 /* ✅ CCTV 비디오 */
@@ -167,7 +253,7 @@ body.dark-mode #busFilterPanel {
   font-size: 16px;
 }
 
-/* ✅ 비디오 하단 버튼 */
+/* ✅ CCTV 하단 버튼 */
 .video-footer {
   display: flex;
   justify-content: flex-end;
@@ -201,4 +287,16 @@ body.dark-mode #busFilterPanel {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #999;
+}
+
+.close-btn {
+  background-color: #aaa;
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.close-btn:hover {
+  background-color: #888;
 }

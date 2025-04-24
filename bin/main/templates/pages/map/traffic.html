@@ -25,7 +25,7 @@
   <script th:src="@{/js/file-upload.js}" defer></script>
   <script src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=zlh7cem9or"></script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-  
+
   <script th:inline="javascript">
     /*<![CDATA[*/
     const ITS_API_KEY = /*[[${itsApiKey}]]*/ '';
@@ -110,7 +110,8 @@
       <button onclick="toggleLayer('vms')" title="전광판"><i class="fas fa-bolt"></i></button>
       <button id="sidebarCctvBtn" title="CCTV"><i class="fas fa-video"></i></button>
       <button id="sidebarTrafficBtn" title="실시간 교통"><i class="fas fa-car-crash"></i></button>
-      <button id="sidebarEventBtn" title="도로 이벤트"><i class="fas fa-triangle-exclamation popup-box event-popup"></i></button>
+      <button id="sidebarEventBtn" title="도로 이벤트"><i
+          class="fas fa-triangle-exclamation popup-box event-popup"></i></button>
       <button id="sidebarBusBtn" title="버스 위치"><i class="fas fa-bus"></i></button>
       <button id="sidebarRouteBtn" title="길찾기"><i class="fas fa-route"></i></button>
       <button id="sidebarBikeBtn" title="따릉이 대여소"><i class="fas fa-bicycle popup-box bike-popup"></i></button>
@@ -211,6 +212,32 @@
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
+    </div>
+  </div>
+
+
+  <!--따릉이 상세정보 왼쪽 패널 -->
+  <div id="stationDetailPanel" class="info-panel" style="display: none;">
+    <h4 id="detailStationName">🚲 대여소 이름</h4>
+    <p id="detailStationInfo">여기에 상세 설명이 들어갑니다.</p>
+    <p id="detailStationDistance">거리: 계산 중...</p>
+
+
+    <!-- 따릉이 안내 / 취소 버튼 -->
+    <div class="btn-group mt-3 w-100">
+      <button class="btn btn-primary w-100" onclick="goToNaverRoute()">🧭 안내</button>
+      <button class="btn btn-secondary w-100" onclick="cancelBikeRoute()">❌ 취소</button>
+    </div>
+
+    <!-- 따릉이 추천 / 위치 이동 버튼 -->
+    <div class="btn-group mt-3 w-100">
+      <button id="recommendBtn" class="btn btn-outline-success w-100">🚲 추천 대여소 보기</button>
+      <button id="moveToMyLocation" class="btn btn-outline-primary w-100">📍 내 위치로 이동</button>
+    </div>
+
+    <!-- 따릉이 ! -->
+    <div style="margin-top: 12px; text-align: right;">
+      <button id="closeDetailPanel" class="close-btn">닫기</button>
     </div>
   </div>
 
