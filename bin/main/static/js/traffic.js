@@ -147,7 +147,12 @@ document.addEventListener('DOMContentLoaded', () => {
         panelStates[key] = true;
         button.classList.add('active');
         const panel = document.getElementById(panelId);
-        if (panel) panel.style.display = 'flex';
+        if (panel) {
+          panel.style.display = 'flex';
+          if (panelPositions[key]) {
+            panel.style.left = panelPositions[key];
+          }
+        }
         onActivate?.();
       }
     });
