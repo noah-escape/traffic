@@ -9,6 +9,13 @@
 }
 
 /* 제목 */
+.view-container h2 {
+  font-size: 1.8rem;
+  color: #343a40;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
 .view-container h3 {
   font-size: 2rem;
   color: #343a40;

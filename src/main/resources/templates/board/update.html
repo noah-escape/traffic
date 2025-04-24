@@ -114,44 +114,39 @@
         <label for="content">내용</label>
         <textarea id="content" name="content" rows="10" required th:text="${post.content}"></textarea>
       </div>
-      <h5>기존 첨부 이미지</h5>
+      <h3>기존 첨부 이미지</h3>
       <!-- 이미지가 있을 때만 출력 -->
-      <div th:each="image : ${post.imageFileNames}"
-        th:if="${image.imagePath != null and !#strings.isEmpty(image.imagePath)}" class="polaroid mt-3">
-        <label>
-          <img th:src="@{${image.imagePath}}" alt="기존 이미지" width="200">
-          <input type="checkbox" class="delete-checkbox" th:value="${image.imageId}">
-          선택
-        </label>
-      </div>
-      <input type="hidden" name="deleteImages" id="deleteImages">
+<div th:if="${post.imageFileNames != null and !#lists.isEmpty(post.imageFileNames)}">
+  <div th:each="image : ${post.imageFileNames}">
+    <div th:if="${image.imagePath != null and !#strings.isEmpty(image.imagePath)}" style="margin-bottom: 10px;">
+      <img th:src="@{${image.imagePath}}" alt="기존 이미지" width="200">
+      <label style="margin-left: 10px;">
+        <input type="checkbox" name="deleteImages" th:value="${image.imageId}">
+        선택
+      </label>
+    </div>
+  </div>
 
-      <!-- 이미지 선택 후 삭제 버튼, 이미지가 있을 때만 표시 -->
-      <div
-        th:if="${post.imageFileNames != null and !post.imageFileNames.?[imagePath != null and !#strings.isEmpty(imagePath)].isEmpty()}"
-        class="text-end my-3">
-        <button type="button" class="btn btn-danger" onclick="removeSelectedImages()">선택한 이미지 삭제</button>
-      </div>
+  <!-- 이미지 선택 후 삭제 버튼 -->
+  <div class="mt-3">
+    <button type="button" class="btn btn-danger" onclick="removeSelectedImages()">선택한 이미지 삭제</button>
+  </div>
+</div>
 
-      <!-- 이미지가 없을 때 메시지 출력 -->
-      <div
-        th:unless="${post.imageFileNames != null and !post.imageFileNames.?[imagePath != null and !#strings.isEmpty(imagePath)].isEmpty()}">
-        <p>첨부된 이미지가 없습니다.</p>
-      </div>
+<!-- 이미지가 없을 때 메시지 출력 -->
+<div th:unless="${post.imageFileNames != null and !#lists.isEmpty(post.imageFileNames)}">
+  <p>첨부된 이미지가 없습니다.</p>
+</div>
 
-      <div>
-        <!-- 이미지 업로드 제목을 h5로 변경 -->
-        <h5 class="mb-3">이미지 업로드</h5>
+      <div class="mb-3">
+        <label for="newImages" class="form-label fw-semibold">이미지 업로드</label>
         <div class="d-flex align-items-center gap-2">
-          <input type="file" class="form-control flex-grow-1" id="newImages" name="newImages" accept="image/*" multiple>
+          <input type="file" class="form-control flex-grow-1" id="newImages" name="newImages" multiple>
           <label for="newImages" class="btn btn-outline-secondary m-0 d-flex align-items-center">
             <i class="bi bi-upload"></i>
           </label>
         </div>
-        <!-- 파일 이름 및 삭제 버튼 -->
-        <div id="file-list" class="mt-3"></div> <!-- 업로드된 파일 목록 표시 -->
       </div>
-
 
       <!-- ✅ 공지글 체크박스: 관리자만 -->
       <div class="form-group" sec:authorize="hasRole('ADMIN')">
@@ -162,12 +157,12 @@
       </div>
 
       <div class="button-group mt-4">
-        <button type="submit" class="btn btn-primary" id="updateBtn">수정하기</button>
+        <button type="submit" class="btn btn-primary">수정</button>
 
         <!-- ✅ 취소 버튼: 글 상세 페이지로 이동 (boardNum 기반) -->
         <button type="button" th:onclick="|location.href='/board/view/${post.boardNum}?currentPage=${currentPage}'|"
           class="btn btn-secondary">
-          취소하기
+          취소
         </button>
       </div>
     </form>
