@@ -45,7 +45,7 @@
 
     <!-- 웹(데스크톱)용 로고 -->
     <a class="navbar-brand d-none d-lg-block position-absolute top-0 mt-2 ms-3" style="z-index: 1020;"
-      th:href="@{/}">kakao</a>
+      th:href="@{/}">Same=</a>
 
     <div class="position-absolute end-0 top-0 mt-2 me-3 d-flex align-items-center gap-2">
       <th:block sec:authorize="isAuthenticated()">
@@ -75,7 +75,7 @@
     <!-- 모바일 메뉴 안에 있는 로고 -->
     <div class="collapse navbar-collapse justify-content-center" id="mobileMenu">
       <div class="d-lg-none text-center w-100">
-        <a class="navbar-brand fw-bold text-white fs-4 mt-2 text-decoration-none" th:href="@{/}">kakao</a>
+        <a class="navbar-brand fw-bold text-white fs-4 mt-2 text-decoration-none" th:href="@{/}">Same=</a>
         <hr />
       </div>
 
@@ -110,10 +110,10 @@
       <button onclick="toggleLayer('vms')" title="전광판"><i class="fas fa-bolt"></i></button>
       <button id="sidebarCctvBtn" title="CCTV"><i class="fas fa-video"></i></button>
       <button id="sidebarTrafficBtn" title="실시간 교통"><i class="fas fa-car-crash"></i></button>
-      <button id="sidebarEventBtn" title="도로 이벤트"><i class="fas fa-triangle-exclamation"></i></button>
+      <button id="sidebarEventBtn" title="도로 이벤트"><i class="fas fa-triangle-exclamation popup-box event-popup"></i></button>
       <button id="sidebarBusBtn" title="버스 위치"><i class="fas fa-bus"></i></button>
       <button id="sidebarRouteBtn" title="길찾기"><i class="fas fa-route"></i></button>
-      <button id="sidebarBikeBtn" title="따릉이 대여소"><i class="fas fa-bicycle"></i></button>
+      <button id="sidebarBikeBtn" title="따릉이 대여소"><i class="fas fa-bicycle popup-box bike-popup"></i></button>
     </aside>
 
     <!-- 지도 -->
