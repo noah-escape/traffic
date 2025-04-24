@@ -34,7 +34,7 @@
 
     <!-- 웹(데스크톱)용 로고 -->
     <a class="navbar-brand d-none d-lg-block position-absolute top-0 mt-2 ms-3" style="z-index: 1020;"
-      th:href="@{/}">kakao</a>
+      th:href="@{/}">Same=</a>
 
     <div class="position-absolute end-0 top-0 mt-2 me-3 d-flex align-items-center gap-2">
       <th:block sec:authorize="isAuthenticated()">
@@ -64,7 +64,7 @@
     <!-- 모바일 메뉴 안에 있는 로고 -->
     <div class="collapse navbar-collapse justify-content-center" id="mobileMenu">
       <div class="d-lg-none text-center w-100">
-        <a class="navbar-brand fw-bold text-white fs-4 mt-2 text-decoration-none" th:href="@{/}">kakao</a>
+        <a class="navbar-brand fw-bold text-white fs-4 mt-2 text-decoration-none" th:href="@{/}">Same=</a>
         <hr />
       </div>
 
@@ -133,9 +133,11 @@
       </div>
 
       <!-- 이미지 아이콘을 아이콘 크기만큼만 차지 -->
-      <div th:if="${post.imageFileNames != null and !#lists.isEmpty(post.imageFileNames)}"
+      <!-- 유효한 이미지(imagePath 있는 이미지)가 하나라도 있으면 아이콘 표시 -->
+      <div th:if="${post.imageFileNames != null and 
+  !post.imageFileNames.?[imagePath != null and !#strings.isEmpty(imagePath)].isEmpty()}"
         class="image-indicator d-flex align-items-center">
-        <i class="bi bi-image me-2" style="font-size: 1.2rem;"></i> <!-- 이미지 아이콘만 표시 -->
+        <i class="bi bi-image me-2" style="font-size: 1.2rem;"></i>
       </div>
     </div>
 

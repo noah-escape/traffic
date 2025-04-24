@@ -21,7 +21,7 @@
   <link rel="stylesheet" th:href="@{/css/home.css}">
   <link rel="stylesheet" th:href="@{/css/board/update.css}">
   <script th:src="@{/js/home.js}" defer></script>
-  <script th:src="@{/js/file-upload.js}" defer></script>
+  <script th:src="@{/js/update.js}" defer></script>
 </head>
 
 <body class="d-flex flex-column min-vh-100">
@@ -34,7 +34,7 @@
 
     <!-- 웹(데스크톱)용 로고 -->
     <a class="navbar-brand d-none d-lg-block position-absolute top-0 mt-2 ms-3" style="z-index: 1020;"
-      th:href="@{/}">kakao</a>
+      th:href="@{/}">Same=</a>
 
     <div class="position-absolute end-0 top-0 mt-2 me-3 d-flex align-items-center gap-2">
       <th:block sec:authorize="isAuthenticated()">
@@ -64,7 +64,7 @@
     <!-- 모바일 메뉴 안에 있는 로고 -->
     <div class="collapse navbar-collapse justify-content-center" id="mobileMenu">
       <div class="d-lg-none text-center w-100">
-        <a class="navbar-brand fw-bold text-white fs-4 mt-2 text-decoration-none" th:href="@{/}">kakao</a>
+        <a class="navbar-brand fw-bold text-white fs-4 mt-2 text-decoration-none" th:href="@{/}">Same=</a>
         <hr />
       </div>
 
@@ -102,6 +102,8 @@
       <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
       <input type="hidden" name="currentPage" th:value="${currentPage}" />
       <input type="hidden" th:field="*{boardNum}" /> <!-- ✅ boardNum 숨겨서 전송 -->
+      <input type="hidden" id="originalSubject" th:value="${post.subject}" />
+      <input type="hidden" id="originalContent" th:value="${post.content}" />
 
       <div class="form-group">
         <label for="subject">제목</label>
@@ -174,21 +176,6 @@
   <footer class="footer">
     ⓒ 2025 Kakao Corp. All rights reserved.
   </footer>
-
-  <script>
-    // ✅ 체크박스 비활성화 막기
-    document.addEventListener("DOMContentLoaded", function () {
-      const checkbox = document.getElementById("notice-checkbox");
-      let prevValue = checkbox.checked;
-
-      checkbox.addEventListener("change", function (e) {
-        if (!checkbox.checked) {
-          alert("⚠️ 공지글은 수정 또는 삭제만 가능합니다.");
-          checkbox.checked = true; // 다시 체크
-        }
-      });
-    });
-  </script>
 
 </body>
 

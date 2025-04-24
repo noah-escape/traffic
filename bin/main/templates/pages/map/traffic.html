@@ -5,17 +5,27 @@
   <meta charset="UTF-8">
   <title>교통 정보 지도</title>
 
-  <!-- ✅ CSS -->
-  <link rel="stylesheet" th:href="@{/css/traffic.css}">
-  <link rel="stylesheet" th:href="@{/css/home.css}">
+  <!-- ✅ Bootstrap & 외부 공통 리소스 -->
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css"
+    rel="stylesheet">
 
-  <!-- ✅ JS -->
+  <!-- ✅ jQuery (항상 Bootstrap JS보다 먼저!) -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <!-- ✅ Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- ✅ 프로젝트 전용 CSS & JS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" th:href="@{/css/home.css}">
+  <link rel="stylesheet" th:href="@{/css/traffic.css}">
+  <script th:src="@{/js/home.js}" defer></script>
+  <script th:src="@{/js/file-upload.js}" defer></script>
   <script src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=zlh7cem9or"></script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script th:src="@{/js/home.js}" defer></script>
+  
   <script th:inline="javascript">
     /*<![CDATA[*/
     const ITS_API_KEY = /*[[${itsApiKey}]]*/ '';
@@ -25,16 +35,26 @@
 
 </head>
 
-<body th:class="${darkMode != null and darkMode ? 'dark-mode' : 'light-mode'}">
-
-  <!-- ✅ 네비게이션 바 -->
+<body class="d-flex flex-column min-vh-100">
+  <!-- ✅ 네브바 -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4 position-relative">
-    <a class="navbar-brand" th:href="@{/}">kakao</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mobileMenu"
+      aria-controls="mobileMenu" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <!-- 웹(데스크톱)용 로고 -->
+    <a class="navbar-brand d-none d-lg-block position-absolute top-0 mt-2 ms-3" style="z-index: 1020;"
+      th:href="@{/}">Same=</a>
+
     <div class="position-absolute end-0 top-0 mt-2 me-3 d-flex align-items-center gap-2">
       <th:block sec:authorize="isAuthenticated()">
         <div class="dropdown">
-          <button class="btn btn-secondary dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown">내정보</button>
-          <ul class="dropdown-menu dropdown-menu-end">
+          <button class="btn login-btn dropdown-toggle rounded-pill px-3 py-2" type="button" id="userDropdown"
+            data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-person-circle me-1"></i> 내정보
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end my-2 auth-dropdown" aria-labelledby="userDropdown">
             <li><a class="dropdown-item" th:href="@{/member/mypage}">마이페이지</a></li>
             <li>
               <form th:action="@{/logout}" method="post">
@@ -45,9 +65,41 @@
         </div>
       </th:block>
       <th:block sec:authorize="isAnonymous()">
-        <a th:href="@{/auth/login}" class="btn btn-outline-light">로그인</a>
+        <a th:href="@{/auth/login}" class="btn login-btn rounded-pill px-3 py-2">
+          <i class="bi bi-person-circle me-1"></i> 로그인
+        </a>
       </th:block>
       <button id="toggle-mode" class="btn btn-outline-light">🌙</button>
+    </div>
+
+    <!-- 모바일 메뉴 안에 있는 로고 -->
+    <div class="collapse navbar-collapse justify-content-center" id="mobileMenu">
+      <div class="d-lg-none text-center w-100">
+        <a class="navbar-brand fw-bold text-white fs-4 mt-2 text-decoration-none" th:href="@{/}">Same=</a>
+        <hr />
+      </div>
+
+      <ul class="navbar-nav text-center">
+        <li class="nav-item position-relative">
+          <a class="nav-link d-flex align-items-center justify-content-center" href="#" id="mobileBoardDropdown"
+            data-bs-toggle="collapse" data-bs-target="#boardDropdownMenu" aria-expanded="false"
+            aria-controls="boardDropdownMenu">
+            게시판
+            <i class="bi bi-chevron-down ms-2 arrow-icon"></i>
+          </a>
+          </a>
+          <div class="collapse" id="boardDropdownMenu">
+            <ul class="list-unstyled ps-0">
+              <li><a class="dropdown-item text-center" th:href="@{/board/list(categoryId=2)}">자유게시판</a></li>
+              <li><a class="dropdown-item text-center" th:href="@{/board/list(categoryId=3)}">민원게시판</a></li>
+            </ul>
+          </div>
+        </li>
+        <li class="nav-item"><a class="nav-link" href="#tech">Tech & Service</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/pages/map/traffic}">지도</a></li>
+        <li class="nav-item"><a class="nav-link" href="#news">News</a></li>
+        <li class="nav-item"><a class="nav-link" href="#ir">IR</a></li>
+      </ul>
     </div>
   </nav>
 
@@ -58,10 +110,10 @@
       <button onclick="toggleLayer('vms')" title="전광판"><i class="fas fa-bolt"></i></button>
       <button id="sidebarCctvBtn" title="CCTV"><i class="fas fa-video"></i></button>
       <button id="sidebarTrafficBtn" title="실시간 교통"><i class="fas fa-car-crash"></i></button>
-      <button id="sidebarEventBtn" title="도로 이벤트"><i class="fas fa-triangle-exclamation"></i></button>
+      <button id="sidebarEventBtn" title="도로 이벤트"><i class="fas fa-triangle-exclamation popup-box event-popup"></i></button>
       <button id="sidebarBusBtn" title="버스 위치"><i class="fas fa-bus"></i></button>
       <button id="sidebarRouteBtn" title="길찾기"><i class="fas fa-route"></i></button>
-      <button id="sidebarBikeBtn" title="따릉이 대여소"><i class="fas fa-bicycle"></i></button>
+      <button id="sidebarBikeBtn" title="따릉이 대여소"><i class="fas fa-bicycle popup-box bike-popup"></i></button>
     </aside>
 
     <!-- 지도 -->
