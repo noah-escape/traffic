@@ -33,7 +33,7 @@
     </button>
 
 <!-- 웹(데스크톱)용 로고 -->
-<a class="navbar-brand d-none d-lg-block position-absolute top-0 mt-2 ms-3" style="z-index: 1020;" th:href="@{/}">kakao</a>
+<a class="navbar-brand d-none d-lg-block position-absolute top-0 mt-2 ms-3" style="z-index: 1020;" th:href="@{/}">Same=</a>
 
 <div class="position-absolute end-0 top-0 mt-2 me-3 d-flex align-items-center gap-2">
   <th:block sec:authorize="isAuthenticated()">
@@ -62,7 +62,7 @@
     <!-- 모바일 메뉴 안에 있는 로고 -->
 <div class="collapse navbar-collapse justify-content-center" id="mobileMenu">
   <div class="d-lg-none text-center w-100">
-    <a class="navbar-brand fw-bold text-white fs-4 mt-2 text-decoration-none" th:href="@{/}">kakao</a>
+    <a class="navbar-brand fw-bold text-white fs-4 mt-2 text-decoration-none" th:href="@{/}">Same=</a>
     <hr/>
   </div>
 
@@ -89,9 +89,47 @@
       </ul>
     </div>
   </nav>
-
+  <!-- ✅ 슬라이드 배너 (Carousel) -->
   <!-- ✅ 메인 콘텐츠 -->
   <main class="main-content">
+<div id="mainCarousel" class="carousel slide" data-bs-ride="carousel">
+  <div class="carousel-indicators">
+    <button type="button" data-bs-target="#mainCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+    <button type="button" data-bs-target="#mainCarousel" data-bs-slide-to="1" aria-label="Slide 2"></button>
+    <button type="button" data-bs-target="#mainCarousel" data-bs-slide-to="2" aria-label="Slide 3"></button>
+  </div>
+  <div class="carousel-inner">
+    <div class="carousel-item active">
+      <img th:src="@{/image/traffic.jpg}" class="d-block w-100" alt="슬라이드 1 설명" style="height: 500px; object-fit: cover;">
+      <div class="carousel-caption d-none d-md-block">
+        <h5>도로교통 정보</h5>
+        <p>최신 교통 상황을 실시간으로 제공합니다.</p>
+      </div>
+    </div>
+    <div class="carousel-item">
+      <img th:src="@{/image/traffic1.jpg}" class="d-block w-100" alt="슬라이드 2 설명" style="height: 500px; object-fit: cover;">
+      <div class="carousel-caption d-none d-md-block">
+        <h5>안전 캠페인</h5>
+        <p>교통 안전을 위한 다양한 캠페인을 만나보세요.</p>
+      </div>
+    </div>
+    <div class="carousel-item">
+      <img th:src="@{/image/bike3.png}" class="d-block w-100" alt="슬라이드 3 설명" style="height: 500px; object-fit: cover;">
+      <div class="carousel-caption d-none d-md-block">
+        <h5>민원 서비스</h5>
+        <p>간편하게 민원을 신청하고 처리 현황을 확인하세요.</p>
+      </div>
+    </div>
+  </div>
+  <button class="carousel-control-prev" type="button" data-bs-target="#mainCarousel" data-bs-slide="prev">
+    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+    <span class="visually-hidden">Previous</span>
+  </button>
+  <button class="carousel-control-next" type="button" data-bs-target="#mainCarousel" data-bs-slide="next">
+    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+    <span class="visually-hidden">Next</span>
+  </button>
+</div>
     <header class="hero text-center py-5">
       <div class="hero-text">
         <h1>Kakao | OpenAI<br>Strategic Collaboration</h1>
@@ -115,6 +153,7 @@
         <p>카카오는 기술과 서비스의 책임 있는 사용을 통해 사회적 가치를 창출하고자 노력합니다. 개인정보 보호, 사이버 윤리, 포용적 기술 구현 등 다양한 측면에서 책임을 다하고 있습니다.</p>
       </div>
     </section>
+    
   </main>
 
   <button id="scrollToTopBtn" class="btn btn-warning rounded-circle shadow">

@@ -22,14 +22,6 @@
   <link rel="stylesheet" th:href="@{/css/board/view.css}">
   <script th:src="@{/js/home.js}"></script>
 
-  <script>
-    function toggleCommentForm() {
-      const form = document.getElementById("comment-form");
-      const button = document.getElementById("comment-toggle-btn");
-      form.style.display = "block";
-      if (button) button.style.display = "none";
-    }
-  </script>
 </head>
 
 <body class="d-flex flex-column min-vh-100">
@@ -42,7 +34,7 @@
 
     <!-- 웹(데스크톱)용 로고 -->
     <a class="navbar-brand d-none d-lg-block position-absolute top-0 mt-2 ms-3" style="z-index: 1020;"
-      th:href="@{/}">kakao</a>
+      th:href="@{/}">Same=</a>
 
     <div class="position-absolute end-0 top-0 mt-2 me-3 d-flex align-items-center gap-2">
       <th:block sec:authorize="isAuthenticated()">
@@ -72,7 +64,7 @@
     <!-- 모바일 메뉴 안에 있는 로고 -->
     <div class="collapse navbar-collapse justify-content-center" id="mobileMenu">
       <div class="d-lg-none text-center w-100">
-        <a class="navbar-brand fw-bold text-white fs-4 mt-2 text-decoration-none" th:href="@{/}">kakao</a>
+        <a class="navbar-brand fw-bold text-white fs-4 mt-2 text-decoration-none" th:href="@{/}">Same=</a>
         <hr />
       </div>
 
@@ -120,46 +112,49 @@
     <!-- 항상 표시되는 제목 -->
     <h5>첨부 이미지</h5>
 
-    <!-- 이미지가 있을 때만 출력 -->
-    <div th:if="${post.imageFileNames != null and !#lists.isEmpty(post.imageFileNames)}">
+    <!-- 유효한 이미지가 1개 이상 있을 때만 출력 -->
+    <div th:if="${post.imageFileNames != null and 
+  !post.imageFileNames.?[imagePath != null].isEmpty()}">
       <div th:each="image : ${post.imageFileNames}">
-        <!-- 이미지 경로를 image.imagePath 로 접근 -->
-        <img th:if="${image.imagePath != null and !#strings.isEmpty(image.imagePath)}" th:src="${image.imagePath}"
-          alt="게시글 이미지" width="400">
+        <img th:if="${image.imagePath != null}" th:src="${image.imagePath}" alt="게시글 이미지" width="400">
       </div>
     </div>
 
-    <!-- 이미지가 없을 때 메시지 출력 -->
-    <div th:unless="${post.imageFileNames != null and !#lists.isEmpty(post.imageFileNames)}">
+    <!-- 유효한 이미지가 하나도 없을 때 -->
+    <div th:unless="${post.imageFileNames != null and 
+     !post.imageFileNames.?[imagePath != null].isEmpty()}">
       <p>첨부된 이미지가 없습니다.</p>
     </div>
 
-    <!-- ✅ 수정/삭제 버튼 -->
-    <div class="button-group"
-      th:if="${#authentication.principal?.username == post.userId or #authorization.expression('hasRole(''ADMIN'')')}">
-      <a th:href="@{|/board/update/${post.categoryId}/${post.boardSeq}?currentPage=${currentPage}|}"
-        class="btn btn-primary">
-        수정하기
-      </a>
+    <!-- ✅ 모든 버튼을 하나의 그룹으로 묶기 -->
+    <div class="button-group my-4">
+      <!-- ✅ 조건부 버튼: 수정/삭제 -->
+      <th:block th:if="${#authentication.principal instanceof T(org.springframework.security.core.userdetails.User) ? 
+    #authentication.principal.username == post.userId : 
+    #authentication.principal == post.userId or #authorization.expression('hasRole(''ADMIN'')')}">
 
-      <button
-        th:onclick="|if(confirm('정말 삭제하시겠습니까?')) location.href='/board/delete/${post.boardNum}?currentPage=${currentPage}'|"
-        class="btn btn-danger">
-        삭제하기
-      </button>
-    </div>
+        <a th:href="@{|/board/update/${post.categoryId}/${post.boardSeq}?currentPage=${currentPage}|}"
+          class="btn btn-primary">
+          수정하기
+        </a>
 
-    <div class="button-group mt-3">
+        <button
+          th:onclick="|if(confirm('정말 삭제하시겠습니까?')) location.href='/board/delete/${post.boardNum}?currentPage=${currentPage}'|"
+          class="btn btn-danger">
+          삭제하기
+        </button>
+      </th:block>
+
+      <!-- ✅ 항상 보이는 목록 버튼 -->
       <a th:href="@{/board/list(categoryId=${originCategoryId}, currentPage=${currentPage})}" class="btn btn-secondary">
         목록보기
       </a>
     </div>
 
-
     <!-- ✅ 댓글 리스트 -->
     <div class="reply-list mt-4">
       <!-- 제목 + 버튼 한 줄로 만들기 -->
-      <div class="d-flex justify-content-between align-items-center mb-3">
+      <div class="button-group d-flex justify-content-between align-items-center mb-3">
         <h5 class="mb-0">댓글</h5>
         <th:block sec:authorize="isAuthenticated()">
           <button type="button" id="comment-toggle-btn" onclick="toggleCommentForm()" class="btn btn-outline-success">
@@ -184,23 +179,32 @@
           <input type="hidden" name="boardNum" th:value="${post.boardNum}" />
           <textarea name="content" placeholder="댓글을 입력하세요" required
             style="width: 100%; height: 100px; resize: none;"></textarea>
-          <br /><br />
-          <div class="button-group">
-            <button type="submit">댓글 등록</button>
+          <br />
+          <div class="comment-submit">
+            <button class="btn btn-success" type="submit">댓글등록</button>
           </div>
         </form>
       </div>
     </div>
-    </div>
+  </div>
 
-    <button id="scrollToTopBtn" class="btn btn-warning rounded-circle shadow">
-      <i class="bi bi-arrow-up"></i>
-    </button>
+  <button id="scrollToTopBtn" class="btn btn-warning rounded-circle shadow">
+    <i class="bi bi-arrow-up"></i>
+  </button>
 
-    <!-- ✅ 푸터 -->
-    <footer class="footer">
-      ⓒ 2025 Kakao Corp. All rights reserved.
-    </footer>
+  <!-- ✅ 푸터 -->
+  <footer class="footer">
+    ⓒ 2025 Kakao Corp. All rights reserved.
+  </footer>
+
+  <script>
+    function toggleCommentForm() {
+      const form = document.getElementById("comment-form");
+      const button = document.getElementById("comment-toggle-btn");
+      form.style.display = "block";
+      if (button) button.style.display = "none";
+    }
+  </script>
 
 </body>
 

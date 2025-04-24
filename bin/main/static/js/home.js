@@ -38,3 +38,24 @@ document.addEventListener('DOMContentLoaded', () => {
     return match ? decodeURIComponent(match[2]) : null;
   }
 });
+
+document.addEventListener('DOMContentLoaded', function () {
+  // 모바일 메뉴 토글 아이콘 회전
+  const toggleBtn = document.getElementById("mobileBoardDropdown");
+  const collapseTarget = document.getElementById("boardDropdownMenu");
+  const icon = toggleBtn.querySelector(".arrow-icon");
+
+  collapseTarget.addEventListener("show.bs.collapse", function () {
+    icon.classList.add("rotate");
+  });
+
+  collapseTarget.addEventListener("hide.bs.collapse", function () {
+    icon.classList.remove("rotate");
+  });
+
+  // ✅ 스크롤 최상단 이동 버튼 클릭 이벤트
+  const scrollBtn = document.getElementById('scrollToTopBtn');
+  scrollBtn.addEventListener('click', function () {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+});

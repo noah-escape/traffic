@@ -45,7 +45,7 @@
 
     <!-- 웹(데스크톱)용 로고 -->
     <a class="navbar-brand d-none d-lg-block position-absolute top-0 mt-2 ms-3" style="z-index: 1020;"
-      th:href="@{/}">kakao</a>
+      th:href="@{/}">Same=</a>
 
     <div class="position-absolute end-0 top-0 mt-2 me-3 d-flex align-items-center gap-2">
       <th:block sec:authorize="isAuthenticated()">
@@ -75,7 +75,7 @@
     <!-- 모바일 메뉴 안에 있는 로고 -->
     <div class="collapse navbar-collapse justify-content-center" id="mobileMenu">
       <div class="d-lg-none text-center w-100">
-        <a class="navbar-brand fw-bold text-white fs-4 mt-2 text-decoration-none" th:href="@{/}">kakao</a>
+        <a class="navbar-brand fw-bold text-white fs-4 mt-2 text-decoration-none" th:href="@{/}">Same=</a>
         <hr />
       </div>
 
@@ -110,10 +110,10 @@
       <button onclick="toggleLayer('vms')" title="전광판"><i class="fas fa-bolt"></i></button>
       <button id="sidebarCctvBtn" title="CCTV"><i class="fas fa-video"></i></button>
       <button id="sidebarTrafficBtn" title="실시간 교통"><i class="fas fa-car-crash"></i></button>
-      <button id="sidebarEventBtn" title="도로 이벤트"><i class="fas fa-triangle-exclamation"></i></button>
+      <button id="sidebarEventBtn" title="도로 이벤트"><i class="fas fa-triangle-exclamation popup-box event-popup"></i></button>
       <button id="sidebarBusBtn" title="버스 위치"><i class="fas fa-bus"></i></button>
       <button id="sidebarRouteBtn" title="길찾기"><i class="fas fa-route"></i></button>
-      <button id="sidebarBikeBtn" title="따릉이 대여소"><i class="fas fa-bicycle"></i></button>
+      <button id="sidebarBikeBtn" title="따릉이 대여소"><i class="fas fa-bicycle popup-box bike-popup"></i></button>
     </aside>
 
     <!-- 지도 -->
@@ -213,6 +213,91 @@
       </div>
     </div>
   </div>
+
+
+<!--따릉이 상세정보 왼쪽 패널 -->
+<div id="stationDetailPanel" class="info-panel" style="display: none;">
+  <h4 id="detailStationName">🚲 대여소 이름</h4>
+  <p id="detailStationInfo">여기에 상세 설명이 들어갑니다.</p>
+  <p id="detailStationDistance">거리: 계산 중...</p>
+
+
+  <!-- 따릉이 안내 / 취소 버튼 -->
+  <div class="btn-group mt-3 w-100">
+    <button class="btn btn-primary w-100" onclick="goToNaverRoute()">🧭 안내</button>
+    <button class="btn btn-secondary w-100" onclick="cancelBikeRoute()">❌ 취소</button>
+  </div>
+
+  <!-- 따릉이 추천 / 위치 이동 버튼 -->
+  <div class="btn-group mt-3 w-100">
+    <button id="recommendBtn" class="btn btn-outline-success w-100">🚲 추천 대여소 보기</button>
+    <button id="moveToMyLocation" class="btn btn-outline-primary w-100">📍 내 위치로 이동</button>
+  </div>
+
+  <!-- 따릉이 ! -->
+  <div style="margin-top: 12px; text-align: right;">
+    <button id="closeDetailPanel" class="close-btn">닫기</button>
+  </div>
+</div>
+
+  <style>
+#stationDetailPanel {
+  position: absolute;
+  top: 65px; /* 상단 바 높이에 맞게 조정 */
+  left: 60px;
+  width: 300px;
+  height: calc(100% - 65px); /* 패널이 전체 높이에서 상단 바만큼 빠지도록 */
+  background: #fff;
+  z-index: 1000;
+  padding: 20px;
+  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+  transition: transform 0.3s ease;
+}
+
+.close-btn {
+  background-color: #aaa;
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.close-btn:hover {
+  background-color: #888;
+}
+  </style>
+
+<!-- 다른 사이드 패널 클릭시 따릉이 패널 닫힘  -->
+<script>
+  function hideStationDetailPanel() {
+    const panel = document.getElementById("stationDetailPanel");
+    if (panel) {
+      panel.style.display = "none";
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const sidebarButtons = document.querySelectorAll(".sidebar button");
+
+    sidebarButtons.forEach(button => {
+      button.addEventListener("click", () => {
+        hideStationDetailPanel();
+      });
+    });
+  });
+</script>
+
+
+
+  
+  
+
+
+
+
+
+
 
 </body>
 <script type="module" src="/js/cctv.js"></script>
