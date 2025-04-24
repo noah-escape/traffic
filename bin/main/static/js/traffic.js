@@ -3,25 +3,29 @@ let busInterval = null;
 let bikeRefreshTimeout = null;
 let lastBikeRefreshTime = 0;
 
-// ✅ 각 사이드 패널 상태 추적
+// ✅ 사이드 패널 상태 (이제 'cctv'도 포함!)
 let panelStates = {
   bus: false,
   bike: false,
   route: false,
-  traffic: false
+  traffic: false,
+  event: false,
+  cctv: false // ✅ 추가!
 };
 
 document.addEventListener('DOMContentLoaded', () => {
   console.log('✅ DOMContentLoaded');
 
-  // ✅ 네이버 지도 초기화
+  updatePanelVars();
+  window.addEventListener('resize', updatePanelVars);
+
   map = new naver.maps.Map('map', {
     center: new naver.maps.LatLng(37.5665, 126.9780),
     zoom: 14
   });
   window.map = map;
 
-  // ✅ 버튼별 기능 구성
+  // ✅ 버튼 기능 정의
   const buttonConfigs = [
     {
       id: 'sidebarBusBtn',
@@ -44,12 +48,12 @@ document.addEventListener('DOMContentLoaded', () => {
       key: 'bike',
       onActivate: () => {
         console.log("🚲 따릉이 ON");
-        panelStates.bike = true; // ✅ 지도 idle 시 조건에 꼭 필요
+        panelStates.bike = true;
         window.moveToMyLocation?.();
       },
       onDeactivate: () => {
         console.log("🚲 따릉이 OFF");
-        panelStates.bike = false; // ✅ 상태를 false로 설정 안 하면 지도 idle에서 계속 실행됨
+        panelStates.bike = false;
         window.clearBikeStations?.();
         if (window.userPositionMarker) {
           window.userPositionMarker.setMap(null);
@@ -86,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("🚦 실시간 교통 OFF");
         window.clearRealTimeTraffic?.();
         const legendBox = document.getElementById('trafficLegendBox');
-        if (legendBox) legendBox.style.display = 'none'; // ✅ 여기 추가!
+        if (legendBox) legendBox.style.display = 'none';
       }
     },
     {
@@ -95,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
       onActivate: () => {
         console.log("📍 도로 이벤트 ON");
         panelStates.event = true;
-        window.loadRoadEventsInView?.(); // ✅ 지도 기준으로 호출
+        window.loadRoadEventsInView?.();
         document.getElementById('eventListPanel').style.display = 'block';
       },
       onDeactivate: () => {
@@ -103,10 +107,25 @@ document.addEventListener('DOMContentLoaded', () => {
         window.clearEventMarkers?.();
         document.getElementById('eventListPanel').style.display = 'none';
       }
-    }    
+    },
+    {
+      id: 'sidebarCctvBtn',
+      key: 'cctv',
+      panelId: 'cctvFilterPanel',
+      onActivate: () => {
+        console.log("🎥 CCTV ON");
+        window.applyCctvFilter?.();
+      },
+      onDeactivate: () => {
+        console.log("🎥 CCTV OFF");
+        window.clearCctvMarkers?.();
+        document.getElementById('roadSearchInput').value = '';
+        document.getElementById('roadList').innerHTML = '';
+      }
+    }
   ];
 
-  // ✅ 모든 사이드 버튼 공통 처리
+  // ✅ 버튼 공통 처리
   buttonConfigs.forEach(({ id, key, panelId, onActivate, onDeactivate }) => {
     const button = document.getElementById(id);
     if (!button) return;
@@ -114,14 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
     button.addEventListener('click', () => {
       const isActivating = !panelStates[key];
 
-      // ✅ CCTV 패널은 항상 OFF
-      const cctvPanel = document.getElementById('cctvFilterPanel');
-      if (cctvPanel) cctvPanel.style.display = 'none';
-      window.clearCctvMarkers?.();
-      document.getElementById('roadSearchInput').value = '';
-      document.getElementById('roadList').innerHTML = '';
-
-      // ✅ 모든 패널 상태 false 및 비활성화 처리
+      // ✅ 모든 패널/버튼 초기화
       for (const k in panelStates) {
         panelStates[k] = false;
         document.getElementById(`sidebar${capitalize(k)}Btn`)?.classList.remove('active');
@@ -129,53 +141,27 @@ document.addEventListener('DOMContentLoaded', () => {
         if (pnl) pnl.style.display = 'none';
       }
 
-      // ✅ 모든 기능 해제
       buttonConfigs.forEach(conf => conf.onDeactivate?.());
 
-      // ✅ 클릭한 버튼만 ON 처리
       if (isActivating) {
         panelStates[key] = true;
         button.classList.add('active');
         const panel = document.getElementById(panelId);
-        if (panel) panel.style.display = 'block';
+        if (panel) panel.style.display = 'flex';
         onActivate?.();
       }
     });
   });
 
-  // ✅ CCTV는 독립적이며 토글 방식
-  document.getElementById('sidebarCctvBtn')?.addEventListener('click', () => {
-    const panel = document.getElementById('cctvFilterPanel');
-    const isVisible = getComputedStyle(panel).display !== 'none';
-    panel.style.display = isVisible ? 'none' : 'flex';
-
-    if (!isVisible) {
-      window.applyCctvFilter?.();
-    } else {
-      window.clearCctvMarkers?.();
-      document.getElementById('roadSearchInput').value = '';
-      document.getElementById('roadList').innerHTML = '';
-    }
-
-    // ✅ 여기도 bike 끄기 강제 보장
-    panelStates.bike = false;
-    window.clearBikeStations?.();
-    if (window.userPositionMarker) {
-      window.userPositionMarker.setMap(null);
-      window.userPositionMarker = null;
-    }
-  });
-
-  // ✅ 지도 이동 시 따릉이 자동 새로고침 (디바운스)
+  // ✅ 지도 이동 시 따릉이 자동 새로고침
   naver.maps.Event.addListener(map, 'idle', () => {
     if (!panelStates.bike) return;
 
     const now = Date.now();
     const elapsed = now - lastBikeRefreshTime;
-
     if (elapsed < 5000) return;
-    clearTimeout(bikeRefreshTimeout);
 
+    clearTimeout(bikeRefreshTimeout);
     bikeRefreshTimeout = setTimeout(() => {
       console.log("🚲 지도 이동에 따라 따릉이 새로고침");
       window.loadBikeStations?.();
@@ -183,7 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 500);
   });
 
-  // ✅ CCTV 영상 제어
+  // ✅ CCTV 제어
   document.getElementById('closeVideoBtn')?.addEventListener('click', () => {
     window.hideVideo?.();
   });
@@ -222,7 +208,32 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-// ✅ 문자열 첫 글자 대문자 변환
+// ✅ 유틸 함수
 function capitalize(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+function updatePanelVars() {
+  const navbar = document.querySelector('nav.navbar');
+  if (!navbar) return;
+
+  const navHeight = navbar.getBoundingClientRect().height;
+  document.documentElement.style.setProperty('--navbar-height', `${navHeight}px`);
+  console.log(`📐 네브바 높이 동기화: ${navHeight}px`);
+}
+
+window.addEventListener('load', updatePanelVars);
+window.addEventListener('resize', updatePanelVars);
+
+const navbar = document.querySelector('nav.navbar');
+if (navbar) {
+  const observer = new MutationObserver(() => {
+    updatePanelVars();
+  });
+
+  observer.observe(navbar, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+  });
 }
