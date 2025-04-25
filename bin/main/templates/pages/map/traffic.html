@@ -22,7 +22,6 @@
   <link rel="stylesheet" th:href="@{/css/home.css}">
   <link rel="stylesheet" th:href="@{/css/traffic.css}">
   <script th:src="@{/js/home.js}" defer></script>
-  <script th:src="@{/js/file-upload.js}" defer></script>
   <script src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=zlh7cem9or"></script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
@@ -165,31 +164,26 @@
     </div>
 
     <!-- 길찾기 패널 -->
-    <div id="routeFilterPanel" style="display:none;">
-      <h5>🧭 길찾기</h5>
-      <!-- 출발지 -->
-      <div class="mb-3 position-relative">
-        <label class="form-label">🚩 출발지</label>
-        <input type="text" id="startPointLabel" class="form-control" placeholder="출발지를 입력하세요" autocomplete="off">
-        <ul id="startResultList" class="list-group position-absolute w-100"
-          style="z-index: 999; top: 100%; display: none;">
-        </ul>
+    <div id="routeFilterPanel" class="sidebar-panel" style="display: none;">
+      <div class="panel-body">
+        <h5>🧭 길찾기</h5>
+    
+        <div class="route-input-row">
+          <input id="startPointLabel" placeholder="출발지 입력" class="form-control small-input" />
+          <input id="goalPointLabel" placeholder="도착지 입력" class="form-control small-input" />
+        </div>
+    
+        <ul id="startResultList" class="autocomplete-result list-group position-absolute w-100" style="display:none;"></ul>
+        <ul id="goalResultList" class="autocomplete-result list-group position-absolute w-100" style="display:none;"></ul>
       </div>
-
-      <!-- 도착지 -->
-      <div class="mb-3 position-relative">
-        <label class="form-label">🎯 도착지</label>
-        <input type="text" id="goalPointLabel" class="form-control" placeholder="도착지를 입력하세요" autocomplete="off">
-        <ul id="goalResultList" class="list-group position-absolute w-100"
-          style="z-index: 999; top: 100%; display: none;">
-        </ul>
+    
+      <div class="panel-footer">
+        <button class="btn btn-danger w-100" onclick="resetRoutePanel()">🔁 초기화</button>
       </div>
-      <button class="btn btn-danger mt-2" onclick="resetRoutePanel()">🔁 초기화</button>
     </div>
 
     <!-- ✅ 교통속도 범례 박스 (기본은 숨김) -->
-    <div id="trafficLegendBox" class="position-absolute bottom-0 end-0 m-3 p-2 bg-white shadow-sm rounded"
-      style="display: none; z-index: 1000;">
+    <div id="trafficLegendBox" class="bottom-0 end-0 m-3 p-2 bg-white shadow-sm rounded" style="display: none;">
       <strong>🚦 교통속도 범례</strong><br />
       <span style="color:#00C851;">●</span> 빠름 (60km/h 이상)<br />
       <span style="color:#ffbb33;">●</span> 보통 (30~60km/h)<br />
@@ -208,12 +202,11 @@
     </div>
 
     <!-- 로딩 스피너 -->
-    <div id="loadingSpinner" class="text-center my-3" style="display: none;">
+    <div id="loadingSpinner" style="display: none;">
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
-    </div>
-  </div>
+    </div>    
 
 
   <!--따릉이 상세정보 왼쪽 패널 -->
