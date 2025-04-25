@@ -40,22 +40,25 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 document.addEventListener('DOMContentLoaded', function () {
-  // 모바일 메뉴 토글 아이콘 회전
   const toggleBtn = document.getElementById("mobileBoardDropdown");
   const collapseTarget = document.getElementById("boardDropdownMenu");
-  const icon = toggleBtn.querySelector(".arrow-icon");
 
-  collapseTarget.addEventListener("show.bs.collapse", function () {
-    icon.classList.add("rotate");
-  });
+  if (toggleBtn && collapseTarget) {
+    const icon = toggleBtn.querySelector(".arrow-icon");
 
-  collapseTarget.addEventListener("hide.bs.collapse", function () {
-    icon.classList.remove("rotate");
-  });
+    collapseTarget.addEventListener("show.bs.collapse", function () {
+      icon?.classList.add("rotate");
+    });
 
-  // ✅ 스크롤 최상단 이동 버튼 클릭 이벤트
+    collapseTarget.addEventListener("hide.bs.collapse", function () {
+      icon?.classList.remove("rotate");
+    });
+  }
+
   const scrollBtn = document.getElementById('scrollToTopBtn');
-  scrollBtn.addEventListener('click', function () {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  });
+  if (scrollBtn) {
+    scrollBtn.addEventListener('click', function () {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
 });
