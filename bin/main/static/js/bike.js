@@ -54,9 +54,14 @@ window.moveToMyLocation = function (skipRecommendation = false) {
     window.userPositionMarker = new naver.maps.Marker({
       position: userPos,
       map,
+      icon: {
+        url: '/image/my-marker.png', // 👉 여기에 네 이미지 경로 넣기
+        size: new naver.maps.Size(44, 66),   // 👉 이미지 크기
+        anchor: new naver.maps.Point(22, 22) // 👉 이미지 중심점
+      },
       title: '내 위치',
       zIndex: 999
-    });
+    });    
 
     map.panTo(userPos);
     window.skipBikeRecommendation = skipRecommendation;
@@ -181,12 +186,16 @@ window.cancelBikeRoute = function () {
 window.loadBikeStations = function () {
   if (isBikeRouting) return;
 
-  const apiUrl = 'http://openapi.seoul.go.kr:8088/75436b6c78776a643536507267774e/json/bikeList/1/1000/';
+  const pageUrls = [
+    'http://openapi.seoul.go.kr:8088/75436b6c78776a643536507267774e/json/bikeList/1/1000/',
+    // 'http://openapi.seoul.go.kr:8088/75436b6c78776a643536507267774e/json/bikeList/1001/2000/',
+    // 'http://openapi.seoul.go.kr:8088/75436b6c78776a643536507267774e/json/bikeList/2001/3000/'
+    // 필요 시 더 추가 가능
+  ];
 
-  fetch(apiUrl)
-    .then(res => res.json())
-    .then(data => {
-      allBikeStations = data?.rentBikeStatus?.row || [];
+  Promise.all(pageUrls.map(url => fetch(url).then(res => res.json())))
+    .then(results => {
+      allBikeStations = results.flatMap(result => result?.rentBikeStatus?.row || []);
       window.renderVisibleBikeMarkers();
     })
     .catch(err => {
