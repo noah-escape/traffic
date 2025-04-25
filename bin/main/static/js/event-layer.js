@@ -34,7 +34,7 @@ window.loadEventMarkers = function (eventData) {
       position: new naver.maps.LatLng(lat, lng),
       map,
       icon: {
-        url: getEventIcon(event.eventType),
+        url: getEventIcon(event.eventType, event.eventDetailType),
         size: new naver.maps.Size(44, 66),
         anchor: new naver.maps.Point(22, 66)
       }
@@ -91,14 +91,45 @@ function showCustomBox(event, latLng) {
 }
 
 // ✅ 아이콘 URL 매핑
-function getEventIcon(type) {
-  const map = {
-    '기상': '/image/event/event-weather.png',
-    '재난': '/image/event/event-disaster.png',
-    '공사': '/image/event/event-work.png',
-    '사고': '/image/event/event-accident.png'
+function getEventIcon(eventType, eventDetailType) {
+  const iconMap = {
+    detail: {
+      '강풍': '/image/event/event-squall.png',
+      '차량증가/정체': '/image/event/event-traffic_congestion.png',
+      '지정체': '/image/event/event-traffic_congestion.png',
+      '시설물보수작업': '/image/event/event-facility_maintenance.png',
+      '이벤트/홍보': '/image/event/event-promotion.png',
+      '고장' : '/image/event/event-vehicle_breakdown.png'
+    },
+
+    type: {
+      '기상': '/image/event/event-weather.png',
+      '재난': '/image/event/event-disaster.png',
+      '공사': '/image/event/event-work.png',
+      '교통사고': '/image/event/event-accident.png',
+      '기타돌발': '/image/event/event-default.png',
+    }
   };
-  return map[type?.trim()] || '/image/event/event-default.png';
+
+  const detail = normalize(eventDetailType);
+  const type = normalize(eventType);
+
+  // ✅ detail 우선
+  if (detail && iconMap.detail[detail]) {
+    return iconMap.detail[detail];
+  }
+
+  // ✅ type fallback
+  if (type && iconMap.type[type]) {
+    return iconMap.type[type];
+  }
+
+  // ✅ default
+  return '/image/event/event-default.png';
+}
+
+function normalize(str) {
+  return str?.trim().replace(/["']/g, '');
 }
 
 // ✅ 날짜 포맷: YYYY-MM-DD HH:mm
@@ -140,7 +171,7 @@ document.getElementById('eventListContent')?.addEventListener('mouseover', e => 
     position: new naver.maps.LatLng(parseFloat(event.coordY), parseFloat(event.coordX)),
     map,
     icon: {
-      url: getEventIcon(event.eventType),
+      url: getEventIcon(event.eventType, event.eventDetailType),    
       size: new naver.maps.Size(44, 66),
       anchor: new naver.maps.Point(22, 66)
     }
@@ -168,7 +199,7 @@ document.getElementById('eventListContent')?.addEventListener('click', e => {
     position: latLng,
     map,
     icon: {
-      url: getEventIcon(event.eventType),
+      url: getEventIcon(event.eventType, event.eventDetailType),
       size: new naver.maps.Size(44, 66),
       anchor: new naver.maps.Point(22, 66)
     }
