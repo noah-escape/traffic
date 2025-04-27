@@ -13,6 +13,12 @@ body {
   background-color: var(--light-blue);
 }
 
+h2 {
+  text-align: center;
+  color: var(--medium-blue);
+  margin: 30px;
+}
+
 .navbar-brand {
   font-size: 1.5rem;
   color: white;
@@ -30,16 +36,11 @@ body {
   color: #6495ED !important;
 }
 
-.dropdown-menu {
-  border-radius: 0.5rem;
-}
-
 .dropdown-item {
   font-size: 0.85rem;
   padding: 0.55rem 1rem;
   border-radius: 0.5rem;
   color: white;
-  width: 100%;  /* 드롭다운 항목이 전체 너비를 채우도록 설정 */
   text-align: center;  /* 텍스트를 가운데 정렬 */
 }
 
@@ -77,14 +78,6 @@ body {
   background-color: white;
 }
 
-.btn.login-btn:focus,
-.btn.login-btn:active,
-.btn.login-btn.show {
-  background-color: #fff !important;
-  color: #000 !important;
-  box-shadow: none !important;
-}
-
 .dropdown-toggle {
   background-color: transparent;
   color: white;
@@ -105,16 +98,70 @@ body {
 hr {
   background-color: white;
   height: 3px;
-  margin-top: 1rem;
-  margin-bottom: 1rem;
+}
+
+.hero-section {
+  background: url('/image/main/main1.png') no-repeat center center / cover;
+  height: 100vh;
+  position: relative;
+}
+
+.hero-content-box {
+  padding: 2rem 3rem;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 10px;
+  max-width: 480px;
+  margin-right: 8vw;
+}
+
+.hero-title {
+  font-size: 2.5rem;
+}
+
+.card {
+  transition: transform 0.3s ease;
+}
+
+.card i {
+  font-size: 3rem;
+}
+
+.card i.bi-bicycle {
+  font-size: 3.5rem; /* 자전거 아이콘만 살짝 더 키움 */
+}
+
+.card:hover {
+  transform: translateY(-5px); /* 살짝 위로 떠오르게 */
+}
+
+.service-btn {
+  background-color: var(--golden-yellow);
+  color: #000;
+  display: inline-block;
+  padding: 0.6rem 1.2rem;
+  font-weight: 600;
+  border: none;
+  transition: all 0.3s ease;
+  border-radius: 8px;
+}
+
+.service-btn:hover {
+  background-color: #cfa743; /* 조금 더 어두운 골드 */
+  color: white;
 }
 
 @media (max-width: 768px) {
-  #mobileBoardDropdown .dropdown-menu {
-    width: auto;
-    max-width: 90vw;
-    left: 50%;
-    transform: translateX(-50%);
+  .hero-section {
+    height: auto;
+    padding: 60px 0;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .hero-content-box {
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.95);
+    width: 90%;
   }
 }
 
@@ -142,6 +189,7 @@ hr {
   color: white;
   border: none;
   border-radius: 50%;
+  transition: background-color 0.3s ease;
 }
 
 #scrollToTopBtn:hover {
