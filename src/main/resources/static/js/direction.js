@@ -27,14 +27,17 @@ window.setStartToCurrentLocation = function () {
     const position = new naver.maps.LatLng(lat, lng);
 
     if (myLocationMarker) myLocationMarker.setMap(null);
+
     myLocationMarker = new naver.maps.Marker({
       position,
       map,
       icon: {
-        content: `<div style="font-size: 24px;">🧍</div>`,
-        anchor: new naver.maps.Point(12, 12)
+        url: '/image/my-marker.png',  // ✅ 네가 만든 내 위치 이미지 경로
+        size: new naver.maps.Size(44, 66),    // ✅ 이미지 크기
+        anchor: new naver.maps.Point(22, 22)  // ✅ 중심을 이미지 정중앙으로 설정
       },
-      title: "내 위치"
+      title: "내 위치",
+      zIndex: 999
     });
 
     map.panTo(position);
@@ -62,29 +65,47 @@ window.removeRouteEvents = function () {
 
 // ✅ 출/도 마커 선택 팝업
 window.showRouteChoice = function (lat, lng, label) {
-  if (routeClickMarker) routeClickMarker.setMap(null);
-  if (routeClickInfoWindow) routeClickInfoWindow.close();
+  // ✅ 이전 팝업 제거
+  if (window.routeClickInfoWindow) {
+    window.routeClickInfoWindow.setMap(null);
+    window.routeClickInfoWindow = null;
+  }
 
   const position = new naver.maps.LatLng(lat, lng);
 
+  // 마커 생성
+  if (routeClickMarker) routeClickMarker.setMap(null);
   routeClickMarker = new naver.maps.Marker({ position, map });
 
-  const content = `
-    <div style="text-align:center; min-width:160px;">
-      <strong>${label}</strong><br/>
-      <button class="btn btn-sm btn-outline-success mt-2" onclick="setAsStart(${lat}, ${lng}, '${label}')">🚩 출발지로</button>
-      <button class="btn btn-sm btn-outline-primary mt-1" onclick="setAsGoal(${lat}, ${lng}, '${label}')">🎯 도착지로</button>
+  // 팝업 생성
+  const content = document.createElement('div');
+  content.className = 'clean-popup';
+  content.innerHTML = `
+    <div class="popup-title">${label}</div>
+    <div class="popup-btn" onclick="setAsStart(${lat}, ${lng}, '${label}')">
+      <i class="bi bi-flag-fill text-success"></i> 출발지로 설정
+    </div>
+    <div class="popup-btn" onclick="setAsGoal(${lat}, ${lng}, '${label}')">
+      <i class="bi bi-geo-alt-fill text-primary"></i> 도착지로 설정
     </div>
   `;
 
-  routeClickInfoWindow = new naver.maps.InfoWindow({
-    content,
-    position,
-    pixelOffset: new naver.maps.Point(0, -30)
-  });
+  const overlay = new naver.maps.OverlayView();
+  overlay.onAdd = function () {
+    this.getPanes().overlayLayer.appendChild(content);
+  };
+  overlay.draw = function () {
+    const proj = this.getProjection();
+    const point = proj.fromCoordToOffset(position);
+    content.style.left = (point.x - 110) + 'px';
+    content.style.top = (point.y - 120) + 'px';
+  };
+  overlay.onRemove = function () {
+    if (content.parentNode) content.parentNode.removeChild(content);
+  };
 
-  routeClickInfoWindow.open(window.map, routeClickMarker);
-  window.activeInfoWindow = routeClickInfoWindow;
+  overlay.setMap(map);
+  window.routeClickInfoWindow = overlay;  // ✅ 현재 팝업 저장
 };
 
 // ✅ 경로 탐색
@@ -129,6 +150,13 @@ window.findDirection = function (startLat, startLng, goalLat, goalLng) {
 
 // ✅ 출/도 설정
 window.setAsStart = function (lat, lng, label) {
+  // ✅ 이미 선택된 출발지인지 확인
+  if (routeStart.lat === lat && routeStart.lng === lng) {
+    if (window.routeClickInfoWindow) window.routeClickInfoWindow.setMap(null);
+    return;
+  }
+
+  // 기존 마커 제거
   if (startMarker) startMarker.setMap(null);
 
   routeStart = { lat, lng, label };
@@ -143,6 +171,9 @@ window.setAsStart = function (lat, lng, label) {
     },
     title: "출발지"
   });
+
+  // 팝업 닫기
+  if (window.routeClickInfoWindow) window.routeClickInfoWindow.setMap(null);
 
   tryFindRoute();
 };

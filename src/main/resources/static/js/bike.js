@@ -1,9 +1,9 @@
 // 🚲 따릉이 마커 및 경로 관련 전역 상태
-let bikeMarkers = [];                 // 따릉이 마커 목록
-let allBikeStations = [];            // 전체 대여소 데이터
-let bikeRoutePolyline = null;        // 경로 선
-let bikeRouteLabel = null;           // 경로 시간 라벨
-let isBikeRouting = false;           // 경로 안내 중 여부
+let bikeMarkers = [];
+let allBikeStations = [];
+let bikeRoutePolyline = null;
+let bikeRouteLabel = null;
+let isBikeRouting = false;
 
 // 📌 사용자 위치 및 추천 대여소 관련 전역
 window.userPositionMarker = null;
@@ -13,28 +13,22 @@ window.userLat = null;
 window.userLng = null;
 window.skipBikeRecommendation = false;
 
-// ✅ 모든 마커 및 경로 제거
+// ✅ 마커 및 경로 제거
 window.clearBikeStations = function () {
   bikeMarkers.forEach(m => m.marker.setMap(null));
   bikeMarkers = [];
 
-  if (window.activeInfoWindow) {
-    window.activeInfoWindow.close();
-    window.activeInfoWindow = null;
-  }
+  if (window.activeInfoWindow) window.activeInfoWindow.close();
+  window.activeInfoWindow = null;
 
-  if (bikeRoutePolyline) {
-    bikeRoutePolyline.setMap(null);
-    bikeRoutePolyline = null;
-  }
+  if (bikeRoutePolyline) bikeRoutePolyline.setMap(null);
+  bikeRoutePolyline = null;
 
-  if (bikeRouteLabel) {
-    bikeRouteLabel.close();
-    bikeRouteLabel = null;
-  }
+  if (bikeRouteLabel) bikeRouteLabel.close();
+  bikeRouteLabel = null;
 };
 
-// ✅ 위도/경도 거리 계산 함수 (Haversine)
+// ✅ 거리 계산 (Haversine)
 function getDistance(lat1, lon1, lat2, lon2) {
   const R = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -45,7 +39,7 @@ function getDistance(lat1, lon1, lat2, lon2) {
   return R * c * 1000;
 }
 
-// ✅ 내 위치로 이동 + 사용자 마커 표시
+// ✅ 내 위치로 이동
 window.moveToMyLocation = function (skipRecommendation = false) {
   if (!navigator.geolocation) return alert("위치 정보를 지원하지 않습니다.");
 
@@ -60,16 +54,21 @@ window.moveToMyLocation = function (skipRecommendation = false) {
     window.userPositionMarker = new naver.maps.Marker({
       position: userPos,
       map,
+      icon: {
+        url: '/image/my-marker.png', // 👉 여기에 네 이미지 경로 넣기
+        size: new naver.maps.Size(44, 66),   // 👉 이미지 크기
+        anchor: new naver.maps.Point(22, 22) // 👉 이미지 중심점
+      },
       title: '내 위치',
       zIndex: 999
-    });
+    });    
 
     map.panTo(userPos);
     window.skipBikeRecommendation = skipRecommendation;
   }, () => alert("위치 정보를 가져올 수 없습니다."));
 };
 
-// ✅ 가장 가까운 추천 대여소 계산 및 표시
+// ✅ 추천 대여소 표시
 window.recommendNearestStation = function () {
   if (!window.userLat || !window.userLng) return;
 
@@ -81,12 +80,11 @@ window.recommendNearestStation = function () {
     .filter(m => m.distance <= 500)
     .sort((a, b) => a.distance - b.distance);
 
-  if (!nearby.length) {
-    alert('500m 이내에 추천 가능한 대여소가 없습니다.');
-    return;
-  }
+  if (!nearby.length) return alert('500m 이내에 추천 가능한 대여소가 없습니다.');
 
   const best = nearby[0];
+  map.panTo(best.position);
+
   window.recommendedStation = {
     stationLatitude: best.position.lat(),
     stationLongitude: best.position.lng(),
@@ -95,8 +93,6 @@ window.recommendNearestStation = function () {
     parkingBikeTotCnt: best.station.parkingBikeTotCnt,
     shared: best.station.shared
   };
-
-  map.panTo(best.position);
 
   if (window.activeInfoWindow) window.activeInfoWindow.close();
   window.activeInfoWindow = null;
@@ -108,7 +104,7 @@ window.recommendNearestStation = function () {
   );
 };
 
-// ✅ 추천 대여소까지 경로 탐색 및 경로/라벨 표시
+// ✅ 경로 안내
 window.goToNaverRoute = function () {
   if (!navigator.geolocation) return alert("위치 정보를 지원하지 않습니다.");
 
@@ -116,10 +112,7 @@ window.goToNaverRoute = function () {
     const userLat = pos.coords.latitude;
     const userLng = pos.coords.longitude;
 
-    if (!window.recommendedStation) {
-      alert('추천 대여소가 없습니다.');
-      return;
-    }
+    if (!window.recommendedStation) return alert('추천 대여소가 없습니다.');
 
     const { stationLatitude, stationLongitude } = window.recommendedStation;
 
@@ -168,28 +161,20 @@ window.goToNaverRoute = function () {
         console.error("❌ 경로 불러오기 실패", err);
         alert("경로 안내에 실패했습니다.");
       });
-
   }, () => alert("위치 정보를 가져올 수 없습니다."));
 };
 
-// ✅ 경로 취소: 상태 초기화 + 마커 재로딩
+// ✅ 경로 취소
 window.cancelBikeRoute = function () {
   isBikeRouting = false;
 
-  if (bikeRoutePolyline) {
-    bikeRoutePolyline.setMap(null);
-    bikeRoutePolyline = null;
-  }
+  if (bikeRoutePolyline) bikeRoutePolyline.setMap(null);
+  if (bikeRouteLabel) bikeRouteLabel.close();
 
-  if (bikeRouteLabel) {
-    bikeRouteLabel.close();
-    bikeRouteLabel = null;
-  }
-
-  if (window.activeInfoWindow) {
-    window.activeInfoWindow.close();
-    window.activeInfoWindow = null;
-  }
+  bikeRoutePolyline = null;
+  bikeRouteLabel = null;
+  if (window.activeInfoWindow) window.activeInfoWindow.close();
+  window.activeInfoWindow = null;
 
   window.recommendedStation = null;
 
@@ -197,16 +182,20 @@ window.cancelBikeRoute = function () {
   window.moveToMyLocation();
 };
 
-// ✅ 따릉이 API 호출 → 전체 대여소 목록 저장 + 현재 보이는 마커 렌더링
+// ✅ 따릉이 데이터 호출
 window.loadBikeStations = function () {
   if (isBikeRouting) return;
 
-  const apiUrl = 'http://openapi.seoul.go.kr:8088/75436b6c78776a643536507267774e/json/bikeList/1/1000/';
+  const pageUrls = [
+    'http://openapi.seoul.go.kr:8088/75436b6c78776a643536507267774e/json/bikeList/1/1000/',
+    // 'http://openapi.seoul.go.kr:8088/75436b6c78776a643536507267774e/json/bikeList/1001/2000/',
+    // 'http://openapi.seoul.go.kr:8088/75436b6c78776a643536507267774e/json/bikeList/2001/3000/'
+    // 필요 시 더 추가 가능
+  ];
 
-  fetch(apiUrl)
-    .then(res => res.json())
-    .then(data => {
-      allBikeStations = data?.rentBikeStatus?.row || [];
+  Promise.all(pageUrls.map(url => fetch(url).then(res => res.json())))
+    .then(results => {
+      allBikeStations = results.flatMap(result => result?.rentBikeStatus?.row || []);
       window.renderVisibleBikeMarkers();
     })
     .catch(err => {
@@ -215,7 +204,7 @@ window.loadBikeStations = function () {
     });
 };
 
-// ✅ 현재 지도 범위 내 대여소 마커 렌더링
+// ✅ 마커 렌더링
 window.renderVisibleBikeMarkers = function () {
   const bounds = map.getBounds();
   window.clearBikeStations();
@@ -231,11 +220,9 @@ window.renderVisibleBikeMarkers = function () {
     if (!bounds.hasLatLng(position)) return;
 
     const defaultImageUrl =
-      bikeCount === 0
-        ? '/image/bike-marker-red.png'
-        : bikeCount <= 5
-          ? '/image/bike-marker-yellow.png'
-          : '/image/bike-marker-green.png';
+      bikeCount === 0 ? '/image/bike-marker-red.png' :
+        bikeCount <= 5 ? '/image/bike-marker-yellow.png' :
+          '/image/bike-marker-green.png';
 
     const hoverImageUrl = `/image/bike-hover/bike-hover-${bikeCount > 9 ? '9plus' : bikeCount}.png`;
 
@@ -245,11 +232,7 @@ window.renderVisibleBikeMarkers = function () {
     const marker = new naver.maps.Marker({
       position,
       map,
-      icon: {
-        url: defaultImageUrl,
-        size: imageSize,
-        anchor: imageAnchor
-      },
+      icon: { url: defaultImageUrl, size: imageSize, anchor: imageAnchor },
       title: name
     });
 
@@ -286,53 +269,56 @@ window.renderVisibleBikeMarkers = function () {
         `잔여 자전거: ${station.parkingBikeTotCnt}대 / 거치대: ${station.rackTotCnt}대`
       );
 
-      if (window.activeInfoWindow) {
-        window.activeInfoWindow.close();
-        window.activeInfoWindow = null;
-      }
+      if (window.activeInfoWindow) window.activeInfoWindow.close();
+      window.activeInfoWindow = null;
     });
 
     bikeMarkers.push({ marker, name, position, bikeCount, station });
   });
 };
 
-// 🚀 이벤트 리스너 등록
-document.getElementById("moveToMyLocation").addEventListener("click", () => {
-  window.moveToMyLocation();
-});
-
-document.getElementById("recommendBtn").addEventListener("click", () => {
-  if (!window.userLat || !window.userLng) {
-    alert("먼저 위치를 불러와 주세요.");
-    return;
-  }
-  window.recommendNearestStation();
-});
-
-// 📌 패널 닫기 버튼 이벤트
-document.getElementById("closeDetailPanel").addEventListener("click", () => {
-  hideStationDetailPanel();
-});
-
-// 📌 대여소 상세 정보 패널
+// ✅ 패널 열기
 function showStationDetailPanel(name, info, distance = null) {
   const panel = document.getElementById("stationDetailPanel");
-  const nameEl = document.getElementById("detailStationName");
-  const infoEl = document.getElementById("detailStationInfo");
-  const distanceEl = document.getElementById("detailStationDistance");
+  if (!panel) return console.warn("⛔ stationDetailPanel 요소 없음");
 
-  nameEl.textContent = name;
-  infoEl.textContent = info;
+  document.getElementById("detailStationName").textContent = name;
+  document.getElementById("detailStationInfo").textContent = info;
 
-  if (distance !== null) {
-    distanceEl.textContent = `거리: ${Math.round(distance)}m`;
-  } else {
-    distanceEl.textContent = "";
-  }
+  document.getElementById("detailStationDistance").textContent =
+    distance !== null ? `거리: ${Math.round(distance)}m` : "";
 
   panel.style.display = "block";
 }
 
+// ✅ 패널 닫기
 function hideStationDetailPanel() {
-  document.getElementById("stationDetailPanel").style.display = "none";
+  const panel = document.getElementById("stationDetailPanel");
+  if (panel) panel.style.display = "none";
 }
+
+// ✅ 즉시 실행 - 버튼 리스너 등록
+(() => {
+  document.getElementById("moveToMyLocation")?.addEventListener("click", () => {
+    window.moveToMyLocation();
+  });
+
+  document.getElementById("recommendBtn")?.addEventListener("click", () => {
+    if (!window.userLat || !window.userLng) {
+      alert("먼저 위치를 불러와 주세요.");
+      return;
+    }
+    window.recommendNearestStation();
+  });
+
+  document.getElementById("closeDetailPanel")?.addEventListener("click", () => {
+    hideStationDetailPanel();
+  });
+
+  const sidebarButtons = document.querySelectorAll(".sidebar button");
+  sidebarButtons.forEach(button => {
+    button.addEventListener("click", () => {
+      hideStationDetailPanel();
+    });
+  });
+})();
