@@ -4,19 +4,22 @@ let cctvMarkers = [];
 let currentVideoUrl = '';
 window.currentVideoUrl = currentVideoUrl;
 
+// ✅ 도로명 추출 (ex: [경부고속도로] → 경부고속도로)
 function extractRoadName(name) {
   if (!name) return '';
   const match = name.match(/\[(.*?)\]/);
   return match ? match[1].trim() : '';
 }
 
-// ✅ 도로 이름 필터링
+// ✅ CCTV 조회 트리거
 function applyCctvFilter() {
   const keyword = document.getElementById('roadSearchInput').value.trim();
-  if (!keyword) loadRoadList();
+  if (!keyword) {
+    loadRoadList();
+  }
 }
 
-// ✅ CCTV 레이어 필터
+// ✅ CCTV 목록 필터링 후 마커 표시
 function filterCctvLayer(roadName, roadType, onComplete) {
   clearCctvMarkers();
   const bounds = map.getBounds();
@@ -29,11 +32,10 @@ function filterCctvLayer(roadName, roadType, onComplete) {
     .then(res => res.json())
     .then(data => {
       const cctvs = Array.isArray(data.response?.data) ? data.response.data : [data.response?.data].filter(Boolean);
-
       const markerImage = {
         url: '/image/cctv-icon.png',
-        size: new naver.maps.Size(44, 44),
-        anchor: new naver.maps.Point(22, 38) // 📌 중심에 anchor 설정 → 줌 아웃 시에도 위치 유지
+        size: new naver.maps.Size(44, 66),
+        anchor: new naver.maps.Point(22, 38)
       };
 
       cctvs.forEach(item => {
@@ -55,7 +57,7 @@ function filterCctvLayer(roadName, roadType, onComplete) {
 
         naver.maps.Event.addListener(marker, 'click', () => {
           currentVideoUrl = video;
-          window.currentVideoUrl = video; // 새창에서도 사용 가능
+          window.currentVideoUrl = video;
           playVideo(video, name, marker.getPosition());
         });
 
@@ -70,16 +72,17 @@ function filterCctvLayer(roadName, roadType, onComplete) {
     .finally(() => typeof onComplete === 'function' && onComplete());
 }
 
-// ✅ 마커 제거
+// ✅ 마커 전체 제거
 function clearCctvMarkers() {
   cctvMarkers.forEach(marker => marker.setMap(null));
   cctvMarkers = [];
 }
 
-// ✅ 도로 리스트 불러오기
+// ✅ 도로 리스트 로딩
 function loadRoadList() {
   const keyword = document.getElementById('roadSearchInput').value.trim();
   const selectedType = document.getElementById('highway').checked ? 'ex' : 'its';
+
   const bounds = map.getBounds();
   const sw = bounds._sw;
   const ne = bounds._ne;
@@ -121,19 +124,16 @@ function loadRoadList() {
     .catch(console.error);
 }
 
-// ✅ 영상 재생
-// ✅ 영상 재생 + 팝업 위치 보정
+// ✅ 영상 팝업 재생
 function playVideo(url, name, position) {
-  const videoContainer = document.getElementById('videoContainer');
+  const container = document.getElementById('videoContainer');
   const cctvVideo = document.getElementById('cctvVideo');
   const videoTitle = document.getElementById('videoTitle');
 
   videoTitle.textContent = name || '영상 없음';
 
-  // ✅ 기존 HLS 종료
+  // ✅ HLS 초기화
   if (hls) hls.destroy();
-
-  // ✅ 새로 재생
   hls = new Hls();
   hls.loadSource(url);
   hls.attachMedia(cctvVideo);
@@ -141,44 +141,46 @@ function playVideo(url, name, position) {
     cctvVideo.play().catch(console.warn);
   });
 
-  // ✅ 팝업 표시
-  videoContainer.style.display = 'block';
+  // ✅ 영상창 보이기
+  container.style.display = 'block';
   cctvVideo.style.display = 'block';
 
-  // ✅ 지도 좌표 → 화면 좌표
-  const point = map.getProjection().fromCoordToOffset(position);
+  // ✅ 지도 중심으로 이동
+  map.panTo(position);
 
-  const containerWidth = videoContainer.offsetWidth || 480;
-  const containerHeight = videoContainer.offsetHeight || 300;
+  // ⏳ 이동이 완료된 후 위치 보정
+  setTimeout(() => {
+    const projection = map.getProjection();
+    const mapEl = document.getElementById('map');
+    const mapRect = mapEl.getBoundingClientRect();
+    const point = projection.fromCoordToOffset(position);
 
-  // ✅ 좌표 계산 (화면 밖 벗어나지 않게 조정)
-  let left = point.x + 10;
-  let top = point.y + 10;
+    const containerWidth = container.offsetWidth || 480;
+    const containerHeight = container.offsetHeight || 300;
 
-  if (left + containerWidth > window.innerWidth) {
-    left = window.innerWidth - containerWidth - 10;
-  }
-  if (top + containerHeight > window.innerHeight) {
-    top = window.innerHeight - containerHeight - 10;
-  }
+    // 📌 마커 아래쪽에 영상 위치
+    let left = point.x - containerWidth / 2;
+    let top = point.y + 20;
 
-  // ✅ 음수 방지
-  left = Math.max(0, left);
-  top = Math.max(0, top);
+    // 📏 지도 내부 제한
+    left = Math.max(10, Math.min(left, mapRect.width - containerWidth - 10));
+    top = Math.max(10, Math.min(top, mapRect.height - containerHeight - 10));
 
-  videoContainer.style.left = `${left}px`;
-  videoContainer.style.top = `${top}px`;
+    // 🔧 offset 기준은 #map 기준이므로 map 위치 보정
+    container.style.left = `${mapRect.left + left}px`;
+    container.style.top = `${mapRect.top + top}px`;
+  }, 300); // 지도 이동 후 위치 보정
 
-  makeVideoContainerDraggable(); // ✅ 드래그 유지
+  makeVideoContainerDraggable();
 }
 
 // ✅ 영상 숨기기
 function hideVideo() {
   if (hls) hls.destroy();
   hls = null;
-  const cctvVideo = document.getElementById('cctvVideo');
-  cctvVideo.pause();
-  cctvVideo.src = '';
+  const video = document.getElementById('cctvVideo');
+  video.pause();
+  video.src = '';
   document.getElementById('videoContainer').style.display = 'none';
 }
 
@@ -187,26 +189,26 @@ function makeVideoContainerDraggable() {
   const container = document.getElementById('videoContainer');
   let offsetX = 0, offsetY = 0, isDragging = false;
 
-  container.addEventListener('mousedown', (e) => {
+  container.onmousedown = (e) => {
     isDragging = true;
     offsetX = e.clientX - container.getBoundingClientRect().left;
     offsetY = e.clientY - container.getBoundingClientRect().top;
     container.style.cursor = 'move';
-  });
+  };
 
-  document.addEventListener('mousemove', (e) => {
+  document.onmousemove = (e) => {
     if (!isDragging) return;
     container.style.left = Math.max(0, Math.min(e.clientX - offsetX, window.innerWidth - container.offsetWidth)) + 'px';
     container.style.top = Math.max(0, Math.min(e.clientY - offsetY, window.innerHeight - container.offsetHeight)) + 'px';
-  });
+  };
 
-  document.addEventListener('mouseup', () => {
+  document.onmouseup = () => {
     isDragging = false;
     container.style.cursor = 'default';
-  });
+  };
 }
 
-// ✅ 로딩 스피너
+// ✅ 로딩 스피너 표시/숨김
 function showSpinner() {
   document.getElementById('loadingSpinner').style.display = 'block';
 }
@@ -214,7 +216,66 @@ function hideSpinner() {
   document.getElementById('loadingSpinner').style.display = 'none';
 }
 
-// ✅ 전역 등록
+// ✅ 영상 닫기 버튼 연결
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('fullscreenBtn')?.addEventListener('click', () => {
+    const video = document.getElementById('cctvVideo');
+    if (video.requestFullscreen) {
+      video.requestFullscreen();
+    } else if (video.webkitRequestFullscreen) {
+      video.webkitRequestFullscreen();
+    } else if (video.msRequestFullscreen) {
+      video.msRequestFullscreen();
+    }
+  });
+  
+  document.getElementById('openNewTabBtn')?.addEventListener('click', () => {
+    const videoUrl = window.currentVideoUrl;
+    const title = document.getElementById('videoTitle')?.textContent || 'CCTV';
+    if (!videoUrl) return;
+  
+    const win = window.open('', '_blank', 'width=800,height=600');
+    if (!win) {
+      alert("팝업이 차단되었습니다! 브라우저 설정을 확인해주세요.");
+      return;
+    }
+  
+    win.document.write(`
+      <!DOCTYPE html>
+      <html lang="ko">
+      <head>
+        <meta charset="UTF-8" />
+        <title>${title}</title>
+        <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+        <style>
+          body { margin: 0; background: #000; }
+          video { width: 100%; height: 100vh; object-fit: contain; }
+        </style>
+      </head>
+      <body>
+        <video id="video" controls autoplay muted></video>
+        <script>
+          const video = document.getElementById('video');
+          const url = "${videoUrl}";
+          if (Hls.isSupported()) {
+            const hls = new Hls();
+            hls.loadSource(url);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+          } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = url;
+            video.play();
+          }
+        </script>
+      </body>
+      </html>
+    `);
+  });
+  
+  document.getElementById('closeVideoBtn')?.addEventListener('click', hideVideo);
+});
+
+// ✅ 전역 연결
 window.playVideo = playVideo;
 window.hideVideo = hideVideo;
 window.applyCctvFilter = applyCctvFilter;

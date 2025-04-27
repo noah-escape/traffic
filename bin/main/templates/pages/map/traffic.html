@@ -22,10 +22,9 @@
   <link rel="stylesheet" th:href="@{/css/home.css}">
   <link rel="stylesheet" th:href="@{/css/traffic.css}">
   <script th:src="@{/js/home.js}" defer></script>
-  <script th:src="@{/js/file-upload.js}" defer></script>
   <script src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=zlh7cem9or"></script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-  
+
   <script th:inline="javascript">
     /*<![CDATA[*/
     const ITS_API_KEY = /*[[${itsApiKey}]]*/ '';
@@ -110,7 +109,8 @@
       <button onclick="toggleLayer('vms')" title="전광판"><i class="fas fa-bolt"></i></button>
       <button id="sidebarCctvBtn" title="CCTV"><i class="fas fa-video"></i></button>
       <button id="sidebarTrafficBtn" title="실시간 교통"><i class="fas fa-car-crash"></i></button>
-      <button id="sidebarEventBtn" title="도로 이벤트"><i class="fas fa-triangle-exclamation popup-box event-popup"></i></button>
+      <button id="sidebarEventBtn" title="도로 이벤트"><i
+          class="fas fa-triangle-exclamation popup-box event-popup"></i></button>
       <button id="sidebarBusBtn" title="버스 위치"><i class="fas fa-bus"></i></button>
       <button id="sidebarRouteBtn" title="길찾기"><i class="fas fa-route"></i></button>
       <button id="sidebarBikeBtn" title="따릉이 대여소"><i class="fas fa-bicycle popup-box bike-popup"></i></button>
@@ -164,31 +164,26 @@
     </div>
 
     <!-- 길찾기 패널 -->
-    <div id="routeFilterPanel" style="display:none;">
-      <h5>🧭 길찾기</h5>
-      <!-- 출발지 -->
-      <div class="mb-3 position-relative">
-        <label class="form-label">🚩 출발지</label>
-        <input type="text" id="startPointLabel" class="form-control" placeholder="출발지를 입력하세요" autocomplete="off">
-        <ul id="startResultList" class="list-group position-absolute w-100"
-          style="z-index: 999; top: 100%; display: none;">
-        </ul>
+    <div id="routeFilterPanel" class="sidebar-panel" style="display: none;">
+      <div class="panel-body">
+        <h5>🧭 길찾기</h5>
+    
+        <div class="route-input-row">
+          <input id="startPointLabel" placeholder="출발지 입력" class="form-control small-input" />
+          <input id="goalPointLabel" placeholder="도착지 입력" class="form-control small-input" />
+        </div>
+    
+        <ul id="startResultList" class="autocomplete-result list-group position-absolute w-100" style="display:none;"></ul>
+        <ul id="goalResultList" class="autocomplete-result list-group position-absolute w-100" style="display:none;"></ul>
       </div>
-
-      <!-- 도착지 -->
-      <div class="mb-3 position-relative">
-        <label class="form-label">🎯 도착지</label>
-        <input type="text" id="goalPointLabel" class="form-control" placeholder="도착지를 입력하세요" autocomplete="off">
-        <ul id="goalResultList" class="list-group position-absolute w-100"
-          style="z-index: 999; top: 100%; display: none;">
-        </ul>
+    
+      <div class="panel-footer">
+        <button class="btn btn-danger w-100" onclick="resetRoutePanel()">🔁 초기화</button>
       </div>
-      <button class="btn btn-danger mt-2" onclick="resetRoutePanel()">🔁 초기화</button>
     </div>
 
     <!-- ✅ 교통속도 범례 박스 (기본은 숨김) -->
-    <div id="trafficLegendBox" class="position-absolute bottom-0 end-0 m-3 p-2 bg-white shadow-sm rounded"
-      style="display: none; z-index: 1000;">
+    <div id="trafficLegendBox" class="bottom-0 end-0 m-3 p-2 bg-white shadow-sm rounded" style="display: none;">
       <strong>🚦 교통속도 범례</strong><br />
       <span style="color:#00C851;">●</span> 빠름 (60km/h 이상)<br />
       <span style="color:#ffbb33;">●</span> 보통 (30~60km/h)<br />
@@ -207,10 +202,35 @@
     </div>
 
     <!-- 로딩 스피너 -->
-    <div id="loadingSpinner" class="text-center my-3" style="display: none;">
+    <div id="loadingSpinner" style="display: none;">
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
+    </div>    
+
+
+  <!--따릉이 상세정보 왼쪽 패널 -->
+  <div id="stationDetailPanel" class="info-panel" style="display: none;">
+    <h4 id="detailStationName">🚲 대여소 이름</h4>
+    <p id="detailStationInfo">여기에 상세 설명이 들어갑니다.</p>
+    <p id="detailStationDistance">거리: 계산 중...</p>
+
+
+    <!-- 따릉이 안내 / 취소 버튼 -->
+    <div class="btn-group mt-3 w-100">
+      <button class="btn btn-primary w-100" onclick="goToNaverRoute()">🧭 안내</button>
+      <button class="btn btn-secondary w-100" onclick="cancelBikeRoute()">❌ 취소</button>
+    </div>
+
+    <!-- 따릉이 추천 / 위치 이동 버튼 -->
+    <div class="btn-group mt-3 w-100">
+      <button id="recommendBtn" class="btn btn-outline-success w-100">🚲 추천 대여소 보기</button>
+      <button id="moveToMyLocation" class="btn btn-outline-primary w-100">📍 내 위치로 이동</button>
+    </div>
+
+    <!-- 따릉이 ! -->
+    <div style="margin-top: 12px; text-align: right;">
+      <button id="closeDetailPanel" class="close-btn">닫기</button>
     </div>
   </div>
 
