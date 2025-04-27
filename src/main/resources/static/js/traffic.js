@@ -237,3 +237,19 @@ if (navbar) {
     attributes: true,
   });
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+  const params = new URLSearchParams(window.location.search);
+  const layer = params.get('layer');
+
+  if (layer) {
+    switch (layer) {
+      case 'bike':
+        document.getElementById('sidebarBikeBtn').click();
+        break;
+      case 'traffic':
+        document.getElementById('sidebarTrafficBtn').click();
+        break;
+    }
+  }
+});
