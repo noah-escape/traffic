@@ -3,6 +3,8 @@ package com.cctv.road.member.controller;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.stereotype.Controller;
@@ -32,7 +34,6 @@ public class MemberController {
 
   private final MemberService memberService;
 
-  // 🔹 소셜 회원가입 화면
   @GetMapping("/oauth2")
   public String showOAuth2RegisterForm(HttpSession session, Model model, HttpServletRequest request) {
     MemberDTO socialUser = (MemberDTO) session.getAttribute("socialUser");
@@ -61,7 +62,6 @@ public class MemberController {
     return "register/oauth2";
   }
 
-  // 🔹 소셜 회원가입 제출
   @PostMapping("/oauth2/submit")
   public String submitOAuth2RegisterForm(@Valid @ModelAttribute("memberDTO") MemberDTO memberDTO,
       BindingResult bindingResult,
@@ -100,21 +100,18 @@ public class MemberController {
     return "redirect:/login?registered";
   }
 
-  // 🔹 아이디 중복 확인
   @GetMapping("/checkIdDuplicate")
   @ResponseBody
   public boolean checkIdDuplicate(@RequestParam String userId) {
     return memberService.isUserIdDuplicate(userId);
   }
 
-  // 🔹 닉네임 중복 확인
   @GetMapping("/checkNickNameDuplicate")
   @ResponseBody
   public boolean checkNickNameDuplicate(@RequestParam String nickName) {
     return memberService.isNickNameDuplicate(nickName);
   }
 
-  // ✅ 회원 정보 수정 화면
   @GetMapping("/update")
   public String showUpdateForm(@AuthenticationPrincipal CustomUserDetails user, Model model) {
     if (user == null || user.getUsername() == null) {
@@ -126,10 +123,12 @@ public class MemberController {
     return "member/update";
   }
 
-  // ✅ 회원 정보 수정 처리
   @PostMapping("/update")
-  public String processUpdateForm(@ModelAttribute("memberDTO") MemberDTO dto,
+  public String processUpdateForm(
+      @ModelAttribute("memberDTO") MemberDTO dto,
       @AuthenticationPrincipal CustomUserDetails user,
+      @RequestParam(required = false) String currentPassword,
+      @RequestParam(required = false) String newPassword,
       Model model) {
 
     if (user == null || user.getUsername() == null) {
@@ -140,6 +139,7 @@ public class MemberController {
     dto.combineAddress();
 
     MemberDTO currentInfo = memberService.getMemberInfo(user.getUsername());
+
     if (!dto.getNickName().equals(currentInfo.getNickName()) &&
         memberService.isNickNameDuplicate(dto.getNickName())) {
       model.addAttribute("memberDTO", dto);
@@ -147,11 +147,16 @@ public class MemberController {
       return "member/update";
     }
 
-    memberService.updateMemberInfo(dto);
+    // ✅ 여기서 통합해서 비밀번호까지 같이 업데이트
+    if (newPassword != null && !newPassword.isBlank()) {
+      memberService.updateMemberInfoWithNewPassword(dto, newPassword);
+    } else {
+      memberService.updateMemberInfo(dto);
+    }
+
     return "redirect:/member/mypage";
   }
 
-  // ✅ 회원 탈퇴 처리
   @PostMapping("/delete")
   public String deleteMember(@AuthenticationPrincipal CustomOAuth2User user, HttpSession session) {
     if (user == null || user.getUsername() == null) {
@@ -163,7 +168,6 @@ public class MemberController {
     return "redirect:/login?deleted";
   }
 
-  // ✅ 비밀번호 유효성 검사
   private void validatePassword(MemberDTO memberDTO, BindingResult bindingResult) {
     String password = memberDTO.getPassword();
     String confirmPassword = memberDTO.getConfirmPassword();
@@ -176,6 +180,20 @@ public class MemberController {
         (!password.matches("^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\",.<>/?]).*$")
             || password.length() < 8 || password.length() > 12)) {
       bindingResult.rejectValue("password", "invalid", "비밀번호는 8 ~ 12자 사이의 영문, 숫자, 특수문자를 포함해야 합니다.");
+    }
+  }
+
+  @PostMapping("/check-password")
+  public ResponseEntity<Void> checkPassword(@RequestParam String currentPassword,
+      @AuthenticationPrincipal CustomUserDetails user) {
+
+    String userId = user.getUsername();
+    boolean match = memberService.checkPassword(userId, currentPassword);
+
+    if (match) {
+      return ResponseEntity.ok().build();
+    } else {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
   }
 }

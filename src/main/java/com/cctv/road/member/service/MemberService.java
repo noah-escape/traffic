@@ -1,5 +1,8 @@
 package com.cctv.road.member.service;
 
+import java.util.Optional;
+import java.util.Random;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +22,7 @@ public class MemberService {
 
   private final MemberRepository memberRepository;
   private final PasswordEncoder passwordEncoder;
+  private final MailService mailService;
 
   @Transactional(readOnly = true)
   public boolean isNickNameDuplicate(String nickName) {
@@ -131,5 +135,72 @@ public class MemberService {
 
     memberRepository.delete(member);
     log.warn("🗑 회원 탈퇴됨: {}", userId);
+  }
+
+  // ✅ 이메일로 아이디 찾기
+  @Transactional(readOnly = true)
+  public String findUserIdByEmail(String email) {
+      String cleanedEmail = email.trim().toLowerCase(); // ✅ 여기서도 정리
+      return memberRepository.findByEmail(cleanedEmail)
+          .map(Member::getUserId)
+          .orElse(null);
+  }  
+
+  @Transactional(readOnly = true)
+  public boolean checkPassword(String userId, String currentPassword) {
+    Member member = memberRepository.findByUserId(userId)
+        .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
+
+    return passwordEncoder.matches(currentPassword, member.getPassword());
+  }
+
+  @Transactional
+  public void updateMemberInfoWithNewPassword(MemberDTO dto, String newPassword) {
+    Member member = memberRepository.findByUserId(dto.getUserId())
+        .orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다."));
+
+    member.setName(dto.getName() != null ? dto.getName() : member.getName());
+    member.setNickName(dto.getNickName() != null ? dto.getNickName() : member.getNickName());
+    member.setEmail(dto.getEmail() != null ? dto.getEmail() : member.getEmail());
+    member.setPhoneNumber(dto.getPhoneNumber() != null ? dto.getPhoneNumber() : member.getPhoneNumber());
+    member.setBirthDate(dto.getBirthDate() != null ? dto.getBirthDate() : member.getBirthDate());
+    member.setAddress(dto.getAddress() != null ? dto.getAddress() : member.getAddress());
+
+    // ✅ 새 비밀번호 암호화 후 저장
+    member.setPassword(passwordEncoder.encode(newPassword));
+  }
+
+  @Transactional
+  public boolean resetPasswordAndSendEmail(String userId, String email, String phoneNumber) {
+    Optional<Member> optionalMember = memberRepository.findByUserIdAndEmailAndPhoneNumber(userId, email, phoneNumber);
+
+    if (optionalMember.isPresent()) {
+      Member member = optionalMember.get();
+
+      String tempPassword = generateTemporaryPassword();
+      mailService.sendTemporaryPassword(email, tempPassword);
+
+      member.setPassword(passwordEncoder.encode(tempPassword));
+      memberRepository.saveAndFlush(member);
+
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  private String generateTemporaryPassword() {
+    String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+";
+    Random random = new Random();
+
+    // 8~12 사이 랜덤 길이 설정
+    int length = 8 + random.nextInt(5); // 8 + (0~4) → 8~12
+    StringBuilder tempPassword = new StringBuilder();
+
+    for (int i = 0; i < length; i++) {
+      tempPassword.append(chars.charAt(random.nextInt(chars.length())));
+    }
+
+    return tempPassword.toString();
   }
 }

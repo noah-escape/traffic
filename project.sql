@@ -33,11 +33,8 @@ CREATE TABLE board (
     content text NOT NULL COMMENT '게시글 내용',
     hit int DEFAULT '0' COMMENT '조회수',
     writedate datetime DEFAULT CURRENT_TIMESTAMP COMMENT '작성시간',
-
     notice bit(1) NOT NULL DEFAULT b'0' COMMENT '공지 여부 (1: 공지글)',
-
     nick_name varchar(255) DEFAULT NULL,
-
     PRIMARY KEY (board_num),
     UNIQUE KEY idx_category_seq (category_id, board_seq),
     KEY user_id (user_id),
@@ -68,6 +65,36 @@ CREATE TABLE reply (
     PRIMARY KEY (num),
     KEY (board_num),
     KEY (user_id),
-    CONSTRAINT fk_reply_user FOREIGN KEY (user_id) REFERENCES users(user_id),
-    CONSTRAINT fk_reply_board FOREIGN KEY (board_num) REFERENCES board(board_num)
+    CONSTRAINT fk_reply_user FOREIGN KEY (user_id) REFERENCES users (user_id),
+    CONSTRAINT fk_reply_board FOREIGN KEY (board_num) REFERENCES board (board_num)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '댓글 테이블';
+
+-- exroad_properties 테이블
+CREATE TABLE exroad_properties (
+    UFID VARCHAR(255) PRIMARY KEY COMMENT '고유 ID',
+    RDNU VARCHAR(25) NOT NULL COMMENT '도로 번호',
+    NAME VARCHAR(100) NOT NULL COMMENT '도로 이름'
+) COMMENT '고속도로 정보 테이블'
+
+-- exroad_coordinates 테이블
+CREATE TABLE exroad_coordinates (
+    UFID VARCHAR(255) COMMENT '고유 ID',
+    geo_X FLOAT NOT NULL COMMENT '위도',
+    geo_Y FLOAT NOT NULL COMMENT '경도',
+    Foreign Key (UFID) REFERENCES exroad_properties (UFID)
+) COMMENT '고속도로 위도/경도 테이블'
+
+-- itsroad_properties 테이블
+CREATE TABLE itsroad_properties (
+    UFID VARCHAR(255) PRIMARY KEY COMMENT '고유 ID',
+    RDNU VARCHAR(25) NOT NULL COMMENT '도로 번호',
+    NAME VARCHAR(100) NOT NULL COMMENT '도로 이름'
+) COMMENT '국도 정보 테이블'
+
+-- itsroad_coordinates 테이블
+CREATE TABLE itsroad_coordinates (
+    UFID VARCHAR(255) COMMENT '고유 ID',
+    geo_X FLOAT NOT NULL COMMENT '위도',
+    geo_Y FLOAT NOT NULL COMMENT '경도',
+    Foreign Key (UFID) REFERENCES itsroad_properties (UFID)
+) COMMENT '국도 위도/경도 테이블'
