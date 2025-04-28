@@ -5,27 +5,27 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>회원정보 수정</title>
-  <!-- ✅ Google Fonts -->
-  <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=swap" rel="stylesheet">
 
-  <!-- ✅ Bootstrap & 외부 리소스 -->
+  <!-- ✅ Bootstrap & 외부 공통 리소스 -->
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css"
+    rel="stylesheet">
 
-  <!-- ✅ jQuery (Bootstrap JS보다 먼저) -->
+  <!-- ✅ jQuery (항상 Bootstrap JS보다 먼저!) -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
   <!-- ✅ Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- ✅ 프로젝트 전용 CSS/JS -->
+  <!-- ✅ 프로젝트 전용 CSS & JS -->
   <link rel="stylesheet" th:href="@{/css/home.css}">
+  <link rel="stylesheet" th:href="@{/css/mypage.css}">
   <script th:src="@{/js/home.js}"></script>
 
 </head>
 
-<body th:class="${darkMode != null and darkMode ? 'dark-mode' : 'light-mode'}">
-
+<body class="d-flex flex-column min-vh-100">
   <!-- ✅ 네브바 -->
   <nav class="navbar navbar-expand-lg px-4 position-relative">
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
@@ -33,16 +33,18 @@
       <span class="navbar-toggler-icon"></span>
     </button>
 
-    <a class="navbar-brand d-none d-lg-block" th:href="@{/}">Same=</a>
+    <!-- 웹(데스크톱)용 로고 -->
+    <a class="navbar-brand d-none d-lg-block position-absolute top-0 mt-2 ms-3" style="z-index: 1020;"
+      th:href="@{/}">Same=</a>
 
     <div class="position-absolute end-0 top-0 mt-2 me-3 d-flex align-items-center gap-2">
       <th:block sec:authorize="isAuthenticated()">
         <div class="dropdown">
-          <button class="btn btn-secondary dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown"
-            aria-expanded="false">
-            내정보
+          <button class="btn login-btn dropdown-toggle rounded-pill px-3 py-2" type="button" id="userDropdown"
+            data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-person-circle me-1"></i> 내정보
           </button>
-          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+          <ul class="dropdown-menu dropdown-menu-end my-2 auth-dropdown" aria-labelledby="userDropdown">
             <li><a class="dropdown-item" th:href="@{/member/mypage}">마이페이지</a></li>
             <li>
               <form th:action="@{/logout}" method="post">
@@ -53,30 +55,36 @@
         </div>
       </th:block>
       <th:block sec:authorize="isAnonymous()">
-        <a th:href="@{/auth/login}" class="btn btn-outline-light">로그인</a>
+        <a th:href="@{/auth/login}" class="btn login-btn rounded-pill px-3 py-2">
+          <i class="bi bi-person-circle me-1"></i> 로그인
+        </a>
       </th:block>
       <button id="toggle-mode" class="btn btn-outline-light">🌙</button>
     </div>
 
-    <div class="collapse navbar-collapse justify-content-center" id="navbarContent">
-      <!-- 모바일 로고 -->
+    <!-- 모바일 메뉴 안에 있는 로고 -->
+    <div class="collapse navbar-collapse justify-content-center" id="mobileMenu">
       <div class="d-lg-none text-center w-100">
-        <a class="fw-bold text-white fs-4 mt-2 text-decoration-none" th:href="@{/}">Same=</a>
-        <hr class="bg-light my-2">
+        <a class="navbar-brand fw-bold text-white fs-4 mt-2 text-decoration-none" th:href="@{/}">Same=</a>
+        <hr />
       </div>
 
       <ul class="navbar-nav text-center">
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="boardDropdown" role="button" data-bs-toggle="dropdown"
-            aria-expanded="false">
+        <li class="nav-item position-relative">
+          <a class="nav-link d-flex align-items-center justify-content-center" href="#" id="mobileBoardDropdown"
+            data-bs-toggle="collapse" data-bs-target="#boardDropdownMenu" aria-expanded="false"
+            aria-controls="boardDropdownMenu">
             게시판
+            <i class="bi bi-chevron-down ms-2 arrow-icon"></i>
           </a>
-          <ul class="dropdown-menu" aria-labelledby="boardDropdown">
-            <li><a class="dropdown-item" th:href="@{/board/list(categoryId=2)}">자유게시판</a></li>
-            <li><a class="dropdown-item" th:href="@{/board/list(categoryId=3)}">민원게시판</a></li>
-          </ul>
+          </a>
+          <div class="collapse" id="boardDropdownMenu">
+            <ul class="list-unstyled ps-0">
+              <li><a class="dropdown-item text-center" th:href="@{/board/list(categoryId=2)}">자유게시판</a></li>
+              <li><a class="dropdown-item text-center" th:href="@{/board/list(categoryId=3)}">민원게시판</a></li>
+            </ul>
+          </div>
         </li>
-
         <li class="nav-item"><a class="nav-link" href="#tech">Tech & Service</a></li>
         <li class="nav-item"><a class="nav-link" th:href="@{/pages/map/traffic}">지도</a></li>
         <li class="nav-item"><a class="nav-link" href="#news">News</a></li>
@@ -85,19 +93,39 @@
     </div>
   </nav>
 
-  <main class="register-container">
+  <!-- ✅ 메인 -->
+  <main class="mypage-container">
     <h1>회원정보 수정</h1>
 
     <form th:action="@{/register/update}" method="post" th:object="${memberDTO}" id="updateForm">
+
       <div>
         <label>아이디</label>
         <input type="text" th:field="*{userId}" readonly>
       </div>
 
+      <!-- ✅ 비밀번호 변경 버튼 -->
+      <div class="mb-3">
+        <button type="button" id="togglePasswordFields" class="full-btn black-btn">비밀번호 변경</button>
+      </div>
+
+      <!-- ✅ 비밀번호 변경 입력창 -->
+      <div id="passwordFields" style="display: none;">
+        <div>
+          <label>새 비밀번호</label>
+          <input type="password" class="form-control" id="newPassword" name="newPassword" autocomplete="new-password"
+            placeholder="새 비밀번호">
+        </div>
+        <div>
+          <label>새 비밀번호 확인</label>
+          <input type="password" class="form-control" id="confirmNewPassword" placeholder="새 비밀번호 확인">
+        </div>
+      </div>
+
       <div>
         <label>닉네임</label>
         <input type="text" th:field="*{nickName}" id="nickName">
-        <button type="button" id="checkNickNameBtn" class="btn-black">중복 확인</button>
+        <button type="button" id="checkNickNameBtn" class="full-btn gray-btn">중복 확인</button>
         <span id="nickNameMessage" class="error"></span>
       </div>
 
@@ -125,36 +153,79 @@
         <label>주소</label>
         <div class="address-group">
           <input type="text" th:field="*{address}" readonly>
-          <button type="button" onclick="execDaumPostcode()" class="btn-black">주소 검색</button>
+          <button type="button" onclick="execDaumPostcode()" class="full-btn black-btn">주소 검색</button>
         </div>
       </div>
 
-      <input type="hidden" th:field="*{addressCity}">
-      <input type="hidden" th:field="*{addressDistrict}">
-      <input type="hidden" th:field="*{addressRoad}">
-      <input type="hidden" th:field="*{addressNumber}">
-      <input type="hidden" th:field="*{addressDetail}">
-
-      <div class="button-group-vertical">
+      <div class="form-button-wrapper">
         <button type="submit" class="full-btn black-btn">수정 완료</button>
-
-        <form id="deleteForm" th:action="@{/register/delete}" method="post">
-          <button type="submit" class="full-btn red-btn">회원 탈퇴</button>
-        </form>
-
+        <button type="button" class="full-btn red-btn" onclick="confirmDelete()">회원 탈퇴</button>
         <button type="button" class="full-btn gray-btn" onclick="history.back()">돌아가기</button>
       </div>
-
     </form>
 
-    <!-- 탈퇴 전송 form -->
+    <!-- 탈퇴용 form -->
     <form id="deleteForm" th:action="@{/register/delete}" method="post"></form>
   </main>
 
-  <!-- 주소 검색 API -->
+  <!-- ✅ 스크립트 -->
   <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 
   <script>
+    $(document).ready(function () {
+
+      $("#togglePasswordFields").click(function () {
+        $("#passwordFields").toggle();
+        if ($("#passwordFields").is(":visible")) {
+          setTimeout(() => $("#newPassword").focus(), 100);
+        }
+      });
+
+      let originalNickName = $("#nickName").val();
+      let isNickNameAvailable = true;
+
+      $("#checkNickNameBtn").click(function () {
+        const nickName = $("#nickName").val();
+        if (!nickName) {
+          $("#nickNameMessage").text("닉네임을 입력해주세요.");
+          return;
+        }
+
+        $.get("/register/checkNickNameDuplicate?nickName=" + nickName, function (data) {
+          if (data && nickName !== originalNickName) {
+            $("#nickNameMessage").text("이미 사용 중입니다.");
+            isNickNameAvailable = false;
+          } else {
+            $("#nickNameMessage").text("사용 가능합니다.").css("color", "green");
+            isNickNameAvailable = true;
+          }
+        });
+      });
+
+      $("#updateForm").submit(function () {
+        const currentNickName = $("#nickName").val();
+        const newPassword = $("#newPassword").val();
+        const confirmNewPassword = $("#confirmNewPassword").val();
+
+        if (currentNickName !== originalNickName && !isNickNameAvailable) {
+          alert("닉네임 중복 확인을 해주세요.");
+          return false;
+        }
+
+        if (newPassword || confirmNewPassword) {
+          if (newPassword !== confirmNewPassword) {
+            alert("비밀번호가 일치하지 않습니다.");
+            return false;
+          }
+          if (newPassword.length < 8 || newPassword.length > 12) {
+            alert("비밀번호는 8 ~ 12자여야 합니다.");
+            return false;
+          }
+        }
+      });
+
+    });
+
     function execDaumPostcode() {
       new daum.Postcode({
         oncomplete: function (data) {
@@ -163,16 +234,6 @@
             alert("도로명 주소를 찾을 수 없습니다.");
             return;
           }
-          const split = fullRoad.split(" ");
-          if (split.length < 4) {
-            alert("주소 형식이 예상과 다릅니다.");
-            return;
-          }
-          document.querySelector('[name="addressCity"]').value = split[0];
-          document.querySelector('[name="addressDistrict"]').value = split[1];
-          document.querySelector('[name="addressRoad"]').value = split[2];
-          document.querySelector('[name="addressNumber"]').value = split[3];
-          document.querySelector('[name="addressDetail"]').value = "";
           document.querySelector('[name="address"]').value = fullRoad;
         }
       }).open();
@@ -183,35 +244,6 @@
         document.getElementById('deleteForm').submit();
       }
     }
-
-    let originalNickName = $("#nickName").val();
-    let isNickNameAvailable = true;
-
-    $("#checkNickNameBtn").on("click", function () {
-      const nickName = $("#nickName").val();
-      if (!nickName) {
-        $("#nickNameMessage").text("닉네임을 입력해주세요.").css("color", "red").show();
-        return;
-      }
-
-      $.get("/register/checkNickNameDuplicate?nickName=" + nickName, function (data) {
-        if (data && nickName !== originalNickName) {
-          $("#nickNameMessage").text("이미 사용 중인 닉네임입니다.").css("color", "red").show();
-          isNickNameAvailable = false;
-        } else {
-          $("#nickNameMessage").text("사용 가능한 닉네임입니다.").css("color", "green").show();
-          isNickNameAvailable = true;
-        }
-      });
-    });
-
-    $("#updateForm").submit(function () {
-      const currentNickName = $("#nickName").val();
-      if (currentNickName !== originalNickName && !isNickNameAvailable) {
-        alert("닉네임 중복 확인을 해주세요.");
-        return false;
-      }
-    });
   </script>
 
 </body>

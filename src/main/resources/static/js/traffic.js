@@ -43,6 +43,27 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   window.map = map;
 
+  // ✅ 지도 로딩 시 전국 CCTV 데이터 preload
+  if (window.preloadAllCctvs) {
+    console.log('✅ 전국 CCTV 데이터 preload 시작');
+    window.preloadAllCctvs();
+  } else {
+    console.warn('⚠️ preloadAllCctvs가 아직 준비되지 않았습니다.');
+  }
+
+  // 사이드바 버튼 핸들링
+  const sidebarCctvBtn = document.getElementById('sidebarCctvBtn');
+  sidebarCctvBtn.addEventListener('click', () => {
+    const panel = document.getElementById('cctvFilterPanel');
+    panel.style.display = panel.style.display === 'flex' ? 'none' : 'flex';
+    if (panel.style.display === 'flex') {
+      window.loadRoadList();
+    } else {
+      window.clearCctvMarkers();
+      window.hideVideo();
+    }
+  });
+
   // 버튼별 기능 정의
   const buttonConfigs = [
     {
@@ -123,8 +144,8 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       onDeactivate: () => {
         window.clearCctvMarkers?.();
-        document.getElementById('roadSearchInput').value = '';
-        document.getElementById('roadList').innerHTML = '';
+        const roadList = document.getElementById('roadList');
+        if (roadList) roadList.innerHTML = '';
       }
     }
   ];
@@ -265,7 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
   dropdownToggles.forEach(toggle => {
     toggle.addEventListener('click', () => {
-      setTimeout(adjustMapHeight, 300); // 드롭다운 애니메이션 시간 고려
+      setTimeout(adjustMapHeight, 300);
     });
   });
 });
