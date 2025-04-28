@@ -8,12 +8,6 @@
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
-.write-container h2 {
-  font-weight: 700;
-  margin-bottom: 1.5rem;
-  text-align: center;
-}
-
 .write-container .form-group {
   margin-bottom: 1.5rem;
 }
@@ -42,47 +36,112 @@
   margin-right: 0.5rem;
 }
 
+/* ✅ 버튼 스타일 */
+button {
+  background-color: var(--dark-green);
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  background-color: var(--medium-blue);
+}
+
+button[type="button"] {
+  background-color: #f0f0f0;
+  color: var(--navy);
+}
+
+button[type="button"]:hover {
+  background-color: #e0e0e0;
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+/* 폴라로이드 스타일 */
+.polaroid-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.polaroid {
+  background-color: white;
+  box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+  transition: transform 0.2s ease;
+}
+
+.polaroid img {
+  max-width: 100%;
+  height: 150px;
+  object-fit: contain;
+  border-radius: 4px;
+  background-color: #f8f9fa;
+}
+
+.polaroid label {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.9rem;
+}
+
+.polaroid:hover {
+  transform: scale(1.03);
+}
+
+/* 첨부 이미지 섹션 간격 맞춤 */
+.attachment-section {
+  margin: 40px 0; 
+}
+
+.attachment-section h5 {
+  margin-top: 40px;
+  margin-bottom: 20px;
+}
+
+.attachment-section p {
+  margin: 0;
+}
+
+/* 파일 업로드 영역 간격 */
+.upload-section {
+  margin-bottom: 40px; /* 공지글과의 간격 */
+}
+
+/* ✅ 파일 업로드 필드 및 버튼 아이콘 조정 */
 input[type="file"].form-control {
   cursor: pointer;
 }
 
-.write-container input[type="file"] {
-  width: auto; /* ✅ input-group 안에서 한 줄로 보이게 */
-  flex-grow: 1;
-}
-
-.write-container .d-flex input[type="file"] {
-  margin-bottom: 0;
-}
-
-/* ✅ 버튼 그룹 */
-.button-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  justify-content: flex-end;
-}
-
-.button-group .btn {
-  min-width: 100px;
-  font-weight: 500;
-  border-radius: 0.5rem;
-}
-
-.button-group .btn-primary {
-  background-color: #007bff;
-  border: none;
-}
-
-.button-group .btn-secondary {
-  background-color: #6c757d;
-  border: none;
-}
-
-/* ✅ 이미지 미리보기 */
-img[alt="기존 이미지"] {
-  border-radius: 8px;
-  margin: 0.5rem 0;
+#file-list .d-flex {
   border: 1px solid #ddd;
-  display: block;
+  padding: 8px;
+  border-radius: 5px;
+}
+
+#file-list .btn-danger {
+  width: 30px;
+  height: 30px;
+  background-color: #f44336;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+#file-list .btn-danger:hover {
+  background-color: #d32f2f;
 }
