@@ -51,13 +51,14 @@ button:hover {
   background-color: var(--medium-blue);
 }
 
-button[type="button"] {
-  background-color: #f0f0f0;
-  color: var(--navy);
+.write-container button[type="button"] {
+  background-color: #f8d7da;
+  color: #721c24;            
 }
 
-button[type="button"]:hover {
-  background-color: #e0e0e0;
+.write-container button[type="button"]:hover {
+  background-color: #f1b0b7; 
+  color: #721c24;         
 }
 
 .button-group {
@@ -132,7 +133,7 @@ input[type="file"].form-control {
   border-radius: 5px;
 }
 
-#file-list .btn-danger {
+#file-list .delete-btn {
   width: 30px;
   height: 30px;
   background-color: #f44336;
@@ -142,6 +143,26 @@ input[type="file"].form-control {
   font-size: 14px;
 }
 
-#file-list .btn-danger:hover {
+#file-list .delete-btn:hover {
   background-color: #d32f2f;
+}
+
+/* 🌚 다크모드 전용 스타일 추가 */
+body.dark-mode .write-container {
+  background-color: var(--card-bg);
+}
+
+body.dark-mode .polaroid label {
+  color: black; 
+}
+
+/* 🌚 다크모드 - 취소하기 버튼 스타일 */
+body.dark-mode .write-container button[type="button"] {
+  background-color: #F87171;
+  color: white;
+}
+
+body.dark-mode .write-container button[type="button"]:hover {
+  background-color: #DC2626; 
+  color: white;
 }
