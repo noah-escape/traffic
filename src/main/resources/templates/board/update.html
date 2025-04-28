@@ -26,7 +26,7 @@
 
 <body class="d-flex flex-column min-vh-100">
   <!-- ✅ 네브바 -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4 position-relative">
+  <nav class="navbar navbar-expand-lg px-4 position-relative">
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mobileMenu"
       aria-controls="mobileMenu" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
@@ -135,7 +135,7 @@
 
       <!-- 이미지 삭제 버튼 -->
       <div th:if="${post.imageFileNames != null and !post.imageFileNames.?[imagePath != null].isEmpty()}" class="text-end my-3">
-        <button type="button" class="btn btn-danger" onclick="removeSelectedImages()">선택한 이미지 삭제</button>
+        <button type="button" class="btn delete-btn" onclick="removeSelectedImages()">선택한 이미지 삭제</button>
       </div>
 
       <div class="upload-section">
