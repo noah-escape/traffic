@@ -179,6 +179,11 @@ window.setAsStart = function (lat, lng, label) {
 };
 
 window.setAsGoal = function (lat, lng, label) {
+  if (routeGoal.lat === lat && routeGoal.lng === lng) {
+    if (window.routeClickInfoWindow) window.routeClickInfoWindow.setMap(null);
+    return;
+  }
+
   if (goalMarker) goalMarker.setMap(null);
 
   routeGoal = { lat, lng, label };
@@ -193,6 +198,8 @@ window.setAsGoal = function (lat, lng, label) {
     },
     title: "도착지"
   });
+
+  if (window.routeClickInfoWindow) window.routeClickInfoWindow.setMap(null);
 
   if (!routeStart.lat || !routeStart.lng) {
     window.setStartToCurrentLocation(); // fallback

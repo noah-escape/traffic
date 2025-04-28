@@ -157,7 +157,6 @@ body.dark-mode #bikeFilterPanel {
 }
 
 /* 📋 리스트 */
-#roadList,
 #bikeRoadList {
   margin-top: 20px;
   border-top: 1px solid #eee;
@@ -165,7 +164,6 @@ body.dark-mode #bikeFilterPanel {
   font-size: 14px;
 }
 
-#roadList .list-group-item,
 #bikeRoadList .list-group-item {
   border-radius: 8px;
   padding: 10px 14px;
@@ -175,13 +173,11 @@ body.dark-mode #bikeFilterPanel {
   transition: background 0.2s;
 }
 
-#roadList .list-group-item:hover,
 #bikeRoadList .list-group-item:hover {
   background-color: var(--blue-gray);
   cursor: pointer;
 }
 
-#roadList:empty::after,
 #bikeRoadList:empty::after {
   content: '검색결과가 없습니다.';
   display: block;
@@ -189,6 +185,28 @@ body.dark-mode #bikeFilterPanel {
   color: #888;
   margin-top: 20px;
   font-size: 14px;
+}
+
+/* 📋 cctv 리스트 분리. */
+#roadList {
+  margin-top: 10px;
+  padding-left: 0;
+  list-style: none;
+  max-height: calc(100vh - 260px);
+  overflow-y: auto;
+}
+#roadList .list-group-item {
+  cursor: pointer;
+  padding: 10px 14px;
+  border: 1px solid #ccc;
+  margin-bottom: 6px;
+  border-radius: 8px;
+}
+#roadList .list-group-item:hover {
+  background: #f1f1f1;
+}
+.road-section {
+  margin-left: 10px;
 }
 
 /* 📌 길찾기 입력 가로 정렬 */
