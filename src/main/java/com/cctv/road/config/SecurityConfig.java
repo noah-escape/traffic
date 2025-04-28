@@ -70,9 +70,11 @@ public class SecurityConfig {
                 "/", "/home", "/login", "/register/**",
                 "/css/**", "/js/**", "/image/**", "/favicon.ico",
                 "/json/**", "/pages/**",
-                "/api/**", "/api/proxy/**")
+                "/api/**", "/api/proxy/**",
+                "/member/find/**", "/find-id", "/find-password")
             .permitAll()
-            .requestMatchers("/member/mypage", "/member/update", "/member/update/**").authenticated()
+            .requestMatchers("/member/mypage", "/member/update", "/member/update/**", "/member/check-password")
+            .authenticated()
             .requestMatchers("/admin/**").hasRole("ADMIN")
             .anyRequest().authenticated())
         .formLogin(form -> form
