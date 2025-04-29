@@ -4,6 +4,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="_csrf" th:content="${_csrf.token}" />
+  <meta name="_csrf_header" th:content="${_csrf.headerName}" />
   <title>마이페이지</title>
 
   <!-- ✅ Bootstrap & 외부 공통 리소스 -->
@@ -27,7 +29,7 @@
 
 <body class="d-flex flex-column min-vh-100">
   <!-- ✅ 네브바 -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4 position-relative">
+  <nav class="navbar navbar-expand-lg px-4 position-relative">
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mobileMenu"
       aria-controls="mobileMenu" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
@@ -100,59 +102,87 @@
       <a href="javascript:history.back()" class="full-btn gray-btn">돌아가기</a>
     </div>
 
-    <div>
-      <label>아이디</label>
-      <input type="text" th:value="${memberDTO.userId}" readonly>
-    </div>
-
-    <div>
-      <label>닉네임</label>
-      <input type="text" th:value="${memberDTO.nickName}" readonly>
-    </div>
-
-    <div>
-      <label>이름</label>
-      <input type="text" th:value="${memberDTO.name}" readonly>
-    </div>
-
-    <div>
-      <label>이메일</label>
-      <input type="email" th:value="${memberDTO.email}" readonly>
-    </div>
-
-    <div>
-      <label>전화번호</label>
-      <input type="text" th:value="${memberDTO.phoneNumber}" readonly>
-    </div>
-
-    <div>
-      <label>생년월일</label>
-      <input type="text" th:value="${#temporals.format(memberDTO.birthDate, 'yyyy-MM-dd')}" readonly>
-    </div>
-
-    <div>
-      <label>주소</label>
-      <input type="text" th:value="${memberDTO.address}" readonly>
-    </div>
+    <div><label>아이디</label><input type="text" th:value="${memberDTO.userId}" readonly></div>
+    <div><label>닉네임</label><input type="text" th:value="${memberDTO.nickName}" readonly></div>
+    <div><label>이름</label><input type="text" th:value="${memberDTO.name}" readonly></div>
+    <div><label>이메일</label><input type="email" th:value="${memberDTO.email}" readonly></div>
+    <div><label>전화번호</label><input type="text" th:value="${memberDTO.phoneNumber}" readonly></div>
+    <div><label>생년월일</label><input type="text" th:value="${#temporals.format(memberDTO.birthDate, 'yyyy-MM-dd')}"
+        readonly></div>
+    <div><label>주소</label><input type="text" th:value="${memberDTO.address}" readonly></div>
 
     <div class="form-button-wrapper">
-      <form th:action="@{/register/update}" method="get">
-        <button type="submit" class="full-btn black-btn">회원정보 수정</button>
-      </form>
+      <button type="button" class="full-btn black-btn" id="openPasswordCheckModal">회원정보 수정</button>
       <form id="deleteForm" th:action="@{/register/delete}" method="post">
         <button type="submit" class="full-btn red-btn">회원 탈퇴</button>
       </form>
     </div>
   </main>
 
+  <!-- ✅ 비밀번호 확인 모달 -->
+  <div class="modal fade" id="passwordCheckModal" tabindex="-1" aria-labelledby="passwordCheckModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="passwordCheckForm">
+          <div class="modal-header">
+            <h5 class="modal-title" id="passwordCheckModalLabel">비밀번호 확인</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <label for="currentPassword" class="form-label">현재 비밀번호</label>
+            <input type="password" class="form-control" id="currentPassword" name="currentPassword" required>
+            <div id="passwordError" class="text-danger mt-2" style="display:none;">비밀번호가 일치하지 않습니다.</div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary">확인</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ JS: 비밀번호 체크 후 이동 -->
   <script>
+    document.getElementById('openPasswordCheckModal').addEventListener('click', function () {
+      var passwordModal = new bootstrap.Modal(document.getElementById('passwordCheckModal'));
+      passwordModal.show();
+    });
+  
+    document.getElementById('passwordCheckForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+  
+      const password = document.getElementById('currentPassword').value;
+      const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+      const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+  
+      fetch('/register/check-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          [csrfHeader]: csrfToken
+        },
+        body: 'currentPassword=' + encodeURIComponent(password)
+      })
+      .then(response => {
+        if (response.ok) {
+          window.location.href = '/register/update';
+        } else {
+          document.getElementById('passwordError').style.display = 'block';
+        }
+      })
+      .catch(error => {
+        console.error('비밀번호 확인 실패', error);
+      });
+    });
+  
     document.getElementById('deleteForm').addEventListener('submit', function (e) {
       const confirmed = confirm("정말 탈퇴하시겠습니까? 😥\n탈퇴하면 복구할 수 없습니다.");
       if (!confirmed) {
         e.preventDefault();
       }
     });
-  </script>
+  </script>  
 
   <button id="scrollToTopBtn" class="btn btn-warning rounded-circle shadow">
     <i class="bi bi-arrow-up"></i>
@@ -162,7 +192,6 @@
   <footer class="footer">
     ⓒ 2025 Kakao Corp. All rights reserved.
   </footer>
-
-</body>
+  < </body>
 
 </html>
