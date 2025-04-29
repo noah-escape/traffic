@@ -26,7 +26,7 @@
 
 <body class="d-flex flex-column min-vh-100">
   <!-- ✅ 네브바 -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4 position-relative">
+  <nav class="navbar navbar-expand-lg px-4 position-relative">
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mobileMenu"
       aria-controls="mobileMenu" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
@@ -109,21 +109,21 @@
 
     <div class="view-content" th:text="${post.content}">내용</div>
 
-    <!-- 항상 표시되는 제목 -->
-    <h5>첨부 이미지</h5>
+    <!-- 첨부 이미지 섹션 -->
+    <div class="attachment-section">
+      <h5>첨부 이미지</h5>
 
-    <!-- 유효한 이미지가 1개 이상 있을 때만 출력 -->
-    <div th:if="${post.imageFileNames != null and 
-  !post.imageFileNames.?[imagePath != null].isEmpty()}">
-      <div th:each="image : ${post.imageFileNames}">
-        <img th:if="${image.imagePath != null}" th:src="${image.imagePath}" alt="게시글 이미지" width="400">
+      <!-- 유효한 이미지가 1개 이상 있을 때만 출력 -->
+      <div th:if="${post.imageFileNames != null and !post.imageFileNames.?[imagePath != null].isEmpty()}">
+        <div th:each="image : ${post.imageFileNames}">
+          <img th:if="${image.imagePath != null}" th:src="${image.imagePath}" alt="게시글 이미지" width="400">
+        </div>
       </div>
-    </div>
 
-    <!-- 유효한 이미지가 하나도 없을 때 -->
-    <div th:unless="${post.imageFileNames != null and 
-     !post.imageFileNames.?[imagePath != null].isEmpty()}">
-      <p>첨부된 이미지가 없습니다.</p>
+      <!-- 유효한 이미지가 하나도 없을 때 -->
+      <div th:unless="${post.imageFileNames != null and !post.imageFileNames.?[imagePath != null].isEmpty()}">
+        <p>첨부된 이미지가 없습니다.</p>
+      </div>
     </div>
 
     <!-- ✅ 모든 버튼을 하나의 그룹으로 묶기 -->
@@ -133,22 +133,21 @@
     #authentication.principal.username == post.userId : 
     #authentication.principal == post.userId or #authorization.expression('hasRole(''ADMIN'')')}">
 
-        <a th:href="@{|/board/update/${post.categoryId}/${post.boardSeq}?currentPage=${currentPage}|}"
-          class="btn btn-primary">
+        <button type="button"
+          th:onclick="|location.href='/board/update/${post.categoryId}/${post.boardSeq}?currentPage=${currentPage}'|">
           수정하기
-        </a>
+        </button>
 
-        <button
-          th:onclick="|if(confirm('정말 삭제하시겠습니까?')) location.href='/board/delete/${post.boardNum}?currentPage=${currentPage}'|"
-          class="btn btn-danger">
+        <button type="button" class="delete"
+          th:onclick="|if(confirm('정말 삭제하시겠습니까?')) location.href='/board/delete/${post.boardNum}?currentPage=${currentPage}'|">
           삭제하기
         </button>
-      </th:block>
 
-      <!-- ✅ 항상 보이는 목록 버튼 -->
-      <a th:href="@{/board/list(categoryId=${originCategoryId}, currentPage=${currentPage})}" class="btn btn-secondary">
-        목록보기
-      </a>
+        <button type="button"
+          th:onclick="|location.href='/board/list?categoryId=${originCategoryId}&amp;currentPage=${currentPage}'|">
+          목록보기
+        </button>
+
     </div>
 
     <!-- ✅ 댓글 리스트 -->
@@ -157,7 +156,7 @@
       <div class="button-group d-flex justify-content-between align-items-center mb-3">
         <h5 class="mb-0">댓글</h5>
         <th:block sec:authorize="isAuthenticated()">
-          <button type="button" id="comment-toggle-btn" onclick="toggleCommentForm()" class="btn btn-outline-success">
+          <button type="button" id="comment-toggle-btn" onclick="toggleCommentForm()" class="reply-button">
             댓글쓰기
           </button>
         </th:block>
@@ -181,7 +180,7 @@
             style="width: 100%; height: 100px; resize: none;"></textarea>
           <br />
           <div class="comment-submit">
-            <button class="btn btn-success" type="submit">댓글등록</button>
+            <button type="submit">댓글등록</button>
           </div>
         </form>
       </div>
