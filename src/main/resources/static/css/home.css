@@ -110,23 +110,6 @@ h2 {
   background-color: white;
 }
 
-.dropdown-toggle {
-  background-color: transparent;
-  color: white;
-  transition: all 0.3s ease;
-  border: none;
-}
-
-.dropdown-toggle:hover {
-  background-color: white;
-}
-
-.dropdown-toggle:focus, .dropdown-toggle:active {
-  background-color: transparent;
-  color: white;
-  border: none;
-}
-
 hr {
   background-color: white;
   height: 3px;
@@ -241,11 +224,6 @@ body.dark-mode #responsibility h5 {
 }
 
 /* 기본 다크 모드 버튼 스타일 */
-body.dark-mode .login-btn {
-  background-color: transparent;
-  color: white;
-}
-
 body.dark-mode .login-btn:hover {
   background-color: var(--medium-blue);
   color: white;
