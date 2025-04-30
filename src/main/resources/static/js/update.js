@@ -117,6 +117,15 @@ document.addEventListener('DOMContentLoaded', function () {
         // ✅ 변경사항 있음
         alert("변경사항을 저장합니다.");
     });
+
+    document.querySelectorAll('.polaroid').forEach(polaroid => {
+        polaroid.addEventListener('click', function (event) {
+            const checkbox = polaroid.querySelector('input[type="checkbox"]');
+            if (!event.target.matches('input[type="checkbox"]') && !event.target.closest('label')) {
+                checkbox.checked = !checkbox.checked;
+            }
+        });
+    });
 });
 
 // removeSelectedImages는 그대로 유지
