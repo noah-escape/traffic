@@ -97,14 +97,13 @@
 
     <div class="write-container d-flex justify-content-end">
       <sec:authorize access="isAuthenticated()">
-        <a th:href="@{/board/write(categoryId=${categoryId})}" class="write-btn">글쓰기</a>
+        <a th:href="@{/board/write(categoryId=${categoryId}, page=${pageNum})}" class="write-btn">글쓰기</a>
       </sec:authorize>
     </div>
 
     <div class="section-title" th:if="${notices != null and !notices.isEmpty()}">📌 공지사항</div>
     <div class="notice-card" th:each="post : ${notices}">
-      <a class="title"
-        th:href="@{|/board/view/${post.boardNum}?currentPage=${currentPage}&originCategoryId=${categoryId}|}">
+      <a class="title" th:href="@{|/board/view/${post.boardNum}?page=${pageNum}&originCategoryId=${categoryId}|}">
         [공지] <span th:text="${post.subject}">공지 제목</span>
       </a>
       <span class="meta">
@@ -121,7 +120,7 @@
     </div>
     <div class="post-card d-flex justify-content-between align-items-center" th:each="post : ${posts}">
       <div class="post-details d-flex flex-column w-100">
-        <a class="title" th:href="@{|/board/view/${post.boardNum}?currentPage=${currentPage}|}"
+        <a class="title" th:href="@{|/board/view/${post.boardNum}?page=${pageNum}&originCategoryId=${categoryId}|}"
           th:text="${post.subject}">제목</a>
 
         <!-- 제목 아래에 메타 정보 배치 -->
@@ -143,27 +142,27 @@
 
     <p class="no-post" th:if="${posts == null or posts.isEmpty()}">등록된 게시글이 없습니다.</p>
 
-    <div class="pagination d-flex justify-content-center mt-4" th:if="${pageList != null and pageList.totalPage > 1}">
-      <a class="page-link" th:if="${pageList.startPage > 1}"
-        th:href="@{/board/list(categoryId=${categoryId}, currentPage=${pageList.startPage - 1})}">이전</a>
+    <div class="pagination d-flex justify-content-center mt-4" th:if="${page.totalPages > 1}">
+      <!-- 항상 보이지만 비활성화 상태를 조건으로 설정 -->
+      <a class="page-link" th:href="@{/board/list(categoryId=${categoryId}, page=${page.number})}"
+        th:classappend="${!page.hasPrevious()} ? ' disabled no-hover' : ''">이전</a>
 
-      <a class="page-link" th:each="p : ${#numbers.sequence(pageList.startPage, pageList.endPage)}"
-        th:href="@{/board/list(categoryId=${categoryId}, currentPage=${p})}"
-        th:classappend="${p == pageList.currentPage} ? ' active' : ''" th:text="${p}">1</a>
+      <a class="page-link" th:each="i : ${#numbers.sequence(1, page.totalPages)}"
+        th:href="@{/board/list(categoryId=${categoryId}, page=${i})}"
+        th:classappend="${i == page.number + 1} ? ' active' : ''" th:text="${i}">1</a>
 
-      <a class="page-link" th:if="${pageList.endPage < pageList.totalPage}"
-        th:href="@{/board/list(categoryId=${categoryId}, currentPage=${pageList.endPage + 1})}">다음</a>
+      <a class="page-link" th:href="@{/board/list(categoryId=${categoryId}, page=${page.number + 2})}"
+        th:classappend="${!page.hasNext()} ? ' disabled no-hover' : ''">다음</a>
     </div>
   </div>
+    <button id="scrollToTopBtn" class="btn btn-warning rounded-circle shadow">
+      <i class="bi bi-arrow-up"></i>
+    </button>
 
-  <button id="scrollToTopBtn" class="btn btn-warning rounded-circle shadow">
-    <i class="bi bi-arrow-up"></i>
-  </button>
-
-  <!-- ✅ 푸터 -->
-  <footer class="footer">
-    ⓒ 2025 Kakao Corp. All rights reserved.
-  </footer>
+    <!-- ✅ 푸터 -->
+    <footer class="footer">
+      ⓒ 2025 Kakao Corp. All rights reserved.
+    </footer>
 
 </body>
 

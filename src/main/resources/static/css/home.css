@@ -223,9 +223,13 @@ body.dark-mode #responsibility h5 {
   color: var(--text-color);
 }
 
-/* 기본 다크 모드 버튼 스타일 */
+/* 🌚 다크모드 - '내정보' 버튼 배경색 */
+body.dark-mode .login-btn {
+  background-color:  transparent !important;
+}
+
 body.dark-mode .login-btn:hover {
-  background-color: var(--medium-blue);
+  background-color: var(--medium-blue) !important;
   color: white;
 }
 
