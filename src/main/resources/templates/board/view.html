@@ -128,25 +128,24 @@
 
     <!-- ✅ 모든 버튼을 하나의 그룹으로 묶기 -->
     <div class="button-group my-4">
-      <!-- ✅ 조건부 버튼: 수정/삭제 -->
-      <th:block th:if="${#authentication.principal instanceof T(org.springframework.security.core.userdetails.User) ? 
-    #authentication.principal.username == post.userId : 
-    #authentication.principal == post.userId or #authorization.expression('hasRole(''ADMIN'')')}">
-
+      <!-- 수정/삭제: 작성자 본인 또는 관리자만 -->
+      <th:block th:if="${canModify}">
         <button type="button"
-          th:onclick="|location.href='/board/update/${post.categoryId}/${post.boardSeq}?currentPage=${currentPage}'|">
+          th:onclick="|location.href='/board/update/${post.categoryId}/${post.boardSeq}?page=${pageNum}&originCategoryId=${originCategoryId}'|">
           수정하기
         </button>
 
         <button type="button" class="delete"
-          th:onclick="|if(confirm('정말 삭제하시겠습니까?')) location.href='/board/delete/${post.boardNum}?currentPage=${currentPage}'|">
+          th:onclick="|if(confirm('정말 삭제하시겠습니까?')) location.href='/board/delete/${post.boardNum}?page=${pageNum}&originCategoryId=${originCategoryId}'|">
           삭제하기
         </button>
+      </th:block>
 
-        <button type="button"
-          th:onclick="|location.href='/board/list?categoryId=${originCategoryId}&amp;currentPage=${currentPage}'|">
-          목록보기
-        </button>
+      <!-- 목록보기: 항상 표시 -->
+      <button type="button"
+        th:onclick="|location.href='/board/list?page=${pageNum}&categoryId=${originCategoryId}'|">
+        목록보기
+      </button>
 
     </div>
 

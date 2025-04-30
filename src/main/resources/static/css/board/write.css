@@ -96,12 +96,12 @@ body.dark-mode .container {
   background-color: var(--card-bg);
 }
 
-body.dark-mode button {
+body.dark-mode .button-group button {
   background-color: var(--dark-green);
   color: white;
 }
 
-body.dark-mode button:hover {
+body.dark-mode .button-group button:hover {
   background-color: #0f926d;
   color: white;
 }
