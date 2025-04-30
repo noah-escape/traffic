@@ -96,6 +96,19 @@
   color: white;
 }
 
+.pagination .disabled {
+  pointer-events: none;
+  color: #aaa !important;
+  background-color: #fff !important;
+  border-color: #dee2e6 !important;
+}
+
+.pagination .no-hover:hover {
+  cursor: default;
+  background-color: transparent !important;
+  color: #aaa !important;
+}
+
 /* 🌚 다크모드 전용 스타일 추가 */
 body.dark-mode .container {
   background-color: #1E1E2F;  
