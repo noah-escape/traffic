@@ -27,7 +27,7 @@
 
 <body class="d-flex flex-column min-vh-100">
   <!-- ✅ 네브바 -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4 position-relative">
+  <nav class="navbar navbar-expand-lg px-4 position-relative">
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mobileMenu" aria-controls="mobileMenu" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
@@ -128,7 +128,7 @@
       <div class="button-group">
         <button type="submit">등록하기</button>
         <button type="reset">다시입력</button>
-        <button type="button" th:onclick="|location.href='/board/list?categoryId=${categoryId}'|">작성취소</button>
+        <button type="button" th:onclick="|location.href='/board/list?categoryId=${categoryId}&page=${pageNum}'|">작성취소</button>
       </div>
 
     </form>
