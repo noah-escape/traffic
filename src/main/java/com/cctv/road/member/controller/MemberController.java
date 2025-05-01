@@ -68,23 +68,28 @@ public class MemberController {
   public String submitOAuth2RegisterForm(@Valid @ModelAttribute("memberDTO") MemberDTO memberDTO,
       BindingResult bindingResult,
       HttpSession session) {
-
+  
+    log.debug("📥 제출된 DTO: {}", memberDTO); // 추가
+    log.debug("❗ 유효성 오류: {}", bindingResult); // 추가
+  
     validatePassword(memberDTO, bindingResult);
-
+  
     if (memberService.isUserIdDuplicate(memberDTO.getUserId())) {
       bindingResult.rejectValue("userId", "duplicate", "이미 사용 중인 아이디입니다.");
     }
-
+  
     if (memberService.isNickNameDuplicate(memberDTO.getNickName())) {
       bindingResult.rejectValue("nickName", "duplicate", "이미 사용 중인 닉네임입니다.");
     }
-
+  
     if (bindingResult.hasErrors()) {
+      log.warn("❗ 검증 실패. 다시 폼으로 리턴됨.");
+      bindingResult.getAllErrors().forEach(e -> log.warn(" - {}", e.getDefaultMessage()));
       return "register/oauth2";
     }
-
+  
     memberDTO.combineAddress();
-
+  
     if (memberDTO.getBirthDate() == null &&
         memberDTO.getNaverBirthYear() != null &&
         memberDTO.getNaverBirthDay() != null) {
@@ -96,11 +101,12 @@ public class MemberController {
         return "register/oauth2";
       }
     }
-
+  
     memberService.registerOAuth2Member(memberDTO);
     session.removeAttribute("socialUser");
+  
     return "redirect:/login?registered";
-  }
+  }  
 
   @GetMapping("/checkIdDuplicate")
   @ResponseBody
