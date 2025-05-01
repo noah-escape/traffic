@@ -1,7 +1,10 @@
 package com.cctv.road;
 
-import org.springframework.boot.SpringApplication;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 
 import io.github.cdimascio.dotenv.Dotenv;
 
@@ -9,12 +12,17 @@ import io.github.cdimascio.dotenv.Dotenv;
 public class RoadApplication {
 
 	public static void main(String[] args) {
-		// .env 파일 읽어오기
-		Dotenv dotenv = Dotenv.configure().load();
-		System.setProperty("MAIL_USERNAME", dotenv.get("MAIL_USERNAME"));
-		System.setProperty("MAIL_PASSWORD", dotenv.get("MAIL_PASSWORD"));
+		Dotenv dotenv = Dotenv.load();
 
-		// 스프링부트 시작
-		SpringApplication.run(RoadApplication.class, args);
+		Map<String, Object> props = new HashMap<>();
+		props.put("DB_URL", dotenv.get("DB_URL"));
+		props.put("DB_USERNAME", dotenv.get("DB_USERNAME"));
+		props.put("DB_PASSWORD", dotenv.get("DB_PASSWORD"));
+		props.put("MAIL_USERNAME", dotenv.get("MAIL_USERNAME"));
+		props.put("MAIL_PASSWORD", dotenv.get("MAIL_PASSWORD"));
+
+		new SpringApplicationBuilder(RoadApplication.class)
+				.properties(props)
+				.run(args);
 	}
 }
