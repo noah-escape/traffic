@@ -26,10 +26,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/register")
+@Slf4j
 public class MemberController {
 
   private final MemberService memberService;
@@ -66,23 +68,28 @@ public class MemberController {
   public String submitOAuth2RegisterForm(@Valid @ModelAttribute("memberDTO") MemberDTO memberDTO,
       BindingResult bindingResult,
       HttpSession session) {
-
+  
+    log.debug("📥 제출된 DTO: {}", memberDTO); // 추가
+    log.debug("❗ 유효성 오류: {}", bindingResult); // 추가
+  
     validatePassword(memberDTO, bindingResult);
-
+  
     if (memberService.isUserIdDuplicate(memberDTO.getUserId())) {
       bindingResult.rejectValue("userId", "duplicate", "이미 사용 중인 아이디입니다.");
     }
-
+  
     if (memberService.isNickNameDuplicate(memberDTO.getNickName())) {
       bindingResult.rejectValue("nickName", "duplicate", "이미 사용 중인 닉네임입니다.");
     }
-
+  
     if (bindingResult.hasErrors()) {
+      log.warn("❗ 검증 실패. 다시 폼으로 리턴됨.");
+      bindingResult.getAllErrors().forEach(e -> log.warn(" - {}", e.getDefaultMessage()));
       return "register/oauth2";
     }
-
+  
     memberDTO.combineAddress();
-
+  
     if (memberDTO.getBirthDate() == null &&
         memberDTO.getNaverBirthYear() != null &&
         memberDTO.getNaverBirthDay() != null) {
@@ -94,11 +101,12 @@ public class MemberController {
         return "register/oauth2";
       }
     }
-
+  
     memberService.registerOAuth2Member(memberDTO);
     session.removeAttribute("socialUser");
+  
     return "redirect:/login?registered";
-  }
+  }  
 
   @GetMapping("/checkIdDuplicate")
   @ResponseBody
@@ -158,14 +166,39 @@ public class MemberController {
   }
 
   @PostMapping("/delete")
-  public String deleteMember(@AuthenticationPrincipal CustomOAuth2User user, HttpSession session) {
-    if (user == null || user.getUsername() == null) {
-      return "redirect:/login?expired";
+  public String deleteMember(@AuthenticationPrincipal Object principal, HttpSession session) {
+    String userId = null;
+  
+    if (principal instanceof CustomOAuth2User oAuth2User) {
+      userId = oAuth2User.getUsername();
+    } else if (principal instanceof CustomUserDetails userDetails) {
+      userId = userDetails.getUsername();
     }
-
-    memberService.deleteMemberByUserId(user.getUsername());
+  
+    log.info("🔥 deleteMember 컨트롤러 진입: {}", userId);
+  
+    // ✅ 삭제 먼저
+    memberService.deleteMemberByUserId(userId);
+  
+    // ✅ 세션 나중에 끊기
     session.invalidate();
-    return "redirect:/login?deleted";
+  
+    // ✅ 모달 띄우기 위한 파라미터 포함해서 리디렉션
+    return "redirect:/member/mypage?deleted=true";
+  }  
+
+  @PostMapping("/check-password")
+  public ResponseEntity<Void> checkPassword(@RequestParam String currentPassword,
+      @AuthenticationPrincipal CustomUserDetails user) {
+
+    String userId = user.getUsername();
+    boolean match = memberService.checkPassword(userId, currentPassword);
+
+    if (match) {
+      return ResponseEntity.ok().build();
+    } else {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
   }
 
   private void validatePassword(MemberDTO memberDTO, BindingResult bindingResult) {
@@ -180,20 +213,6 @@ public class MemberController {
         (!password.matches("^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\",.<>/?]).*$")
             || password.length() < 8 || password.length() > 12)) {
       bindingResult.rejectValue("password", "invalid", "비밀번호는 8 ~ 12자 사이의 영문, 숫자, 특수문자를 포함해야 합니다.");
-    }
-  }
-
-  @PostMapping("/check-password")
-  public ResponseEntity<Void> checkPassword(@RequestParam String currentPassword,
-      @AuthenticationPrincipal CustomUserDetails user) {
-
-    String userId = user.getUsername();
-    boolean match = memberService.checkPassword(userId, currentPassword);
-
-    if (match) {
-      return ResponseEntity.ok().build();
-    } else {
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
   }
 }

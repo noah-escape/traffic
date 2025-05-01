@@ -51,13 +51,23 @@ button:hover {
   background-color: var(--medium-blue);
 }
 
-button[type="button"] {
-  background-color: #f0f0f0;
-  color: var(--navy);
+.write-container .delete-btn {
+  background-color: #f8d7da;
+  color: #721c24;            
 }
 
-button[type="button"]:hover {
-  background-color: #e0e0e0;
+.write-container .delete-btn:hover {
+  background-color: #f1b0b7; 
+  color: #721c24;         
+}
+
+.write-container .cancel-btn {
+  background-color: #f0f0f0;
+  color: var(--navy);         
+}
+
+.write-container .cancel-btn:hover {
+  background-color: #e0e0e0;       
 }
 
 .button-group {
@@ -108,7 +118,6 @@ button[type="button"]:hover {
 }
 
 .attachment-section h5 {
-  margin-top: 40px;
   margin-bottom: 20px;
 }
 
@@ -132,16 +141,39 @@ input[type="file"].form-control {
   border-radius: 5px;
 }
 
-#file-list .btn-danger {
-  width: 30px;
-  height: 30px;
-  background-color: #f44336;
-  border: none;
-  color: white;
-  cursor: pointer;
-  font-size: 14px;
+/* 🌚 다크모드 전용 스타일 추가 */
+body.dark-mode .write-container {
+  background-color: var(--card-bg);
 }
 
-#file-list .btn-danger:hover {
-  background-color: #d32f2f;
+body.dark-mode .polaroid label {
+  color: black; 
+}
+
+/* 🌚 다크모드 - 선택한 이미지 삭제 버튼 스타일 */
+body.dark-mode .write-container .delete-btn {
+  background-color: #F87171;
+  color: white;
+}
+
+body.dark-mode .write-container .delete-btn:hover {
+  background-color: #DC2626; 
+  color: white;
+}
+
+/* 🌚 다크모드 - 취소하기 버튼 */
+body.dark-mode .write-container .cancel-btn {
+  background-color: #6D8299; 
+  color: white;
+}
+
+body.dark-mode .write-container .cancel-btn:hover {
+  background-color: #4C5D73; 
+  color: white;
+}
+
+/* 🌚 다크모드 - 수정하기 버튼 */
+body.dark-mode button:hover:not(.navbar-toggler) {
+  background-color: #0f926d;
+  color: white;
 }
