@@ -541,3 +541,16 @@ body.dark-mode #bikeFilterPanel {
   margin-bottom: 8px;
   /* 줄바꿈 시 약간 간격 */
 }
+
+body.light-mode .sidebar,
+body.dark-mode .sidebar {
+  background-color: var(--light-blue);
+  color: var(--text-color);
+}
+
+body.dark-mode h3,
+body.dark-mode h5,
+body.dark-mode h4,
+body.dark-mode p{
+  color: var(--text-color);
+}

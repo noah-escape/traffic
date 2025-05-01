@@ -114,7 +114,9 @@
     <div class="form-button-wrapper">
       <button type="button" class="full-btn black-btn" id="openPasswordCheckModal">회원정보 수정</button>
       <form id="deleteForm" th:action="@{/register/delete}" method="post">
-        <button type="submit" class="full-btn red-btn">회원 탈퇴</button>
+        <!-- ✅ CSRF 토큰 반드시 포함 -->
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+        <button type="submit" class="btn btn-danger">회원 탈퇴</button>
       </form>
     </div>
   </main>
@@ -141,6 +143,26 @@
       </div>
     </div>
   </div>
+  <!-- 탈퇴 감사 모달 -->
+  <div class="modal fade" id="deleteThankYouModal" tabindex="-1" aria-labelledby="deleteThankYouLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content text-center">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteThankYouLabel">회원 탈퇴 완료</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>그 동안 저희 Same=을 이용해 주셔서 감사합니다.</p>
+          <p>더 나은 서비스로 다시 찾아뵙겠습니다 😊</p>
+        </div>
+        <div class="modal-footer justify-content-center">
+          <button type="button" class="btn btn-primary" id="goHomeBtn">메인으로 가기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 
   <!-- ✅ JS: 비밀번호 체크 후 이동 -->
   <script>
@@ -148,14 +170,14 @@
       var passwordModal = new bootstrap.Modal(document.getElementById('passwordCheckModal'));
       passwordModal.show();
     });
-  
+
     document.getElementById('passwordCheckForm').addEventListener('submit', function (e) {
       e.preventDefault();
-  
+
       const password = document.getElementById('currentPassword').value;
       const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
       const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
-  
+
       fetch('/register/check-password', {
         method: 'POST',
         headers: {
@@ -164,25 +186,38 @@
         },
         body: 'currentPassword=' + encodeURIComponent(password)
       })
-      .then(response => {
-        if (response.ok) {
-          window.location.href = '/register/update';
-        } else {
-          document.getElementById('passwordError').style.display = 'block';
-        }
-      })
-      .catch(error => {
-        console.error('비밀번호 확인 실패', error);
-      });
+        .then(response => {
+          if (response.ok) {
+            window.location.href = '/register/update';
+          } else {
+            document.getElementById('passwordError').style.display = 'block';
+          }
+        })
+        .catch(error => {
+          console.error('비밀번호 확인 실패', error);
+        });
     });
-  
+
     document.getElementById('deleteForm').addEventListener('submit', function (e) {
       const confirmed = confirm("정말 탈퇴하시겠습니까? 😥\n탈퇴하면 복구할 수 없습니다.");
       if (!confirmed) {
         e.preventDefault();
       }
     });
-  </script>  
+
+      // 탈퇴 후 감사 모달 처리
+  window.addEventListener("DOMContentLoaded", function () {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get("deleted") === "true") {
+      const modal = new bootstrap.Modal(document.getElementById('deleteThankYouModal'));
+      modal.show();
+    }
+
+    document.getElementById('goHomeBtn')?.addEventListener('click', function () {
+      window.location.href = "/";
+    });
+  });
+  </script>
 
   <button id="scrollToTopBtn" class="btn btn-warning rounded-circle shadow">
     <i class="bi bi-arrow-up"></i>
