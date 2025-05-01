@@ -8,6 +8,7 @@ let searchTimeout = null;
 let startMarker = null;
 let goalMarker = null;
 let mapClickListener = null;
+let popupLocked = false;
 
 // ✅ 출발지 / 도착지 전역 상태
 window.routeStart = { lat: null, lng: null, label: "내 위치" };
@@ -49,6 +50,8 @@ window.initRouteEvents = function () {
   if (mapClickListener) return; // 이미 등록됐으면 무시
 
   mapClickListener = naver.maps.Event.addListener(window.map, 'click', function (e) {
+    if (popupLocked) return; // ✅ 막아주는 부분
+
     const lat = e.coord.lat();
     const lng = e.coord.lng();
     showRouteChoice(lat, lng, "선택한 위치");
@@ -65,19 +68,19 @@ window.removeRouteEvents = function () {
 
 // ✅ 출/도 마커 선택 팝업
 window.showRouteChoice = function (lat, lng, label) {
-  // ✅ 이전 팝업 제거
+  // ✅ 기존 popup이 있을 경우 제거
   if (window.routeClickInfoWindow) {
     window.routeClickInfoWindow.setMap(null);
     window.routeClickInfoWindow = null;
   }
+  if (routeClickMarker) {
+    routeClickMarker.setMap(null);
+    routeClickMarker = null;
+  }
 
   const position = new naver.maps.LatLng(lat, lng);
-
-  // 마커 생성
-  if (routeClickMarker) routeClickMarker.setMap(null);
   routeClickMarker = new naver.maps.Marker({ position, map });
 
-  // 팝업 생성
   const content = document.createElement('div');
   content.className = 'clean-popup';
   content.innerHTML = `
@@ -97,15 +100,15 @@ window.showRouteChoice = function (lat, lng, label) {
   overlay.draw = function () {
     const proj = this.getProjection();
     const point = proj.fromCoordToOffset(position);
-    content.style.left = (point.x - 110) + 'px';
-    content.style.top = (point.y - 120) + 'px';
+    content.style.left = (point.x - content.offsetWidth / 2) + 'px';
+    content.style.top = (point.y - content.offsetHeight - 20) + 'px'; // 마커 위로 띄움    
   };
   overlay.onRemove = function () {
     if (content.parentNode) content.parentNode.removeChild(content);
   };
 
   overlay.setMap(map);
-  window.routeClickInfoWindow = overlay;  // ✅ 현재 팝업 저장
+  window.routeClickInfoWindow = overlay;
 };
 
 // ✅ 경로 탐색
@@ -150,14 +153,15 @@ window.findDirection = function (startLat, startLng, goalLat, goalLng) {
 
 // ✅ 출/도 설정
 window.setAsStart = function (lat, lng, label) {
-  // ✅ 이미 선택된 출발지인지 확인
   if (routeStart.lat === lat && routeStart.lng === lng) {
-    if (window.routeClickInfoWindow) window.routeClickInfoWindow.setMap(null);
+    routeClickInfoWindow?.setMap(null);
     return;
   }
 
-  // 기존 마커 제거
-  if (startMarker) startMarker.setMap(null);
+  popupLocked = true; // ✅ popup 자동 호출 방지
+
+  startMarker?.setMap(null);
+  routeClickMarker?.setMap(null);
 
   routeStart = { lat, lng, label };
   document.getElementById('startPointLabel').value = label;
@@ -172,17 +176,24 @@ window.setAsStart = function (lat, lng, label) {
     title: "출발지"
   });
 
-  // 팝업 닫기
-  if (window.routeClickInfoWindow) window.routeClickInfoWindow.setMap(null);
+  routeClickInfoWindow?.setMap(null);
 
   tryFindRoute();
+
+  // 300ms 후 popup 다시 열리게 허용
+  setTimeout(() => {
+    popupLocked = false;
+  }, 300);
 };
+
 
 window.setAsGoal = function (lat, lng, label) {
   if (routeGoal.lat === lat && routeGoal.lng === lng) {
-    if (window.routeClickInfoWindow) window.routeClickInfoWindow.setMap(null);
+    window.routeClickInfoWindow?.setMap(null);
     return;
   }
+
+  popupLocked = true; // ✅ 팝업 락 설정
 
   if (goalMarker) goalMarker.setMap(null);
 
@@ -199,13 +210,16 @@ window.setAsGoal = function (lat, lng, label) {
     title: "도착지"
   });
 
-  if (window.routeClickInfoWindow) window.routeClickInfoWindow.setMap(null);
+  window.routeClickInfoWindow?.setMap(null);
 
   if (!routeStart.lat || !routeStart.lng) {
     window.setStartToCurrentLocation(); // fallback
   }
 
   tryFindRoute();
+
+  // 일정 시간 후 락 해제
+  setTimeout(() => popupLocked = false, 300);
 };
 
 // ✅ 경로 탐색 실행
@@ -229,13 +243,45 @@ window.clearRouteMarkers = function () {
   if (startMarker) startMarker.setMap(null), startMarker = null;
   if (goalMarker) goalMarker.setMap(null), goalMarker = null;
   if (routeClickMarker) routeClickMarker.setMap(null), routeClickMarker = null;
-  if (routeClickInfoWindow) routeClickInfoWindow.close(), routeClickInfoWindow = null;
+
+  // ✅ 순서 중요! null로 바꾸기 전에 setMap(null) 호출
+  if (routeClickInfoWindow) {
+    routeClickInfoWindow.setMap(null);
+    routeClickInfoWindow = null;
+  }
 };
 
 window.resetRoutePanel = function () {
-  clearRoute();
-  clearRouteMarkers();
+  // ✅ Overlay 제거
+  if (routeClickInfoWindow) {
+    routeClickInfoWindow.setMap(null);
+    routeClickInfoWindow = null;
+  }
 
+  // ✅ 팝업 DOM도 확실히 제거
+  document.querySelectorAll('.clean-popup').forEach(el => el.remove());
+
+  // ✅ 마커 제거
+  if (startMarker) startMarker.setMap(null), startMarker = null;
+  if (goalMarker) goalMarker.setMap(null), goalMarker = null;
+  if (routeClickMarker) routeClickMarker.setMap(null), routeClickMarker = null;
+
+  // ✅ 경로 제거
+  if (directionPolyline) directionPolyline.setMap(null), directionPolyline = null;
+  if (directionInfoWindow) directionInfoWindow.close(), directionInfoWindow = null;
+
+  // ✅ 상태 초기화
+  window.routeStart = { lat: null, lng: null, label: "내 위치" };
+  window.routeGoal = { lat: null, lng: null, label: "" };
+  routeActive = false;
+
+  // ✅ 클릭 이벤트 제거
+  if (mapClickListener) {
+    naver.maps.Event.removeListener(mapClickListener);
+    mapClickListener = null;
+  }
+
+  // ✅ 입력창 초기화
   document.getElementById('startPointLabel').value = '';
   document.getElementById('goalPointLabel').value = '';
   document.getElementById('startResultList').innerHTML = '';
@@ -243,7 +289,11 @@ window.resetRoutePanel = function () {
   document.getElementById('startResultList').style.display = 'none';
   document.getElementById('goalResultList').style.display = 'none';
 
+  // ✅ 다시 현재 위치로
   window.setStartToCurrentLocation();
+
+  // ✅ 클릭 이벤트 다시 연결
+  window.initRouteEvents();
 };
 
 // ✅ 자동완성

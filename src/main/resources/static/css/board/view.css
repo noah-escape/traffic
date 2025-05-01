@@ -78,9 +78,9 @@ button.delete:hover {
 }
 
 /* ✅ 댓글등록 버튼 (submit) */
-button.submit {
+button[type="submit"] {
   background-color: #dd9c2c; 
-  color: #000;              
+  color: white;              
   border: 2px solid #dd9c2c;  
 }
 
@@ -210,12 +210,12 @@ body.dark-mode button:hover {
 
 /* 🌚 다크모드 - 삭제하기 버튼 */
 body.dark-mode button.delete {
-  background-color: #6D8299; /* 세련된 블루 그레이 */
+  background-color: #6D8299; 
   color: white;
 }
 
 body.dark-mode button.delete:hover {
-  background-color: #4C5D73; /* 진해지며 강조 */
+  background-color: #4C5D73; 
   color: white;
 }
 

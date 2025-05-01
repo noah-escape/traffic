@@ -7,9 +7,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -228,14 +227,9 @@ public class BoardService {
   /**
    * 게시글 페이징 목록
    */
-  public List<BoardDTO> getPagedPosts(int categoryId, int start, int size) {
-    Pageable pageable = PageRequest.of(start / size, size, Sort.by(Sort.Order.desc("boardSeq")));
-
-    return boardRepository.findNonNoticeByCategoryIdWithMember(categoryId, pageable)
-        .stream()
-        .map(BoardDTO::fromEntity)
-        .collect(Collectors.toList());
-  }
+  public Page<BoardDTO> getPagedPosts(int categoryId, Pageable pageable) {
+    return boardRepository.findNonNoticeByCategoryIdWithMember(categoryId, pageable).map(BoardDTO::fromEntity);
+}
 
   /**
    * 카테고리별 게시글 총 개수

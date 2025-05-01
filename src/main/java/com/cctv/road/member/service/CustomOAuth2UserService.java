@@ -75,6 +75,18 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
       name = (String) attributes.get("name");
       email = (String) attributes.get("email");
       oauthId = (String) attributes.get("sub");
+
+      log.warn("📡 구글 사용자 정보 수신:");
+      log.warn(" - name: {}", name);
+      log.warn(" - email: {}", email);
+      log.warn(" - oauthId(sub): {}", oauthId);
+
+      if (name == null || email == null || oauthId == null) {
+        log.error("❌ 구글 로그인 정보 중 필수 값이 null입니다. 회원가입 불가.");
+        throw new OAuth2AuthenticationException(
+            new OAuth2Error("invalid_google_user"),
+            "구글 사용자 정보가 부족하여 회원가입할 수 없습니다.");
+      }
     }
 
     // ✅ 기존 회원인 경우: 로그인 처리

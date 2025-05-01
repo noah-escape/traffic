@@ -31,10 +31,15 @@
   border: 1px solid #d0dbe5; 
 }
 
+.title {
+  font-weight: bold;
+  text-decoration: none;
+  display: block;
+  margin-bottom: 8px;
+}
+
 .notice-card .title {
   color: #2a4e77;
-  font-weight: bold;
-  font-size: 1.1rem;
 }
 
 .notice-card .title:hover {
@@ -47,13 +52,6 @@
 
 .post-card .title:hover {
   color: #1e90ff;
-}
-
-.title {
-  font-weight: bold;
-  text-decoration: none;
-  display: block;
-  margin-bottom: 8px;
 }
 
 .meta {
@@ -98,9 +96,26 @@
   color: white;
 }
 
+.pagination .disabled {
+  pointer-events: none;
+  color: #aaa !important;
+  background-color: #fff !important;
+  border-color: #dee2e6 !important;
+}
+
+.pagination .no-hover:hover {
+  cursor: default;
+  background-color: transparent !important;
+  color: #aaa !important;
+}
+
 /* 🌚 다크모드 전용 스타일 추가 */
 body.dark-mode .container {
   background-color: #1E1E2F;  
+}
+
+body.dark-mode .no-post {
+  color: white;
 }
 
 /* 🌚 공지사항 카드 */

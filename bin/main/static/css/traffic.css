@@ -13,12 +13,14 @@
   --background-dark: #2c2c2c;
 }
 
-html, body {
+html,
+body {
   height: 100%;
   margin: 0;
   font-family: 'Noto Sans KR', sans-serif;
   background-color: var(--background);
-  overflow: hidden; /* ✅ 스크롤 제거 */
+  overflow: hidden;
+  /* ✅ 스크롤 제거 */
 }
 
 .main-content {
@@ -157,7 +159,6 @@ body.dark-mode #bikeFilterPanel {
 }
 
 /* 📋 리스트 */
-#roadList,
 #bikeRoadList {
   margin-top: 20px;
   border-top: 1px solid #eee;
@@ -165,7 +166,6 @@ body.dark-mode #bikeFilterPanel {
   font-size: 14px;
 }
 
-#roadList .list-group-item,
 #bikeRoadList .list-group-item {
   border-radius: 8px;
   padding: 10px 14px;
@@ -175,13 +175,11 @@ body.dark-mode #bikeFilterPanel {
   transition: background 0.2s;
 }
 
-#roadList .list-group-item:hover,
 #bikeRoadList .list-group-item:hover {
   background-color: var(--blue-gray);
   cursor: pointer;
 }
 
-#roadList:empty::after,
 #bikeRoadList:empty::after {
   content: '검색결과가 없습니다.';
   display: block;
@@ -189,6 +187,31 @@ body.dark-mode #bikeFilterPanel {
   color: #888;
   margin-top: 20px;
   font-size: 14px;
+}
+
+/* 📋 cctv 리스트 분리. */
+#roadList {
+  margin-top: 10px;
+  padding-left: 0;
+  list-style: none;
+  max-height: calc(100vh - 260px);
+  overflow-y: auto;
+}
+
+#roadList .list-group-item {
+  cursor: pointer;
+  padding: 10px 14px;
+  border: 1px solid #ccc;
+  margin-bottom: 6px;
+  border-radius: 8px;
+}
+
+#roadList .list-group-item:hover {
+  background: #f1f1f1;
+}
+
+.road-section {
+  margin-left: 10px;
 }
 
 /* 📌 길찾기 입력 가로 정렬 */
@@ -281,7 +304,8 @@ body.dark-mode #bikeFilterPanel {
   top: 100px;
   left: 100px;
   width: 480px;
-  max-height: calc(100vh - 120px); /* 👈 화면 아래 넘지 않게 제한 */
+  max-height: calc(100vh - 120px);
+  /* 👈 화면 아래 넘지 않게 제한 */
   background: white;
   border-radius: var(--card-radius);
   box-shadow: var(--card-shadow);
@@ -292,7 +316,8 @@ body.dark-mode #bikeFilterPanel {
   gap: 12px;
   transition: all 0.3s ease-in-out;
   border: 1px solid #ccc;
-  overflow: hidden; /* 👈 내부 넘침 방지 */
+  overflow: hidden;
+  /* 👈 내부 넘침 방지 */
 }
 
 /* 헤더 영역 */
@@ -414,6 +439,118 @@ body.dark-mode #bikeFilterPanel {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(5px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+#eventInfoBox {
+  top: 70px;
+  right: 320px;
+  width: 300px;
+  min-height: 200px;
+  /* ✅ 높이 어느 정도 지정 */
+  z-index: 1050;
+  position: absolute;
+
+  background: url('/path/to/your-image.png') no-repeat center center / cover;
+  /* 또는 투명하게 하고 싶으면 */
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(5px);
+  /* 선택 */
+
+  border-left: 1px solid #ccc;
+
+  padding: 16px;
+  color: #000;
+  /* 글자 검정색 */
+
+  /* ✅ 핵심! 글자 줄바꿈/폭 넘기지 않게 */
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+
+  display: none;
+  /* 처음에는 숨김 */
+  border-radius: 8px;
+  /* 모서리 둥글게 */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  /* 그림자 추가 */
+}
+
+.event-info-box {
+  position: absolute;
+  top: 70px;
+  right: 320px;
+  width: 300px;
+  min-height: 200px;
+  z-index: 1050;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(4px);
+  border-left: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  color: #000;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+}
+
+.custom-event-box {
+  position: absolute;
+  top: 100px;
+  /* 필요시 JS로 조정 */
+  left: 100px;
+  /* 필요시 JS로 조정 */
+  width: 300px;
+  max-width: 90%;
+  /* 모바일 대응 */
+  padding: 16px 20px;
+
+  background: rgba(255, 255, 255, 0.95);
+  /* 거의 불투명 흰색 */
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  border: 1px solid #ddd;
+
+  z-index: 2000;
+  /* 지도(map)보다 위에 */
+  overflow-wrap: break-word;
+  word-break: break-word;
+  white-space: normal;
+
+  color: #333;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.custom-event-box strong {
+  font-size: 16px;
+  color: #007bff;
+  /* 파란색 강조 */
+}
+
+.custom-event-box br {
+  margin-bottom: 8px;
+  /* 줄바꿈 시 약간 간격 */
+}
+
+body.light-mode .sidebar,
+body.dark-mode .sidebar {
+  background-color: var(--light-blue);
+  color: var(--text-color);
+}
+
+body.dark-mode h3,
+body.dark-mode h5,
+body.dark-mode h4,
+body.dark-mode p{
+  color: var(--text-color);
 }

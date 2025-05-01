@@ -56,5 +56,4 @@ public class MyPageController {
     model.addAttribute("memberDTO", dto);
     return "member/update";
   }
-
 }
