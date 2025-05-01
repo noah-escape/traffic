@@ -54,4 +54,7 @@ ALTER TABLE board
   DROP COLUMN `is_notice`,
   DROP COLUMN `ais_notice`,
   MODIFY `notice` bit(1) NOT NULL DEFAULT b'0' COMMENT '공지 여부 (1: 공지글)';
-SHOW TABLES;
+
+  SELECT * from users;
+
+  DELETE FROM board WHERE user_id = 'rhrnrk36';

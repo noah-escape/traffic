@@ -90,3 +90,29 @@ input[type="file"].form-control {
 #file-list .btn-danger:hover {
   background-color: #d32f2f;
 }
+
+/* 🌚 다크모드 전용 스타일 추가 */
+body.dark-mode .container {
+  background-color: var(--card-bg);
+}
+
+body.dark-mode .button-group button {
+  background-color: var(--dark-green);
+  color: white;
+}
+
+body.dark-mode .button-group button:hover {
+  background-color: #0f926d;
+  color: white;
+}
+
+/* 🌚 다크모드 - 삭제하기 버튼 */
+body.dark-mode button[type="reset"] {
+  background-color: #6D8299; 
+  color: white;
+}
+
+body.dark-mode button[type="reset"]:hover {
+  background-color: #4C5D73; 
+  color: white;
+}
