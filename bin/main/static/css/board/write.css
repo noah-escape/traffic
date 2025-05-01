@@ -9,13 +9,6 @@
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
-/* ✅ 헤더 스타일 */
-h2 {
-  text-align: center;
-  color: var(--medium-blue);
-  margin-bottom: 40px;
-}
-
 /* ✅ 폼 그룹 */
 .form-group {
   margin-bottom: 20px;
@@ -78,27 +71,15 @@ input[type="file"].form-control {
   cursor: pointer;
 }
 
-.input-group-text {
-  margin-bottom: 0;
-}
-
-/* ✅ 추가: .write-container 안에서 input[type=file] 한 줄 정렬 */
-.write-container input[type="file"] {
-  width: auto; /* ✅ input-group 안에서 한 줄로 보이게 */
-  flex-grow: 1;
-}
-
-.write-container .d-flex input[type="file"] {
-  margin-bottom: 0;
-}
-
-/* #file-list .d-flex {
+#file-list .d-flex {
   border: 1px solid #ddd;
   padding: 8px;
   border-radius: 5px;
 }
 
 #file-list .btn-danger {
+  width: 30px;
+  height: 30px;
   background-color: #f44336;
   border: none;
   color: white;
@@ -108,4 +89,4 @@ input[type="file"].form-control {
 
 #file-list .btn-danger:hover {
   background-color: #d32f2f;
-} */
+}
