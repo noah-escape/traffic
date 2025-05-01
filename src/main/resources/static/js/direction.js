@@ -65,19 +65,19 @@ window.removeRouteEvents = function () {
 
 // ✅ 출/도 마커 선택 팝업
 window.showRouteChoice = function (lat, lng, label) {
-  // ✅ 이전 팝업 제거
+  // ✅ 기존 popup이 있을 경우 제거
   if (window.routeClickInfoWindow) {
     window.routeClickInfoWindow.setMap(null);
     window.routeClickInfoWindow = null;
   }
+  if (routeClickMarker) {
+    routeClickMarker.setMap(null);
+    routeClickMarker = null;
+  }
 
   const position = new naver.maps.LatLng(lat, lng);
-
-  // 마커 생성
-  if (routeClickMarker) routeClickMarker.setMap(null);
   routeClickMarker = new naver.maps.Marker({ position, map });
 
-  // 팝업 생성
   const content = document.createElement('div');
   content.className = 'clean-popup';
   content.innerHTML = `
@@ -105,7 +105,7 @@ window.showRouteChoice = function (lat, lng, label) {
   };
 
   overlay.setMap(map);
-  window.routeClickInfoWindow = overlay;  // ✅ 현재 팝업 저장
+  window.routeClickInfoWindow = overlay;
 };
 
 // ✅ 경로 탐색
@@ -150,14 +150,13 @@ window.findDirection = function (startLat, startLng, goalLat, goalLng) {
 
 // ✅ 출/도 설정
 window.setAsStart = function (lat, lng, label) {
-  // ✅ 이미 선택된 출발지인지 확인
   if (routeStart.lat === lat && routeStart.lng === lng) {
-    if (window.routeClickInfoWindow) window.routeClickInfoWindow.setMap(null);
+    window.routeClickInfoWindow?.setMap(null);
     return;
   }
 
-  // 기존 마커 제거
-  if (startMarker) startMarker.setMap(null);
+  startMarker?.setMap(null);
+  routeClickMarker?.setMap(null);
 
   routeStart = { lat, lng, label };
   document.getElementById('startPointLabel').value = label;
@@ -172,8 +171,7 @@ window.setAsStart = function (lat, lng, label) {
     title: "출발지"
   });
 
-  // 팝업 닫기
-  if (window.routeClickInfoWindow) window.routeClickInfoWindow.setMap(null);
+  routeClickInfoWindow?.setMap(null);
 
   tryFindRoute();
 };
