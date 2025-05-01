@@ -26,7 +26,7 @@
 
 <body class="d-flex flex-column min-vh-100">
   <!-- ✅ 네브바 -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4 position-relative">
+  <nav class="navbar navbar-expand-lg px-4 position-relative">
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mobileMenu"
       aria-controls="mobileMenu" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
@@ -128,25 +128,24 @@
 
     <!-- ✅ 모든 버튼을 하나의 그룹으로 묶기 -->
     <div class="button-group my-4">
-      <!-- ✅ 조건부 버튼: 수정/삭제 -->
-      <th:block th:if="${#authentication.principal instanceof T(org.springframework.security.core.userdetails.User) ? 
-    #authentication.principal.username == post.userId : 
-    #authentication.principal == post.userId or #authorization.expression('hasRole(''ADMIN'')')}">
-
+      <!-- 수정/삭제: 작성자 본인 또는 관리자만 -->
+      <th:block th:if="${canModify}">
         <button type="button"
-          th:onclick="|location.href='/board/update/${post.categoryId}/${post.boardSeq}?currentPage=${currentPage}'|">
+          th:onclick="|location.href='/board/update/${post.categoryId}/${post.boardSeq}?page=${pageNum}&originCategoryId=${originCategoryId}'|">
           수정하기
         </button>
 
         <button type="button" class="delete"
-          th:onclick="|if(confirm('정말 삭제하시겠습니까?')) location.href='/board/delete/${post.boardNum}?currentPage=${currentPage}'|">
+          th:onclick="|if(confirm('정말 삭제하시겠습니까?')) location.href='/board/delete/${post.boardNum}?page=${pageNum}&originCategoryId=${originCategoryId}'|">
           삭제하기
         </button>
+      </th:block>
 
-        <button type="button"
-          th:onclick="|location.href='/board/list?categoryId=${originCategoryId}&amp;currentPage=${currentPage}'|">
-          목록보기
-        </button>
+      <!-- 목록보기: 항상 표시 -->
+      <button type="button"
+        th:onclick="|location.href='/board/list?page=${pageNum}&categoryId=${originCategoryId}'|">
+        목록보기
+      </button>
 
     </div>
 
@@ -156,7 +155,7 @@
       <div class="button-group d-flex justify-content-between align-items-center mb-3">
         <h5 class="mb-0">댓글</h5>
         <th:block sec:authorize="isAuthenticated()">
-          <button type="button" id="comment-toggle-btn" onclick="toggleCommentForm()" class="outline-success">
+          <button type="button" id="comment-toggle-btn" onclick="toggleCommentForm()" class="reply-button">
             댓글쓰기
           </button>
         </th:block>
