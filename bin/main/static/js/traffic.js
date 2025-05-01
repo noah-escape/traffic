@@ -161,6 +161,12 @@ document.addEventListener('DOMContentLoaded', () => {
       resetPanelsAndCloseVideo();
       buttonConfigs.forEach(conf => conf.onDeactivate?.());
 
+      // ✅ 팝업 확실히 제거
+      if (window.routeClickInfoWindow) {
+        window.routeClickInfoWindow.setMap(null);
+        window.routeClickInfoWindow = null;
+      }
+
       if (isActivating) {
         panelStates[key] = true;
         button.classList.add('active');
