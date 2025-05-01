@@ -49,6 +49,7 @@ h3 {
   gap: 10px;
   flex-wrap: wrap;
   justify-content: center;
+  margin-top: 2rem;
 }
 
 /* ✅ 버튼 스타일 */
@@ -66,44 +67,39 @@ button:hover {
   background-color: var(--medium-blue);
 }
 
-button[class="delete"] {
+/* 삭제하기 버튼 */
+button.delete {
   background-color: #f0f0f0;
   color: var(--navy);
 }
 
-button[class="delete"]:hover {
+button.delete:hover {
   background-color: #e0e0e0;
 }
 
 /* ✅ 댓글등록 버튼 (submit) */
 button[type="submit"] {
-  background-color: #28a745; 
-  color: #fff;              
-  border: 2px solid #28a745;  
+  background-color: #dd9c2c; 
+  color: white;              
+  border: 2px solid #dd9c2c;  
 }
 
 button[type="submit"]:hover {
   background-color: transparent;
-  color: #28a745;               
+  color: #dd9c2c;   
+  border: 2px solid #dd9c2c;
 }
 
-/* ✅ 댓글쓰기 버튼 (outline-success) */
-button[class="outline-success"] {
+/* ✅ 댓글쓰기 버튼 (reply-button) - #dd9c2c 적용 */
+button.reply-button {
   background-color: transparent; 
-  color: #28a745;               
-  border: 2px solid #28a745;    
+  color: #dd9c2c;               
+  border: 2px solid #dd9c2c;    
 }
 
-button[class="outline-success"]:hover {
-  background-color: #28a745;    
+button.reply-button:hover {
+  background-color: #dd9c2c;    
   color: white;                  
-}
-
-.button-group {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  margin-top: 2rem;
 }
 
 /* 댓글 폼 */
@@ -167,4 +163,82 @@ button[class="outline-success"]:hover {
 
 .attachment-section p {
   margin: 0;
+}
+
+/* 🌚 다크모드 전용 스타일 추가 */
+body.dark-mode .view-container {
+  background-color: var(--card-bg);
+}
+
+body.dark-mode h3,
+body.dark-mode .view-meta,
+body.dark-mode .view-content,
+body.dark-mode .reply-list h5,
+body.dark-mode .reply-list p,
+body.dark-mode .attachment-section h5,
+body.dark-mode .attachment-section p {
+  color: var(--text-color);
+}
+
+/* 🌚 다크모드 - 댓글 폼 */
+body.dark-mode #comment-form {
+  background-color: var(--card-bg);
+  color: var(--text-color);
+}
+
+body.dark-mode #comment-form textarea {
+  background-color: #444;
+  color: #fff;
+  border: 1px solid #666;
+}
+
+/* 🌚 다크모드 - 댓글 구분선 */
+body.dark-mode .reply-list .border-top {
+  border-top: 1px solid #555;
+}
+
+/* 🌚 다크모드 - 기본 버튼 (수정하기 / 목록보기) */
+body.dark-mode button {
+  background-color: var(--dark-green);
+  color: white;
+}
+
+body.dark-mode button:hover {
+  background-color: #0f926d;
+  color: white;
+}
+
+/* 🌚 다크모드 - 삭제하기 버튼 */
+body.dark-mode button.delete {
+  background-color: #6D8299; 
+  color: white;
+}
+
+body.dark-mode button.delete:hover {
+  background-color: #4C5D73; 
+  color: white;
+}
+
+/* 🌚 다크모드 - 댓글등록 버튼 */
+body.dark-mode button[type="submit"] {
+  background-color: var(--golden-yellow);
+  color: white;
+}
+
+body.dark-mode button[type="submit"]:hover {
+  background-color: transparent;
+  color: var(--golden-yellow);
+  border: 2px solid var(--golden-yellow);
+}
+
+/* 🌚 다크모드 - 댓글쓰기 버튼 */
+body.dark-mode button.reply-button {
+  background-color: transparent;
+  color: #dd9c2c;
+  border: 2px solid #dd9c2c;
+}
+
+body.dark-mode button.reply-button:hover {
+  background-color: #dd9c2c;
+  color: white;
 }

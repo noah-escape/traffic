@@ -22,14 +22,14 @@
 
   <!-- ✅ 프로젝트 전용 CSS & JS -->
   <link rel="stylesheet" th:href="@{/css/home.css}">
-  <link rel="stylesheet" th:href="@{/css/mypage.css}">
+  <link rel="stylesheet" th:href="@{/css/member/mypage.css}">
   <script th:src="@{/js/home.js}"></script>
 
 </head>
 
 <body class="d-flex flex-column min-vh-100">
   <!-- ✅ 네브바 -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4 position-relative">
+  <nav class="navbar navbar-expand-lg px-4 position-relative">
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mobileMenu"
       aria-controls="mobileMenu" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
@@ -96,7 +96,7 @@
   </nav>
 
   <main class="mypage-container">
-    <h1>마이페이지</h1>
+    <h2>마이페이지</h2>
 
     <div class="form-button-wrapper d-flex justify-content-end mb-4">
       <a href="javascript:history.back()" class="full-btn gray-btn">돌아가기</a>
@@ -192,6 +192,7 @@
   <footer class="footer">
     ⓒ 2025 Kakao Corp. All rights reserved.
   </footer>
-  < </body>
+
+</body>
 
 </html>
