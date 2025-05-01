@@ -1,8 +1,15 @@
 document.addEventListener('DOMContentLoaded', function () {
     const fileInput = document.getElementById('newImages');
     const fileListContainer = document.getElementById('file-list');
-    const originalSubject = document.getElementById('originalSubject').value.trim();
-    const originalContent = document.getElementById('originalContent').value.trim();
+    const subjectInput = document.getElementById('subject');
+    const contentInput = document.getElementById('content');
+    const deleteImagesInput = document.getElementById('deleteImages');
+    const updateBtn = document.getElementById('updateBtn');
+    const checkbox = document.getElementById("notice-checkbox");
+
+    // ✅ 처음 로드 시 제목, 내용 저장 (전역처럼 사용 가능)
+    const originalSubject = subjectInput.value.trim();
+    const originalContent = contentInput.value.trim();
 
     // 에러 메시지 처리
     const errorMessage = /*[[${error}]]*/ '';
@@ -29,14 +36,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (hasInvalidFile) {
             alert('이미지 파일만 업로드 가능합니다! (jpg, png, gif 등)');
-            fileInput.value = ''; // 초기화
-            fileListContainer.innerHTML = ''; // 리스트 초기화
+            fileInput.value = '';
         }
     });
 
     // 파일 리스트 업데이트 및 삭제 처리
     fileInput.addEventListener('change', function (e) {
-        fileListContainer.innerHTML = '';  // 기존 목록 초기화
+        fileListContainer.innerHTML = '';
         let fileArray = Array.from(e.target.files);
 
         if (fileArray.length > 0) {
@@ -67,8 +73,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // 공지글 체크박스 비활성화 방지
-    const checkbox = document.getElementById("notice-checkbox");
+    // 체크박스 비활성화 막기
     if (checkbox) {
         checkbox.addEventListener("change", function () {
             if (!checkbox.checked) {
@@ -78,35 +83,52 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // 수정 버튼 클릭 시 전체 검증
-    document.getElementById('updateBtn').addEventListener('click', function (e) {
-        const deleteImagesValue = document.getElementById('deleteImages').value;
+    // 수정 버튼 클릭 시 체크된 이미지가 남아있으면 얼럿 + 수정사항 없는지 체크
+    updateBtn.addEventListener('click', function (e) {
+        const deleteImagesValue = deleteImagesInput.value;
         const checkedCheckboxes = document.querySelectorAll('.delete-checkbox:checked');
-        const currentSubject = document.getElementById('subject').value.trim();
-        const currentContent = document.getElementById('content').value.trim();
-        const hasNewFiles = fileInput.files.length > 0;
-        const hasDeletedImages = deleteImagesValue.length > 0;
+        const currentSubject = subjectInput.value.trim();
+        const currentContent = contentInput.value.trim();
+        const newImagesCount = fileInput.files.length;
 
         // ✅ 체크박스 체크만 하고 삭제 버튼 안 누른 경우
-        if (checkedCheckboxes.length > 0 && !hasDeletedImages) {
+        if (checkedCheckboxes.length > 0 && !deleteImagesValue) {
             alert("선택한 이미지가 있습니다.\n'선택한 이미지 삭제' 버튼을 눌러주세요.");
             e.preventDefault();
             return;
         }
 
-        // ✅ 아무 것도 변경되지 않은 경우
-        if (originalSubject === currentSubject && originalContent === currentContent && !hasNewFiles && !hasDeletedImages) {
-            alert("수정한 내용이 없습니다.");
+        // ✅ 이미지 변경 여부 체크
+        const isImageDeleted = deleteImagesValue.length > 0;
+        const isNewImageAdded = newImagesCount > 0;
+        const isImageChanged = isImageDeleted || isNewImageAdded;
+
+        // ✅ 제목, 내용, 이미지 모두 변경 없을 때
+        if (
+            currentSubject === originalSubject &&
+            currentContent === originalContent &&
+            !isImageChanged
+        ) {
+            alert("수정된 내용이 없습니다.");
             e.preventDefault();
             return;
         }
 
-        // ✅ 정상 수정 진행
+        // ✅ 변경사항 있음
         alert("변경사항을 저장합니다.");
+    });
+
+    document.querySelectorAll('.polaroid').forEach(polaroid => {
+        polaroid.addEventListener('click', function (event) {
+            const checkbox = polaroid.querySelector('input[type="checkbox"]');
+            if (!event.target.matches('input[type="checkbox"]') && !event.target.closest('label')) {
+                checkbox.checked = !checkbox.checked;
+            }
+        });
     });
 });
 
-// 이미지 삭제 함수
+// removeSelectedImages는 그대로 유지
 function removeSelectedImages() {
     const checkboxes = document.querySelectorAll('.delete-checkbox:checked');
     const deletedIds = [];
@@ -118,6 +140,7 @@ function removeSelectedImages() {
 
     checkboxes.forEach(checkbox => {
         deletedIds.push(checkbox.value);
+
         const polaroidDiv = checkbox.closest('.polaroid');
         if (polaroidDiv) {
             polaroidDiv.style.display = 'none';
@@ -125,5 +148,6 @@ function removeSelectedImages() {
     });
 
     document.getElementById('deleteImages').value = deletedIds.join(',');
+
     alert("선택한 이미지가 삭제되었습니다.\n변경사항을 저장하려면 '수정' 버튼을 눌러주세요.");
 }

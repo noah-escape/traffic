@@ -8,9 +8,11 @@ document.addEventListener('DOMContentLoaded', () => {
   if (darkMode === 'true') {
     body.classList.add('dark-mode');
     body.classList.remove('light-mode');
+    button.innerHTML = '🌙';
   } else {
     body.classList.add('light-mode');
     body.classList.remove('dark-mode');
+    button.innerHTML = '☀️';
   }
 
   button.addEventListener('click', () => {
@@ -18,11 +20,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isDark) {
       body.classList.remove('dark-mode');
       body.classList.add('light-mode');
-      setCookie('darkMode', 'false', 7); // 7일간 유지
+      setCookie('darkMode', 'false', 7);
+      button.innerHTML = '☀️';
     } else {
       body.classList.remove('light-mode');
       body.classList.add('dark-mode');
       setCookie('darkMode', 'true', 7);
+      button.innerHTML = '🌙';
     }
   });
 
@@ -37,9 +41,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
     return match ? decodeURIComponent(match[2]) : null;
   }
-});
 
-document.addEventListener('DOMContentLoaded', function () {
+  // 메뉴 아이콘 회전
   const toggleBtn = document.getElementById("mobileBoardDropdown");
   const collapseTarget = document.getElementById("boardDropdownMenu");
 
@@ -55,6 +58,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
+  // Scroll To Top
   const scrollBtn = document.getElementById('scrollToTopBtn');
   if (scrollBtn) {
     scrollBtn.addEventListener('click', function () {

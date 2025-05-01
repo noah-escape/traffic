@@ -98,3 +98,5 @@ CREATE TABLE itsroad_coordinates (
     geo_Y FLOAT NOT NULL COMMENT '경도',
     Foreign Key (UFID) REFERENCES itsroad_properties (UFID)
 ) COMMENT '국도 위도/경도 테이블'
+
+SHOW DATABASES;
