@@ -134,13 +134,6 @@
 
     <!-- CCTV 검색 패널 -->
     <div id="cctvFilterPanel" style="display: none;">
-      <div class="mb-2">
-        <label for="roadSearchInput" class="form-label">도로명 검색</label>
-        <div class="input-group">
-          <input id="roadSearchInput" class="form-control" type="text" placeholder="도로명 입력">
-          <button class="btn btn-outline-secondary" onclick="applyCctvFilter()">검색</button>
-        </div>
-      </div>
       <div class="mb-3">
         <div class="form-check form-check-inline">
           <input class="form-check-input" type="radio" name="roadType" id="highway" checked>
@@ -167,16 +160,18 @@
     <div id="routeFilterPanel" class="sidebar-panel" style="display: none;">
       <div class="panel-body">
         <h5>🧭 길찾기</h5>
-    
+
         <div class="route-input-row">
           <input id="startPointLabel" placeholder="출발지 입력" class="form-control small-input" />
           <input id="goalPointLabel" placeholder="도착지 입력" class="form-control small-input" />
         </div>
-    
-        <ul id="startResultList" class="autocomplete-result list-group position-absolute w-100" style="display:none;"></ul>
-        <ul id="goalResultList" class="autocomplete-result list-group position-absolute w-100" style="display:none;"></ul>
+
+        <ul id="startResultList" class="autocomplete-result list-group position-absolute w-100" style="display:none;">
+        </ul>
+        <ul id="goalResultList" class="autocomplete-result list-group position-absolute w-100" style="display:none;">
+        </ul>
       </div>
-    
+
       <div class="panel-footer">
         <button class="btn btn-danger w-100" onclick="resetRoutePanel()">🔁 초기화</button>
       </div>
@@ -197,8 +192,7 @@
     </div>
 
     <!-- 상세 내용 패널 -->
-    <div id="eventInfoBox" class="position-absolute"
-      style="top:70px; right:320px; width:300px; z-index:1050; background:#fff; display:none; border-left:1px solid #ccc;">
+    <div id="eventInfoBox" class="event-info-box" style="display: none;">
     </div>
 
     <!-- 로딩 스피너 -->
@@ -206,36 +200,36 @@
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
-    </div>    
-
-
-  <!--따릉이 상세정보 왼쪽 패널 -->
-  <div id="stationDetailPanel" class="info-panel" style="display: none;">
-    <h4 id="detailStationName">🚲 대여소 이름</h4>
-    <p id="detailStationInfo">여기에 상세 설명이 들어갑니다.</p>
-    <p id="detailStationDistance">거리: 계산 중...</p>
-
-
-    <!-- 따릉이 안내 / 취소 버튼 -->
-    <div class="btn-group mt-3 w-100">
-      <button class="btn btn-primary w-100" onclick="goToNaverRoute()">🧭 안내</button>
-      <button class="btn btn-secondary w-100" onclick="cancelBikeRoute()">❌ 취소</button>
     </div>
 
-    <!-- 따릉이 추천 / 위치 이동 버튼 -->
-    <div class="btn-group mt-3 w-100">
-      <button id="recommendBtn" class="btn btn-outline-success w-100">🚲 추천 대여소 보기</button>
-      <button id="moveToMyLocation" class="btn btn-outline-primary w-100">📍 내 위치로 이동</button>
-    </div>
 
-    <!-- 따릉이 ! -->
-    <div style="margin-top: 12px; text-align: right;">
-      <button id="closeDetailPanel" class="close-btn">닫기</button>
+    <!--따릉이 상세정보 왼쪽 패널 -->
+    <div id="stationDetailPanel" class="info-panel" style="display: none;">
+      <h4 id="detailStationName">🚲 대여소 이름</h4>
+      <p id="detailStationInfo">여기에 상세 설명이 들어갑니다.</p>
+      <p id="detailStationDistance">거리: 계산 중...</p>
+
+
+      <!-- 따릉이 안내 / 취소 버튼 -->
+      <div class="btn-group mt-3 w-100">
+        <button class="btn btn-primary w-100" onclick="goToNaverRoute()">🧭 안내</button>
+        <button class="btn btn-secondary w-100" onclick="cancelBikeRoute()">❌ 취소</button>
+      </div>
+
+      <!-- 따릉이 추천 / 위치 이동 버튼 -->
+      <div class="btn-group mt-3 w-100">
+        <button id="recommendBtn" class="btn btn-outline-success w-100">🚲 추천 대여소 보기</button>
+        <button id="moveToMyLocation" class="btn btn-outline-primary w-100">📍 내 위치로 이동</button>
+      </div>
+
+      <!-- 따릉이 ! -->
+      <div style="margin-top: 12px; text-align: right;">
+        <button id="closeDetailPanel" class="close-btn">닫기</button>
+      </div>
     </div>
-  </div>
 
 </body>
-<script type="module" src="/js/cctv.js"></script>
+<script th:src="@{/js/cctv.js}" defer></script> <!-- 수정 -->
 <script type="module" src="/js/bus.js"></script>
 <script type="module" src="/js/bike.js"></script>
 <script type="module" src="/js/direction.js"></script>
