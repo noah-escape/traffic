@@ -9,12 +9,17 @@
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
+/* 공통 마진 */
+.mypage-container div {
+    margin-bottom: 20px;
+}
+
 /* ✅ 입력 그룹 */
 label {
+    display: block;
+    margin-bottom: 8px;
     font-weight: 600;
-    margin-bottom: 0.5rem;
-    display: inline-block;
-    color: #343a40;
+    color: #333;
 }
 
 input[type="text"],
@@ -22,18 +27,17 @@ input[type="email"],
 input[type="password"],
 input[type="date"] {
     width: 100%;
-    padding: 0.75rem 1rem;
-    border: 1px solid #ccc;
-    border-radius: 10px;
+    padding: 0.75rem;
     font-size: 1rem;
+    border-radius: 8px;
+    border: 1px solid #ccc;
     transition: border-color 0.3s;
-    background-color: #f9f9f9;
+    box-sizing: border-box;
 }
 
 input:focus {
+    border-color: var(--medium-blue);
     outline: none;
-    border-color: #007bff;
-    background-color: #fff;
 }
 
 input[readonly] {
@@ -58,7 +62,7 @@ input[readonly] {
     font-size: 0.95rem;
     font-weight: bold;
     border-radius: 8px;
-    background-color: #6c757d;
+    background-color: var(--medium-blue);
     color: white;
     border: none;
     white-space: nowrap;
@@ -67,7 +71,7 @@ input[readonly] {
 }
 
 .input-row button:hover {
-    background-color: #5a6268;
+    background-color: #3d6ca6;
 }
 
 /* ✅ 버튼 스타일 */
@@ -149,4 +153,9 @@ input[readonly] {
 /* ✅ 다크모드 */
 body.dark-mode .mypage-container {
     background-color: var(--card-bg);
+}
+
+/* ✅ 다크모드: 입력 필드 텍스트 색상 지정 */
+body.dark-mode label {
+    color: var(--text-color)
 }
