@@ -1,0 +1,161 @@
+/* ✅ 컨테이너 */
+.mypage-container {
+    width: 100%;
+    max-width: 600px;
+    margin: 50px auto;
+    background-color: white;
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+/* 공통 마진 */
+.mypage-container div {
+    margin-bottom: 20px;
+}
+
+/* ✅ 입력 그룹 */
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="date"] {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 1rem;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    transition: border-color 0.3s;
+    box-sizing: border-box;
+}
+
+input:focus {
+    border-color: var(--medium-blue);
+    outline: none;
+}
+
+input[readonly] {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+}
+
+.input-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.input-row input {
+    flex: 1;
+    min-width: 0;
+}
+
+.input-row button {
+    width: 100px;
+    padding: 0.6rem;
+    font-size: 0.95rem;
+    font-weight: bold;
+    border-radius: 8px;
+    background-color: var(--medium-blue);
+    color: white;
+    border: none;
+    white-space: nowrap;
+    flex-shrink: 0;
+    height: 100%;
+}
+
+.input-row button:hover {
+    background-color: #3d6ca6;
+}
+
+/* ✅ 버튼 스타일 */
+.full-btn {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    border: none;
+    border-radius: 1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.btn-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.black-btn {
+    background-color: #212529;
+    color: #fff;
+}
+
+.black-btn:hover {
+    background-color: #343a40;
+}
+
+.red-btn {
+    background-color: #dc3545;
+    color: #fff;
+}
+
+.red-btn:hover {
+    background-color: #c82333;
+}
+
+.gray-btn {
+    background-color: #6c757d;
+    color: #fff;
+}
+
+.gray-btn:hover {
+    background-color: #5a6268;
+}
+
+/* 3개 버튼이 한 줄로 정렬 */
+.form-button-wrapper {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+}
+
+.form-button-wrapper .full-btn {
+    flex: none;
+    min-width: 120px;
+    max-width: 160px;
+    width: 100%;
+}
+
+/* ✅ 주소 그룹 */
+.address-group {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* ✅ 메시지 스타일 */
+.error {
+    font-size: 0.9rem;
+    color: red;
+    margin-top: 0.4rem;
+}
+
+/* ✅ 다크모드 */
+body.dark-mode .mypage-container {
+    background-color: var(--card-bg);
+}
+
+/* ✅ 다크모드: 입력 필드 텍스트 색상 지정 */
+body.dark-mode label {
+    color: var(--text-color)
+}
