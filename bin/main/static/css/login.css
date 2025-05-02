@@ -8,6 +8,12 @@
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
+h1 {
+    text-align: center;
+    color: var(--medium-blue);
+    margin: 20px;
+}
+
 /* 폼 요소 간 간격 */
 .login-container .form-label {
     font-weight: 600;
