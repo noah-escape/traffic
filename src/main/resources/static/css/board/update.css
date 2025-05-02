@@ -173,7 +173,7 @@ body.dark-mode .write-container .cancel-btn:hover {
 }
 
 /* 🌚 다크모드 - 수정하기 버튼 */
-body.dark-mode button:hover:not(.navbar-toggler) {
+body.dark-mode button:hover{
   background-color: #0f926d;
   color: white;
 }
