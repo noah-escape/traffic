@@ -114,6 +114,7 @@
       <button id="sidebarBusBtn" title="버스 위치"><i class="fas fa-bus"></i></button>
       <button id="sidebarRouteBtn" title="길찾기"><i class="fas fa-route"></i></button>
       <button id="sidebarBikeBtn" title="따릉이 대여소"><i class="fas fa-bicycle popup-box bike-popup"></i></button>
+      <button id="sidebarSubwayBtn" title="지하철"><i class="fas fa-train-subway"></i></button>
     </aside>
 
     <!-- 지도 -->
@@ -228,12 +229,49 @@
       </div>
     </div>
 
+
+
+
+
+<!-- 🚇 지하철 패널 내부 -->
+<div id="subwayFilterPanel" style="display: none; flex-direction: column;">
+  <h5 class="mt-3 px-3">🚇 지하철 정보</h5>
+
+  <!-- 호선 체크 필터 -->
+  <div class="px-3 mb-2">
+    <label class="form-label">표시할 호선 선택</label>
+    <div id="lineCheckboxContainer" class="d-flex flex-wrap gap-2"></div>
+  </div>
+
+  <!-- 출발/도착역 입력 -->
+  <div class="px-3">
+    <div class="input-group mb-2">
+      <input id="startStationInput" class="form-control" placeholder="🚩 탑승역 (예: 서울역)" />
+    </div>
+    <div class="input-group mb-2">
+      <input id="endStationInput" class="form-control" placeholder="🏁 하차역 (예: 종각)" />
+    </div>
+
+    <!-- 경로 검색 버튼 -->
+    <button class="btn btn-success w-100 mb-2" onclick="findSubwayRoute()">🔍 경로 검색</button>
+  </div>
+
+  <!-- ✅ 경로 결과 출력 -->
+  <div id="routeResultBox" class="px-3 mb-3" style="font-size: 14px;"></div>
+</div>
+
+
+
+
+
+
 </body>
 <script th:src="@{/js/cctv.js}" defer></script> <!-- 수정 -->
 <script type="module" src="/js/bus.js"></script>
 <script type="module" src="/js/bike.js"></script>
 <script type="module" src="/js/direction.js"></script>
 <script type="module" src="/js/event-layer.js"></script>
+<script src="/js/subway.js"></script>
 <script src="/js/realtime-traffic.js" defer></script>
 <script src="/js/traffic.js" defer></script> <!-- 메인 -->
 
