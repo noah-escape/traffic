@@ -63,7 +63,6 @@
 
 .check .input-row input {
     flex: 1;
-    /* input은 남은 공간 다 차지 */
     min-width: 0;
 }
 
@@ -156,14 +155,9 @@ body.dark-mode .oauth2-container {
 }
 
 body.dark-mode .oauth2-container label,
+body.dark-mode .oauth2-container input,
 body.dark-mode input::placeholder {
     color: var(--text-color);
-}
-
-body.dark-mode .oauth2-container input {
-    background-color: var(--input-bg-dark);
-    color: var(--text-color);
-    border: 1px solid #666;
 }
 
 body.dark-mode .oauth2-container button {
@@ -177,4 +171,9 @@ body.dark-mode .oauth2-container button:hover {
 /* ✅ 다크모드에서 input[type="date"] 아이콘 흰색처럼 보이게 */
 body.dark-mode input[type="date"]::-webkit-calendar-picker-indicator {
     filter: invert(1);
+}
+
+/* ✅ 다크모드 placeholder 색상 따로 지정 */
+body.dark-mode input::placeholder {
+    color: #b0b8c0;
 }
