@@ -20,7 +20,7 @@
 
   <!-- ✅ 프로젝트 전용 CSS & JS -->
   <link rel="stylesheet" th:href="@{/css/home.css}">
-  <link rel="stylesheet" th:href="@{/css/mypage.css}">
+  <link rel="stylesheet" th:href="@{/css/member/update.css}">
   <script th:src="@{/js/home.js}"></script>
 
 </head>
@@ -95,7 +95,7 @@
 
   <!-- ✅ 메인 -->
   <main class="mypage-container">
-    <h1>회원정보 수정</h1>
+    <h2>회원정보 수정</h2>
 
     <form th:action="@{/register/update}" method="post" th:object="${memberDTO}" id="updateForm">
 
@@ -104,28 +104,51 @@
         <input type="text" th:field="*{userId}" readonly>
       </div>
 
-      <!-- ✅ 비밀번호 변경 버튼 -->
+      <!-- 비밀번호 섹션 -->
       <div class="mb-3">
-        <button type="button" id="togglePasswordFields" class="full-btn black-btn">비밀번호 변경</button>
+        <label>비밀번호</label>
+
+        <!-- 비밀번호 입력 필드 (처음에 숨김) -->
+        <div id="passwordFields" style="display: none;" class="mt-2">
+          <div>
+            <label>새 비밀번호</label>
+            <input type="password" id="password" th:field="*{password}">
+            <span th:if="${#fields.hasErrors('password')}" th:errors="*{password}" class="error"></span>
+            <small>8 ~ 12자 사이의 영문, 숫자, 특수문자를 포함해야 합니다.</small>
+          </div>
+
+
+          <div class="mt-2">
+            <label>새 비밀번호 확인</label>
+            <input type="password" id="confirmPassword" th:field="*{confirmPassword}">
+            <span id="passwordMatchMessage" class="error"></span>
+            <span th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}" class="error"></span>
+          </div>
+
+          <!-- 비밀번호 저장 버튼 -->
+          <button type="button" id="savePasswordBtn" class="btn btn-success mt-3">비밀번호 저장</button>
+
+          <!-- 메시지 -->
+          <div id="passwordSaveMessage" class="mt-2 small text-success" style="display: none;">
+            비밀번호가 임시 저장되었습니다.
+          </div>
+          <div id="passwordInfoNote" class="mt-1 small text-muted" style="display: none;">
+            ※ 저장하려면 '수정 완료' 버튼을 눌러주세요
+          </div>
+        </div>
+
+        <!-- 비밀번호 변경 버튼 -->
+        <button type="button" id="togglePasswordFields" class="full-btn black-btn mt-2">비밀번호 변경</button>
       </div>
 
-      <!-- ✅ 비밀번호 변경 입력창 -->
-      <div id="passwordFields" style="display: none;">
-        <div>
-          <label>새 비밀번호</label>
-          <input type="password" class="form-control" id="newPassword" name="newPassword" autocomplete="new-password"
-            placeholder="새 비밀번호">
-        </div>
-        <div>
-          <label>새 비밀번호 확인</label>
-          <input type="password" class="form-control" id="confirmNewPassword" placeholder="새 비밀번호 확인">
-        </div>
-      </div>
+
 
       <div>
-        <label>닉네임</label>
-        <input type="text" th:field="*{nickName}" id="nickName">
-        <button type="button" id="checkNickNameBtn" class="full-btn gray-btn">중복 확인</button>
+        <label for="nickName">닉네임</label>
+        <div class="input-row">
+          <input type="text" id="nickName" th:field="*{nickName}">
+          <button type="button" id="checkNickNameBtn">중복 확인</button>
+        </div>
         <span id="nickNameMessage" class="error"></span>
       </div>
 
@@ -150,10 +173,10 @@
       </div>
 
       <div>
-        <label>주소</label>
-        <div class="address-group">
-          <input type="text" th:field="*{address}" readonly>
-          <button type="button" onclick="execDaumPostcode()" class="full-btn black-btn">주소 검색</button>
+        <label for="address">주소</label>
+        <div class="input-row">
+          <input type="text" id="address" th:field="*{address}" readonly>
+          <button type="button" onclick="execDaumPostcode()">주소 검색</button>
         </div>
       </div>
 
@@ -211,16 +234,21 @@
           alert("닉네임 중복 확인을 해주세요.");
           return false;
         }
+      });
 
-        if (newPassword || confirmNewPassword) {
-          if (newPassword !== confirmNewPassword) {
-            alert("비밀번호가 일치하지 않습니다.");
-            return false;
-          }
-          if (newPassword.length < 8 || newPassword.length > 12) {
-            alert("비밀번호는 8 ~ 12자여야 합니다.");
-            return false;
-          }
+      $("#password, #confirmPassword").on("keyup", function () {
+        const password = $("#password").val();
+        const confirmPassword = $("#confirmPassword").val();
+
+        if (!password || !confirmPassword) {
+          $("#passwordMatchMessage").text("").hide();
+          return;
+        }
+
+        if (password === confirmPassword) {
+          $("#passwordMatchMessage").text("비밀번호가 일치합니다.").css("color", "green").show();
+        } else {
+          $("#passwordMatchMessage").text("비밀번호가 일치하지 않습니다.").css("color", "red").show();
         }
       });
 
@@ -245,6 +273,15 @@
       }
     }
   </script>
+
+  <button id="scrollToTopBtn" class="btn btn-warning rounded-circle shadow">
+    <i class="bi bi-arrow-up"></i>
+  </button>
+
+  <!-- ✅ 푸터 -->
+  <footer class="footer">
+    ⓒ 2025 Kakao Corp. All rights reserved.
+  </footer>
 
 </body>
 
