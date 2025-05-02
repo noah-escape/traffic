@@ -21,7 +21,7 @@
   <!-- ✅ 프로젝트 전용 CSS & JS -->
   <link rel="stylesheet" th:href="@{/css/home.css}">
   <script th:src="@{/js/home.js}"></script>
-  
+
 </head>
 
 <body class="d-flex flex-column min-vh-100">
@@ -33,8 +33,12 @@
     </button>
 
     <!-- 웹(데스크톱)용 로고 -->
-    <a class="navbar-brand d-none d-lg-block position-absolute top-0 mt-2 ms-3" style="z-index: 1020;"
-      th:href="@{/}">Same=</a>
+    <a class="navbar-brand d-none d-lg-block position-absolute top-0 mt-2 ms-3" style="z-index: 1020;" th:href="@{/}">
+      <!-- 라이트 모드 로고 -->
+      <img src="/image/main/logo-light.png" alt="Logo Light" class="logo-light" style="height: 40px;">
+      <!-- 다크 모드 로고 -->
+      <img src="/image/main/logo-dark.png" alt="Logo Dark" class="logo-dark" style="height: 40px;">
+    </a>
 
     <div class="position-absolute end-0 top-0 mt-2 me-3 d-flex align-items-center gap-2">
       <th:block sec:authorize="isAuthenticated()">
@@ -64,7 +68,12 @@
     <!-- 모바일 메뉴 안에 있는 로고 -->
     <div class="collapse navbar-collapse justify-content-center" id="mobileMenu">
       <div class="d-lg-none text-center w-100">
-        <a class="navbar-brand fw-bold text-white fs-4 mt-2 text-decoration-none" th:href="@{/}">Same=</a>
+        <a class="navbar-brand d-lg-none mt-2 mb-3 d-inline-block" th:href="@{/}">
+          <!-- 라이트 모드 로고 -->
+          <img src="/image/main/logo-light.png" alt="Logo Light" class="logo-light" style="height: 40px;">
+          <!-- 다크 모드 로고 -->
+          <img src="/image/main/logo-dark.png" alt="Logo Dark" class="logo-dark" style="height: 40px;">
+        </a>
         <hr />
       </div>
 
@@ -94,12 +103,12 @@
   <!-- ✅ 슬라이드 배너 (Carousel) -->
   <!-- ✅ 메인 콘텐츠 -->
   <main class="main-content">
-    
+
 
     <!-- ✅ Hero Section -->
     <header class="hero-section d-flex align-items-center justify-content-end">
-      <div class="hero-content-box text-center"> 
-        <h1 class="fw-bold text-dark hero-title">Same=<br/>도로 교통 정보 플랫폼</h1>
+      <div class="hero-content-box text-center">
+        <h1 class="fw-bold text-dark hero-title">Same=<br />도로 교통 정보 플랫폼</h1>
         <p class="lead text-dark mb-4">스마트한 도로 교통 정보 서비스</p>
         <a href="#services" class="btn btn-lg service-btn">서비스 알아보기</a>
       </div>
@@ -116,7 +125,7 @@
                 <div class="card-body">
                   <i class="bi bi-map fs-1 text-primary"></i>
                   <h5 class="card-title mt-3">실시간 교통 지도</h5>
-                  <p class="card-text">전국의 실시간 교통 상황을<br/>지도에서 확인하고 계획하세요.</p>
+                  <p class="card-text">전국의 실시간 교통 상황을<br />지도에서 확인하고 계획하세요.</p>
                 </div>
               </div>
             </a>
@@ -127,7 +136,7 @@
                 <div class="card-body">
                   <i class="bi bi-bicycle fs-1 text-success"></i>
                   <h5 class="card-title mt-3">따릉이 대여소 정보</h5>
-                  <p class="card-text">서울 전역의 따릉이 대여소 위치와<br/>이용 가능 현황을 제공합니다.</p>
+                  <p class="card-text">서울 전역의 따릉이 대여소 위치와<br />이용 가능 현황을 제공합니다.</p>
                 </div>
               </div>
             </a>
@@ -138,7 +147,7 @@
                 <div class="card-body">
                   <i class="bi bi-megaphone fs-1 text-danger"></i>
                   <h5 class="card-title mt-3">민원 신고 서비스</h5>
-                  <p class="card-text">도로 위 불편 사항을 간편하게 신고하고<br/>처리 상황을 확인하세요.</p>
+                  <p class="card-text">도로 위 불편 사항을 간편하게 신고하고<br />처리 상황을 확인하세요.</p>
                 </div>
               </div>
             </a>
