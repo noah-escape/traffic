@@ -31,7 +31,7 @@ input[type="date"] {
     font-size: 1rem;
     border-radius: 8px;
     border: 1px solid #ccc;
-    transition: border-color 0.3s;
+    transition: all 0.3s;
     box-sizing: border-box;
 }
 
@@ -62,7 +62,7 @@ input[readonly] {
     font-size: 0.95rem;
     font-weight: bold;
     border-radius: 8px;
-    background-color: var(--medium-blue);
+    background-color: #3d6ca6;
     color: white;
     border: none;
     white-space: nowrap;
@@ -71,7 +71,7 @@ input[readonly] {
 }
 
 .input-row button:hover {
-    background-color: #3d6ca6;
+    background-color: var(--medium-blue);
 }
 
 /* ✅ 버튼 스타일 */
@@ -158,4 +158,10 @@ body.dark-mode .mypage-container {
 /* ✅ 다크모드: 입력 필드 텍스트 색상 지정 */
 body.dark-mode label {
     color: var(--text-color)
+}
+
+/* 🌚 다크모드 placeholder 구분 색상 */
+body.dark-mode input[readonly] {
+    background-color: #dde3e8;
+    color: #6c757d;           
 }
