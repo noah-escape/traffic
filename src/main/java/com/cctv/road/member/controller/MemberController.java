@@ -68,28 +68,28 @@ public class MemberController {
   public String submitOAuth2RegisterForm(@Valid @ModelAttribute("memberDTO") MemberDTO memberDTO,
       BindingResult bindingResult,
       HttpSession session) {
-  
+
     log.debug("📥 제출된 DTO: {}", memberDTO); // 추가
     log.debug("❗ 유효성 오류: {}", bindingResult); // 추가
-  
+
     validatePassword(memberDTO, bindingResult);
-  
+
     if (memberService.isUserIdDuplicate(memberDTO.getUserId())) {
       bindingResult.rejectValue("userId", "duplicate", "이미 사용 중인 아이디입니다.");
     }
-  
+
     if (memberService.isNickNameDuplicate(memberDTO.getNickName())) {
       bindingResult.rejectValue("nickName", "duplicate", "이미 사용 중인 닉네임입니다.");
     }
-  
+
     if (bindingResult.hasErrors()) {
       log.warn("❗ 검증 실패. 다시 폼으로 리턴됨.");
       bindingResult.getAllErrors().forEach(e -> log.warn(" - {}", e.getDefaultMessage()));
       return "register/oauth2";
     }
-  
+
     memberDTO.combineAddress();
-  
+
     if (memberDTO.getBirthDate() == null &&
         memberDTO.getNaverBirthYear() != null &&
         memberDTO.getNaverBirthDay() != null) {
@@ -101,12 +101,12 @@ public class MemberController {
         return "register/oauth2";
       }
     }
-  
+
     memberService.registerOAuth2Member(memberDTO);
     session.removeAttribute("socialUser");
-  
+
     return "redirect:/login?registered";
-  }  
+  }
 
   @GetMapping("/checkIdDuplicate")
   @ResponseBody
@@ -135,19 +135,19 @@ public class MemberController {
   public String processUpdateForm(
       @ModelAttribute("memberDTO") MemberDTO dto,
       @AuthenticationPrincipal CustomUserDetails user,
-      @RequestParam(required = false) String currentPassword,
-      @RequestParam(required = false) String newPassword,
       Model model) {
 
+    // 1. 로그인 유효성 검사
     if (user == null || user.getUsername() == null) {
       return "redirect:/login?expired";
     }
 
+    // 2. 사용자 ID 및 주소 정리
     dto.setUserId(user.getUsername());
     dto.combineAddress();
 
+    // 3. 현재 닉네임과 비교하여 중복 검사
     MemberDTO currentInfo = memberService.getMemberInfo(user.getUsername());
-
     if (!dto.getNickName().equals(currentInfo.getNickName()) &&
         memberService.isNickNameDuplicate(dto.getNickName())) {
       model.addAttribute("memberDTO", dto);
@@ -155,37 +155,38 @@ public class MemberController {
       return "member/update";
     }
 
-    // ✅ 여기서 통합해서 비밀번호까지 같이 업데이트
-    if (newPassword != null && !newPassword.isBlank()) {
-      memberService.updateMemberInfoWithNewPassword(dto, newPassword);
+    // 4. 비밀번호가 있다면 비밀번호 포함 수정, 없다면 일반 정보만 수정
+    if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
+      memberService.updateMemberInfoWithNewPassword(dto, dto.getPassword());
     } else {
       memberService.updateMemberInfo(dto);
     }
 
+    // 5. 마이페이지로 리디렉션
     return "redirect:/member/mypage";
   }
 
   @PostMapping("/delete")
   public String deleteMember(@AuthenticationPrincipal Object principal, HttpSession session) {
     String userId = null;
-  
+
     if (principal instanceof CustomOAuth2User oAuth2User) {
       userId = oAuth2User.getUsername();
     } else if (principal instanceof CustomUserDetails userDetails) {
       userId = userDetails.getUsername();
     }
-  
+
     log.info("🔥 deleteMember 컨트롤러 진입: {}", userId);
-  
+
     // ✅ 삭제 먼저
     memberService.deleteMemberByUserId(userId);
-  
+
     // ✅ 세션 나중에 끊기
     session.invalidate();
-  
+
     // ✅ 모달 띄우기 위한 파라미터 포함해서 리디렉션
     return "redirect:/member/mypage?deleted=true";
-  }  
+  }
 
   @PostMapping("/check-password")
   public ResponseEntity<Void> checkPassword(@RequestParam String currentPassword,
