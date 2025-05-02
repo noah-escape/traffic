@@ -33,8 +33,12 @@
     </button>
 
     <!-- 웹(데스크톱)용 로고 -->
-    <a class="navbar-brand d-none d-lg-block position-absolute top-0 mt-2 ms-3" style="z-index: 1020;"
-      th:href="@{/}">Same=</a>
+    <a class="navbar-brand d-none d-lg-block position-absolute top-0 mt-2 ms-3" style="z-index: 1020;" th:href="@{/}">
+      <!-- 라이트 모드 로고 -->
+      <img src="/image/main/logo-light.png" alt="Logo Light" class="logo-light" style="height: 40px;">
+      <!-- 다크 모드 로고 -->
+      <img src="/image/main/logo-dark.png" alt="Logo Dark" class="logo-dark" style="height: 40px;">
+    </a>
 
     <div class="position-absolute end-0 top-0 mt-2 me-3 d-flex align-items-center gap-2">
       <th:block sec:authorize="isAuthenticated()">
@@ -64,7 +68,12 @@
     <!-- 모바일 메뉴 안에 있는 로고 -->
     <div class="collapse navbar-collapse justify-content-center" id="mobileMenu">
       <div class="d-lg-none text-center w-100">
-        <a class="navbar-brand fw-bold text-white fs-4 mt-2 text-decoration-none" th:href="@{/}">Same=</a>
+        <a class="navbar-brand d-lg-none mt-2 mb-3 d-inline-block" th:href="@{/}">
+          <!-- 라이트 모드 로고 -->
+          <img src="/image/main/logo-light.png" alt="Logo Light" class="logo-light" style="height: 40px;">
+          <!-- 다크 모드 로고 -->
+          <img src="/image/main/logo-dark.png" alt="Logo Dark" class="logo-dark" style="height: 40px;">
+        </a>
         <hr />
       </div>
 
@@ -92,77 +101,90 @@
     </div>
   </nav>
 
-  <div class="container flex-grow-1">
-    <h2 th:text="${categoryName} + ' 목록'">게시판 목록</h2>
+  <!-- container의 역할을 하는 div에 board-wrapper 클래스 추가 -->
+  <div class="container flex-grow-1"
+    th:classappend="${posts == null or posts.isEmpty()} ? ' board-wrapper-empty' : ' board-wrapper'">
 
-    <div class="write-container d-flex justify-content-end">
-      <sec:authorize access="isAuthenticated()">
-        <a th:href="@{/board/write(categoryId=${categoryId}, page=${pageNum})}" class="write-btn">글쓰기</a>
-      </sec:authorize>
-    </div>
+    <!-- 게시판 내용 (공지, 글 목록 등)는 이 안에 -->
+    <div class="board-content">
+      <h2 th:text="${categoryName} + ' 목록'">게시판 목록</h2>
 
-    <div class="section-title" th:if="${notices != null and !notices.isEmpty()}">📌 공지사항</div>
-    <div class="notice-card" th:each="post : ${notices}">
-      <a class="title" th:href="@{|/board/view/${post.boardNum}?page=${pageNum}&originCategoryId=${categoryId}|}">
-        [공지] <span th:text="${post.subject}">공지 제목</span>
-      </a>
-      <span class="meta">
-        👤 <span th:text="${post.nickName}">닉네임</span> ·
-        🕒 <span th:text="${#temporals.format(post.writedate, 'yyyy-MM-dd HH:mm')}">작성일</span> ·
-        👁 <span th:text="${post.hit}">0</span>
-      </span>
-    </div>
+      <div class="write-container d-flex justify-content-end">
+        <sec:authorize access="isAuthenticated()">
+          <a th:href="@{/board/write(categoryId=${categoryId}, page=${pageNum})}" class="write-btn">글쓰기</a>
+        </sec:authorize>
+      </div>
 
-
-    <div class="section-title" th:if="${posts != null and !posts.isEmpty()}">📝 게시글</div>
-    <div class="total-count text-start">
-      <p th:text="'총 ' + ${totalCount} + ' 건의 게시글이 있습니다.'"></p>
-    </div>
-    <div class="post-card d-flex justify-content-between align-items-center" th:each="post : ${posts}">
-      <div class="post-details d-flex flex-column w-100">
-        <a class="title" th:href="@{|/board/view/${post.boardNum}?page=${pageNum}&originCategoryId=${categoryId}|}"
-          th:text="${post.subject}">제목</a>
-
-        <!-- 제목 아래에 메타 정보 배치 -->
+      <div class="section-title">📌 공지사항</div>
+      <div th:if="${notices != null and !notices.isEmpty()}" th:each="post : ${notices}" class="notice-card">
+        <a class="title" th:href="@{|/board/view/${post.boardNum}?page=${pageNum}&originCategoryId=${categoryId}|}">
+          [공지] <span th:text="${post.subject}">공지 제목</span>
+        </a>
         <span class="meta">
-          👤 <span th:text="${post.nickName}">닉네임</span> ·
-          🕒 <span th:text="${#temporals.format(post.writedate, 'yyyy-MM-dd HH:mm')}">작성일</span> ·
-          👁 <span th:text="${post.hit}">0</span>
+          <i class="bi bi-megaphone"></i> <span th:text="${post.nickName}">닉네임</span> ·
+          <i class="bi bi-clock"></i> <span
+            th:text="${#temporals.format(post.writedate, 'yyyy-MM-dd HH:mm')}">작성일</span> ·
+          <i class="bi bi-eye"></i> <span th:text="${post.hit}">0</span>
         </span>
       </div>
+      <p class="no-post" th:if="${notices == null or notices.isEmpty()}">등록된 공지사항이 없습니다.</p>
 
-      <!-- 이미지 아이콘을 아이콘 크기만큼만 차지 -->
-      <!-- 유효한 이미지(imagePath 있는 이미지)가 하나라도 있으면 아이콘 표시 -->
-      <div th:if="${post.imageFileNames != null and 
-  !post.imageFileNames.?[imagePath != null and !#strings.isEmpty(imagePath)].isEmpty()}"
-        class="image-indicator d-flex align-items-center">
-        <i class="bi bi-image me-2" style="font-size: 1.2rem;"></i>
+      <div class="section-title">📝 게시글</div>
+      <div class="total-count text-start">
+        <p th:text="'총 ' + ${totalCount} + ' 건의 게시글이 있습니다.'"></p>
       </div>
+      <div class="post-card d-flex justify-content-between align-items-center" th:each="post : ${posts}">
+        <div class="post-details d-flex flex-column w-100">
+          <a class="title" th:href="@{|/board/view/${post.boardNum}?page=${pageNum}&originCategoryId=${categoryId}|}"
+            th:text="${post.subject}">제목</a>
+
+          <!-- 제목 아래에 메타 정보 배치 -->
+          <span class="meta">
+            <i class="bi bi-file-person"></i> <span th:text="${post.nickName}">닉네임</span> ·
+            <i class="bi bi-clock"></i> <span
+              th:text="${#temporals.format(post.writedate, 'yyyy-MM-dd HH:mm')}">작성일</span> ·
+            <i class="bi bi-eye"></i> <span th:text="${post.hit}">0</span>
+          </span>
+        </div>
+
+        <!-- 이미지 아이콘을 아이콘 크기만큼만 차지 -->
+        <!-- 유효한 이미지(imagePath 있는 이미지)가 하나라도 있으면 아이콘 표시 -->
+        <div th:if="${post.imageFileNames != null and 
+  !post.imageFileNames.?[imagePath != null and !#strings.isEmpty(imagePath)].isEmpty()}"
+          class="image-indicator d-flex align-items-center">
+          <i class="bi bi-image me-2" style="font-size: 1.2rem;"></i>
+        </div>
+      </div>
+
+      <p class="no-post" th:if="${posts == null or posts.isEmpty()}">등록된 게시글이 없습니다.</p>
     </div>
 
-    <p class="no-post" th:if="${posts == null or posts.isEmpty()}">등록된 게시글이 없습니다.</p>
+    <!-- ✅ 페이징: 항상 board-wrapper 하단에 위치 -->
+    <div class="pagination d-flex justify-content-center mt-4">
+      <th:block th:if="${posts != null and !posts.isEmpty()}">
+        <a class="page-link" th:href="@{/board/list(categoryId=${categoryId}, page=${page.number})}"
+          th:classappend="${!page.hasPrevious()} ? ' disabled no-hover' : ''">이전</a>
 
-    <div class="pagination d-flex justify-content-center mt-4" th:if="${page.totalPages > 1}">
-      <!-- 항상 보이지만 비활성화 상태를 조건으로 설정 -->
-      <a class="page-link" th:href="@{/board/list(categoryId=${categoryId}, page=${page.number})}"
-        th:classappend="${!page.hasPrevious()} ? ' disabled no-hover' : ''">이전</a>
+        <th:block th:if="${page.totalPages > 0}">
+          <a class="page-link" th:each="i : ${#numbers.sequence(1, page.totalPages)}"
+            th:href="@{/board/list(categoryId=${categoryId}, page=${i})}"
+            th:classappend="${i == page.number + 1} ? ' active' : ''" th:text="${i}">1</a>
+        </th:block>
 
-      <a class="page-link" th:each="i : ${#numbers.sequence(1, page.totalPages)}"
-        th:href="@{/board/list(categoryId=${categoryId}, page=${i})}"
-        th:classappend="${i == page.number + 1} ? ' active' : ''" th:text="${i}">1</a>
-
-      <a class="page-link" th:href="@{/board/list(categoryId=${categoryId}, page=${page.number + 2})}"
-        th:classappend="${!page.hasNext()} ? ' disabled no-hover' : ''">다음</a>
+        <a class="page-link" th:href="@{/board/list(categoryId=${categoryId}, page=${page.number + 2})}"
+          th:classappend="${!page.hasNext()} ? ' disabled no-hover' : ''">다음</a>
+      </th:block>
     </div>
   </div>
-    <button id="scrollToTopBtn" class="btn btn-warning rounded-circle shadow">
-      <i class="bi bi-arrow-up"></i>
-    </button>
 
-    <!-- ✅ 푸터 -->
-    <footer class="footer">
-      ⓒ 2025 Kakao Corp. All rights reserved.
-    </footer>
+  <button id="scrollToTopBtn" class="btn btn-warning rounded-circle shadow">
+    <i class="bi bi-arrow-up"></i>
+  </button>
+
+  <!-- ✅ 푸터 -->
+  <footer class="footer">
+    ⓒ 2025 Kakao Corp. All rights reserved.
+  </footer>
 
 </body>
 

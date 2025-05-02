@@ -157,11 +157,13 @@ hr {
 }
 
 .card i.bi-bicycle {
-  font-size: 3.5rem; /* 자전거 아이콘만 살짝 더 키움 */
+  font-size: 3.5rem;
+  /* 자전거 아이콘만 살짝 더 키움 */
 }
 
 .card:hover {
-  transform: translateY(-5px); /* 살짝 위로 떠오르게 */
+  transform: translateY(-5px);
+  /* 살짝 위로 떠오르게 */
 }
 
 .service-btn {
@@ -176,7 +178,8 @@ hr {
 }
 
 .service-btn:hover {
-  background-color: #cfa743; /* 조금 더 어두운 골드 */
+  background-color: #cfa743;
+  /* 조금 더 어두운 골드 */
   color: white;
 }
 
@@ -193,6 +196,20 @@ hr {
     background: rgba(255, 255, 255, 0.95);
     width: 90%;
   }
+}
+
+/* 🌞 기본적으로 다크 로고 숨기기 */
+.logo-dark {
+  display: none;
+}
+
+/* 🌞 라이트 모드용 */
+.logo-light {
+  display: inline;
+}
+
+.logo-dark {
+  display: none;
 }
 
 .footer {
@@ -243,7 +260,7 @@ body.dark-mode #responsibility h5 {
 body.dark-mode .login-btn,
 body.dark-mode .navbar-toggler,
 body.dark-mode #toggle-mode {
-  background-color:  transparent !important;
+  background-color: transparent !important;
 }
 
 body.dark-mode .login-btn:hover,
@@ -267,4 +284,13 @@ body.dark-mode .dropdown-menu button.dropdown-item:hover {
   background-color: transparent !important;
   color: #6495ED !important;
   border: none;
+}
+
+/* 🌚 다크 모드용 */
+body.dark-mode .logo-light {
+  display: none;
+}
+
+body.dark-mode .logo-dark {
+  display: inline;
 }
