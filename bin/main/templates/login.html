@@ -34,8 +34,12 @@
     </button>
 
     <!-- 웹(데스크톱)용 로고 -->
-    <a class="navbar-brand d-none d-lg-block position-absolute top-0 mt-2 ms-3" style="z-index: 1020;"
-      th:href="@{/}">Same=</a>
+    <a class="navbar-brand d-none d-lg-block position-absolute top-0 mt-2 ms-3" style="z-index: 1020;" th:href="@{/}">
+      <!-- 라이트 모드 로고 -->
+      <img src="/image/main/logo-light.png" alt="Logo Light" class="logo-light" style="height: 40px;">
+      <!-- 다크 모드 로고 -->
+      <img src="/image/main/logo-dark.png" alt="Logo Dark" class="logo-dark" style="height: 40px;">
+    </a>
 
     <div class="position-absolute end-0 top-0 mt-2 me-3 d-flex align-items-center gap-2">
       <th:block sec:authorize="isAuthenticated()">
@@ -65,7 +69,12 @@
     <!-- 모바일 메뉴 안에 있는 로고 -->
     <div class="collapse navbar-collapse justify-content-center" id="mobileMenu">
       <div class="d-lg-none text-center w-100">
-        <a class="navbar-brand fw-bold text-white fs-4 mt-2 text-decoration-none" th:href="@{/}">Same=</a>
+        <a class="navbar-brand d-lg-none mt-2 mb-3 d-inline-block" th:href="@{/}">
+          <!-- 라이트 모드 로고 -->
+          <img src="/image/main/logo-light.png" alt="Logo Light" class="logo-light" style="height: 40px;">
+          <!-- 다크 모드 로고 -->
+          <img src="/image/main/logo-dark.png" alt="Logo Dark" class="logo-dark" style="height: 40px;">
+        </a>
         <hr />
       </div>
 
@@ -95,27 +104,27 @@
   <!-- ✅ 로그인 폼 본문 -->
   <main class="main-content d-flex justify-content-center align-items-center" style="min-height: calc(100vh - 150px);">
     <div class="login-container p-5 rounded-4 shadow">
-      
+
       <!-- 제목 -->
       <h1 class="text-center mb-4">로그인</h1>
-  
+
       <!-- 로그인 Form -->
       <form th:action="@{/login}" method="post">
         <div class="mb-3">
           <label for="username" class="form-label">아이디:</label>
           <input type="text" class="form-control" id="username" name="username" required>
         </div>
-  
+
         <div class="mb-4">
           <label for="password" class="form-label">비밀번호:</label>
           <input type="password" class="form-control" id="password" name="password" required>
         </div>
-  
+
         <div class="d-grid mb-3">
           <button type="submit" class="btn btn-login">로그인</button>
         </div>
       </form>
-  
+
       <!-- 아이디/비밀번호 찾기 -->
       <div class="row gx-2 mb-4">
         <div class="col-6">
@@ -124,12 +133,13 @@
           </button>
         </div>
         <div class="col-6">
-          <button type="button" class="btn btn-find-password w-100" data-bs-toggle="modal" data-bs-target="#findPasswordModal">
+          <button type="button" class="btn btn-find-password w-100" data-bs-toggle="modal"
+            data-bs-target="#findPasswordModal">
             비밀번호 찾기
           </button>
         </div>
       </div>
-  
+
       <!-- 소셜 로그인 -->
       <div class="border-top pt-4">
         <label class="signup-label text-center d-block mb-2">회원가입/간편로그인</label>
