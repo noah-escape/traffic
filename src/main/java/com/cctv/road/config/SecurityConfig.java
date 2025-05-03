@@ -71,7 +71,8 @@ public class SecurityConfig {
                 "/css/**", "/js/**", "/image/**", "/favicon.ico",
                 "/json/**", "/pages/**",
                 "/api/**", "/api/proxy/**",
-                "/member/find/**", "/find-id", "/find-password"
+                "/member/find/**", "/find-id", "/find-password",
+                "/board/list/**"
             ).permitAll()
             .requestMatchers("/register/delete").authenticated()
             .requestMatchers("/member/mypage", "/member/update", "/member/update/**", "/member/check-password")

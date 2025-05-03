@@ -10,7 +10,8 @@ let panelStates = {
   route: false,
   traffic: false,
   event: false,
-  cctv: false
+  cctv: false,
+  subway: false
 };
 
 // 패널 및 영상창 초기화
@@ -147,7 +148,32 @@ document.addEventListener('DOMContentLoaded', () => {
         const roadList = document.getElementById('roadList');
         if (roadList) roadList.innerHTML = '';
       }
-    }
+    },
+    {
+      id: 'sidebarSubwayBtn',
+      key: 'subway',
+      panelId: 'subwayFilterPanel',
+      onActivate: () => {
+        window.subwayLayerVisible = true;
+        console.log("🚇 지하철 ON");
+        Promise.all([
+          window.generateSubwayGraph?.(),
+          window.loadStationCoordMapFromJson?.()
+        ]).then(([graph]) => {
+          window.subwayGraph = graph;
+          window.renderLineCheckboxes?.();
+          window.loadSubwayStations?.();
+        });
+      },
+      onDeactivate: () => {
+        window.subwayLayerVisible = false;
+        console.log("🚇 지하철 OFF");
+        window.clearSubwayLayer?.();
+        window.clearStationMarkers?.();
+        clearInterval(window.subwayRefreshInterval);
+        window.subwayRefreshInterval = null;
+      }
+    }    
   ];
 
   // 버튼 핸들링 및 사이즈 조절
@@ -211,6 +237,18 @@ document.addEventListener('DOMContentLoaded', () => {
       attributes: true,
       attributeFilter: ['class'],
     });
+  }
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const autoPanelKey = urlParams.get('panel');
+  if (autoPanelKey) {
+    const autoBtnId = `sidebar${autoPanelKey.charAt(0).toUpperCase() + autoPanelKey.slice(1)}Btn`;
+    const autoBtn = document.getElementById(autoBtnId);
+    if (autoBtn) {
+      setTimeout(() => {
+        autoBtn.click(); // 자동 클릭
+      }, 400);
+    }
   }
 });
 
