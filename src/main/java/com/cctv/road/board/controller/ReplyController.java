@@ -21,7 +21,7 @@ public class ReplyController {
 
   @PostMapping("/reply/write")
   public String writeReply(@ModelAttribute ReplyDTO replyDTO,
-      @AuthenticationPrincipal CustomUserDetails userDetails, // ✅ 여기!
+      @AuthenticationPrincipal CustomUserDetails userDetails,
       HttpServletRequest request) {
 
     Member member = userDetails.getMember(); // ✅ 로그인한 사용자 정보
