@@ -70,28 +70,6 @@ async function loadStationCoordMapFromJson() {
     .catch(err => console.error("🚨 역 좌표 로드 실패:", err));
 }
 
-// ✅ 사이드바 버튼 클릭 시 동작
-document.getElementById('sidebarSubwayBtn').addEventListener('click', () => {
-  subwayLayerVisible = !subwayLayerVisible;
-  if (subwayLayerVisible) {
-    console.log("🚇 지하철 ON");
-    document.getElementById('subwayFilterPanel')?.style.setProperty('display', 'flex');
-    Promise.all([generateSubwayGraph(), loadStationCoordMapFromJson()])
-      .then(([graph]) => {
-        window.subwayGraph = graph;
-        renderLineCheckboxes();
-        loadSubwayStations();
-      });
-  } else {
-    console.log("🚇 지하철 OFF");
-    document.getElementById('subwayFilterPanel')?.style.setProperty('display', 'none');
-    clearSubwayLayer();
-    clearStationMarkers();
-    clearInterval(subwayRefreshInterval);
-    subwayRefreshInterval = null;
-  }
-});
-
 function loadSubwayStations() {
   fetch('/json/subway_station_master.json')
     .then(response => response.json())
@@ -390,4 +368,14 @@ document.querySelectorAll(".sidebar button").forEach(btn => {
   });
 });
 
+window.subwayLayerVisible = subwayLayerVisible;
+window.subwayMarkers = subwayMarkers;
+window.stationMarkers = stationMarkers;
+window.subwayRefreshInterval = subwayRefreshInterval;
 
+window.generateSubwayGraph = generateSubwayGraph;
+window.loadStationCoordMapFromJson = loadStationCoordMapFromJson;
+window.loadSubwayStations = loadSubwayStations;
+window.clearSubwayLayer = clearSubwayLayer;
+window.clearStationMarkers = clearStationMarkers;
+window.renderLineCheckboxes = renderLineCheckboxes;
