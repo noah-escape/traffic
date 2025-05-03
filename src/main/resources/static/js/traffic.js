@@ -212,6 +212,18 @@ document.addEventListener('DOMContentLoaded', () => {
       attributeFilter: ['class'],
     });
   }
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const autoPanelKey = urlParams.get('panel');
+  if (autoPanelKey) {
+    const autoBtnId = `sidebar${autoPanelKey.charAt(0).toUpperCase() + autoPanelKey.slice(1)}Btn`;
+    const autoBtn = document.getElementById(autoBtnId);
+    if (autoBtn) {
+      setTimeout(() => {
+        autoBtn.click(); // 자동 클릭
+      }, 400);
+    }
+  }
 });
 
 // 문자열 첫 글자 대문자

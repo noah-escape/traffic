@@ -95,40 +95,41 @@ public class BoardService {
 
   // 이미지 저장 메서드 (예시)
   private String saveImage(MultipartFile image) throws IOException {
-    // 이미지가 비어있지 않은지 확인
     if (image == null || image.isEmpty()) {
-      // 이미지가 없을 경우 null 또는 기본 이미지 경로를 반환
-      return null; // 이미지가 없으면 null 반환, 또는 기본 이미지 경로를 반환할 수 있음
+        log.warn("⚠️ 업로드된 이미지가 비어 있음");
+        return null;
     }
 
-    // 저장할 디렉토리 설정
     String uploadDir = "C:/project/upload/images";
     File dir = new File(uploadDir);
     if (!dir.exists()) {
-      dir.mkdirs(); // 디렉토리가 없으면 생성
+        boolean created = dir.mkdirs();
+        log.info("📁 디렉토리 생성됨: {} → {}", uploadDir, created);
     }
 
-    // 파일명 확인 및 확장자 처리
     String originalFilename = image.getOriginalFilename();
-
     if (originalFilename == null || !originalFilename.contains(".")) {
-      throw new IOException("올바르지 않은 파일 이름입니다.");
+        throw new IOException("올바르지 않은 파일 이름입니다.");
     }
 
-    // 파일명에서 공백 제거 및 안전한 파일명 생성
     String sanitizedFilename = originalFilename.trim().replaceAll("[^a-zA-Z0-9.-]", "_");
-
-    // 확장자 추출
     String extension = sanitizedFilename.substring(sanitizedFilename.lastIndexOf("."));
     String uniqueFileName = UUID.randomUUID().toString() + extension;
     String filePath = uploadDir + "/" + uniqueFileName;
 
-    // 실제 파일 저장
-    image.transferTo(new File(filePath));
+    // ✅ 여기 로그 추가 (실제 저장 경로)
+    log.info("💾 이미지 저장 경로: {}", filePath);
 
-    // 웹에서 접근할 수 있는 상대 경로로 반환 (예: /images/uuid.jpg)
+    try {
+        image.transferTo(new File(filePath));
+        log.info("✅ 이미지 저장 완료: {}", filePath);
+    } catch (IOException e) {
+        log.error("❌ 이미지 저장 실패: {}", e.getMessage());
+        throw e;
+    }
+
     return "/images/" + uniqueFileName;
-  }
+}
 
   /**
    * 게시글 조회수 증가
