@@ -145,3 +145,9 @@ body.dark-mode .btn-close {
   filter: invert(1) grayscale(100%) brightness(200%);
   opacity: 0.9;
 }
+
+/* 🌚 다크모드 placeholder 구분 색상 */
+body.dark-mode input[readonly] {
+  background-color: #dde3e8;
+  color: #5c656d;           
+}
