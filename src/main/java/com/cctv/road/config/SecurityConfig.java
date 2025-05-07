@@ -72,7 +72,7 @@ public class SecurityConfig {
                 "/json/**", "/pages/**",
                 "/api/**", "/api/proxy/**",
                 "/member/find/**", "/find-id", "/find-password",
-                "/board/list/**"
+                "/board/list/**", "/board/view/**"
             ).permitAll()
             .requestMatchers("/register/delete").authenticated()
             .requestMatchers("/member/mypage", "/member/update", "/member/update/**", "/member/check-password")
