@@ -208,10 +208,6 @@ hr {
   display: inline;
 }
 
-.logo-dark {
-  display: none;
-}
-
 .footer {
   color: white;
   background-color: var(--light-blue);

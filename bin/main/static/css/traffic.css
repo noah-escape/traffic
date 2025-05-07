@@ -215,6 +215,61 @@ body.dark-mode #bikeFilterPanel {
   margin-left: 10px;
 }
 
+/* ▶ CCTV 패널 2탭 구조 */
+.cctv-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* ▶ 상단 탭 버튼 바 */
+.cctv-tab-bar {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid #ccc;
+  gap: 4px;
+}
+
+/* ▶ CCTV 리스트 공통 */
+.cctv-list {
+  flex-grow: 1;
+  margin: 0;
+  padding: 0;
+  border-top: none;
+  border-bottom: none;
+  list-style: none;
+}
+
+/* ▶ 리스트 스크롤 가능 */
+.scrollable-list {
+  overflow-y: auto;
+}
+
+/* ▶ 하단 지도 타입 버튼 영역 */
+.map-type-buttons {
+  margin-top: auto;
+  padding: 10px;
+  border-top: 1px solid #ccc;
+  display: flex;
+  justify-content: space-around;
+}
+
+/* 📋 cctv 리스트 하단 버튼 */
+.map-type-btn {
+  margin-right: 6px;
+  margin-top: 4px;
+  padding: 6px 12px;
+  font-size: 13px;
+  border: 1px solid #aaa;
+  background: #f9f9f9;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.map-type-btn:hover {
+  background: #e0e0e0;
+}
+
 /* 📌 길찾기 입력 가로 정렬 */
 .route-input-row {
   display: flex;

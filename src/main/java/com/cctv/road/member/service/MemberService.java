@@ -29,34 +29,24 @@ public class MemberService {
     return memberRepository.existsByNickName(nickName);
   }
 
-  // ✅ 회원가입 공통 처리
   @Transactional
   public Member registerSocialMember(MemberDTO dto) {
     String userId = dto.getUserId();
-    log.info("🔐 회원가입 시도: {}", userId);
-    log.debug("📦 DTO 내용: {}", dto);
 
     if (memberRepository.existsByUserId(userId)) {
-      log.warn("❌ 중복된 아이디: {}", userId);
       throw new IllegalArgumentException("이미 사용 중인 아이디입니다.");
     }
 
     if (dto.getAddress() == null || dto.getAddress().isBlank()) {
       try {
         dto.combineAddress();
-        log.debug("🏡 결합된 주소: {}", dto.getAddress());
       } catch (Exception e) {
-        log.error("🚨 주소 결합 실패: {}", e.getMessage(), e);
         throw new RuntimeException("주소 처리 중 오류가 발생했습니다.");
       }
     }
 
-    log.info("🧾 가입 정보 요약 → userId: {}, nickName: {}, name: {}, email: {}",
-        dto.getUserId(), dto.getNickName(), dto.getName(), dto.getEmail());
-
     String encodedPassword = passwordEncoder.encode(dto.getPassword());
 
-    // ✅ 여기서 권한 부여 (기본값: ROLE_USER)
     Role role = Role.ROLE_USER;
 
     Member member = Member.builder()
@@ -70,14 +60,11 @@ public class MemberService {
         .address(dto.getAddress())
         .oauthProvider(dto.getOauthProvider())
         .oauthId(dto.getOauthId())
-        .role(role) // ✅ 이 줄을 반드시 추가해야 enum 저장됨
+        .role(role)
         .build();
-
-    log.debug("📦 변환된 Entity: {}", member);
 
     Member saved = memberRepository.save(member);
 
-    log.info("✅ 회원가입 완료: {}", saved.getUserId());
     return saved;
   }
 
@@ -193,8 +180,7 @@ public class MemberService {
     String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+";
     Random random = new Random();
 
-    // 8~12 사이 랜덤 길이 설정
-    int length = 8 + random.nextInt(5); // 8 + (0~4) → 8~12
+    int length = 8 + random.nextInt(5);
     StringBuilder tempPassword = new StringBuilder();
 
     for (int i = 0; i < length; i++) {
