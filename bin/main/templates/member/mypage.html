@@ -74,7 +74,7 @@
     <!-- 모바일 메뉴 안에 있는 로고 -->
     <div class="collapse navbar-collapse justify-content-center" id="mobileMenu">
       <div class="d-lg-none text-center w-100">
-        <a class="navbar-brand d-lg-none mt-2 mb-3 d-inline-block" th:href="@{/}">
+        <a class="navbar-brand d-lg-none mt-2 d-inline-block" th:href="@{/}">
           <!-- 라이트 모드 로고 -->
           <img src="/image/main/logo-light.png" alt="Logo Light" class="logo-light" style="height: 40px;">
           <!-- 다크 모드 로고 -->
@@ -99,10 +99,10 @@
             </ul>
           </div>
         </li>
-        <li class="nav-item"><a class="nav-link" href="#tech">Tech & Service</a></li>
+        <li class="nav-item"><a class="nav-link coming-soon" href="#statistics">통계 & 자료</a></li>
         <li class="nav-item"><a class="nav-link" th:href="@{/pages/map/traffic}">지도</a></li>
-        <li class="nav-item"><a class="nav-link" href="#news">News</a></li>
-        <li class="nav-item"><a class="nav-link" href="#ir">IR</a></li>
+        <li class="nav-item"><a class="nav-link coming-soon" href="#news">뉴스</a></li>
+        <li class="nav-item"><a class="nav-link coming-soon" href="#weather">날씨</a></li>
       </ul>
     </div>
   </nav>
@@ -128,7 +128,7 @@
       <form id="deleteForm" th:action="@{/register/delete}" method="post">
         <!-- ✅ CSRF 토큰 반드시 포함 -->
         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-        <button type="submit" class="btn btn-danger">회원 탈퇴</button>
+        <button type="submit" class="full-btn red-btn">회원 탈퇴</button>
       </form>
     </div>
   </main>
@@ -237,7 +237,7 @@
 
   <!-- ✅ 푸터 -->
   <footer class="footer">
-    ⓒ 2025 Kakao Corp. All rights reserved.
+    ⓒ 2025 ROAD TRAFFIC Corp. All rights reserved.
   </footer>
 
 </body>
