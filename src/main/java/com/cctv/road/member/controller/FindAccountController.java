@@ -23,7 +23,7 @@ public class FindAccountController {
   // ✅ 아이디 찾기 POST
   @PostMapping("/find-id")
   @ResponseBody
-  public String findId(@RequestParam String email) {
+  public String findIdAjax(@RequestParam String email) {
     // log.info("📨 요청받은 email: [{}]", email); // ✅ email 찍기
 
     String cleanedEmail = email.trim().toLowerCase();
@@ -32,7 +32,7 @@ public class FindAccountController {
     String userId = memberService.findUserIdByEmail(cleanedEmail);
     // log.info("📨 찾은 userId: [{}]", userId); // ✅ 찾은 userId 찍기
 
-    if (userId != null) {
+    if (userId != null && !userId.isBlank()) {
       mailService.sendIdByEmail(cleanedEmail, userId);
       return "success";
     } else {
