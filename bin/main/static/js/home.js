@@ -65,4 +65,14 @@ document.addEventListener('DOMContentLoaded', () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   }
+
+  // ✅ 준비 중 기능 얼럿
+  const comingSoonLinks = document.querySelectorAll('.coming-soon');
+  comingSoonLinks.forEach(link => {
+    link.addEventListener('click', function (e) {
+      e.preventDefault();
+      alert("해당 기능은 현재 준비 중입니다. 곧 만나보실 수 있어요!");
+    });
+  });
+
 });

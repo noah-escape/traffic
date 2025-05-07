@@ -31,7 +31,7 @@
     font-size: 1rem;
     border-radius: 8px;
     border: 1px solid #ccc;
-    transition: border-color 0.3s;
+    transition: all 0.3s;
     box-sizing: border-box;
 }
 
@@ -154,9 +154,7 @@ body.dark-mode .oauth2-container {
     background-color: var(--card-bg);
 }
 
-body.dark-mode .oauth2-container label,
-body.dark-mode .oauth2-container input,
-body.dark-mode input::placeholder {
+body.dark-mode .oauth2-container label {
     color: var(--text-color);
 }
 
@@ -168,12 +166,3 @@ body.dark-mode .oauth2-container button:hover {
     background-color: var(--blue-gray-light);
 }
 
-/* ✅ 다크모드에서 input[type="date"] 아이콘 흰색처럼 보이게 */
-body.dark-mode input[type="date"]::-webkit-calendar-picker-indicator {
-    filter: invert(1);
-}
-
-/* ✅ 다크모드 placeholder 색상 따로 지정 */
-body.dark-mode input::placeholder {
-    color: #b0b8c0;
-}
