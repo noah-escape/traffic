@@ -51,6 +51,10 @@ h2 {
   background-color: var(--light-blue);
 }
 
+.navbar-nav .nav-item {
+  margin: 0 12px;
+}
+
 .navbar-brand {
   font-size: 1.5rem;
   color: white;
@@ -127,7 +131,7 @@ hr {
 }
 
 .hero-section {
-  background: url('/image/main/main1.png') no-repeat center center / cover;
+  background: url('/image/main/main1.webp') no-repeat center center / cover;
   height: 100vh;
   position: relative;
 }
@@ -202,10 +206,6 @@ hr {
 /* 🌞 라이트 모드용 */
 .logo-light {
   display: inline;
-}
-
-.logo-dark {
-  display: none;
 }
 
 .footer {
