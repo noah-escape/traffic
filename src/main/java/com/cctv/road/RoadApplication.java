@@ -5,9 +5,11 @@ import java.util.Map;
 
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import io.github.cdimascio.dotenv.Dotenv;
 
+@EnableScheduling
 @SpringBootApplication
 public class RoadApplication {
 

@@ -1,74 +1,72 @@
-let busStopMarkers = [];
+let busMarkers = []; // 🔸 지도 위 버스 마커 저장용 배열
+let busTimer = null; // 🔸 갱신 타이머
 
-window.clearBusStopMarkers = function () {
-  busStopMarkers.forEach(m => m.setMap(null));
-  busStopMarkers = [];
-};
+// 🔹 기존 마커 제거
+function clearBusMarkers() {
+  busMarkers.forEach(marker => marker.setMap(null));
+  busMarkers = [];
+}
 
-window.searchBusStops = function () {
-  console.log("🚏 정류장 검색 함수 실행됨!");
-  const keyword = document.getElementById("busStopInput").value.trim();
-  if (!keyword) return alert("정류장 이름을 입력하세요!");
-
-  const url = `/api/proxy/busStationList?keyword=${encodeURIComponent(keyword)}`;
+// 🔹 버스 위치 조회 및 지도에 마커 표시
+function showBusPositions(routeId) {
+  const url = `/api/proxy/busPos?routeId=${routeId}`;
 
   fetch(url)
     .then(res => res.json())
     .then(data => {
-      console.log("📡 버스 API 응답:", data);
-      const raw = data?.msgBody?.itemList;
-      const stations = Array.isArray(raw) ? raw : raw ? [raw] : [];
+      const buses = data?.msgBody?.itemList ?? [];
 
-      if (stations.length === 0) {
-        alert("검색 결과가 없습니다.");
+      if (buses.length === 0) {
+        console.warn("📭 실시간 버스 데이터 없음");
+        clearBusMarkers();
         return;
       }
 
-      window.clearBusStopMarkers();
+      clearBusMarkers(); // ✅ 이전 마커 제거
 
-      stations.forEach(stop => {
-        const name = stop.stNm;
-        const lat = parseFloat(stop.tmY);
-        const lng = parseFloat(stop.tmX);
-        const arsId = stop.arsId;
+      buses.forEach(bus => {
+        const lat = parseFloat(bus.gpsY);
+        const lng = parseFloat(bus.gpsX);
+        const carNo = bus.vehId;
 
-        const position = new naver.maps.LatLng(lat, lng);
-        const marker = new naver.maps.Marker({
-          map,
-          position,
-          title: name,
-          icon: {
-            url: '/image/bus-stop.png', // 커스텀 마커
-            size: new naver.maps.Size(30, 40),
-            anchor: new naver.maps.Point(15, 40)
-          }
-        });
+        if (!isNaN(lat) && !isNaN(lng)) {
+          const marker = new naver.maps.Marker({
+            position: new naver.maps.LatLng(lat, lng),
+            map: map,
+            title: `버스 번호: ${carNo}`,
+            icon: {
+              url: 'https://cdn-icons-png.flaticon.com/512/61/61211.png',
+              size: new naver.maps.Size(40, 40),
+              anchor: new naver.maps.Point(20, 20)
+            }
+          });
 
-        const info = new naver.maps.InfoWindow({
-          content: `
-            <div style="padding:6px 12px;">
-              🚏 <strong>${name}</strong><br/>
-              정류장번호: ${arsId}
-            </div>
-          `,
-          position
-        });
+          const info = new naver.maps.InfoWindow({
+            content: `<div style="padding:6px;">🚌 차량번호: ${carNo}</div>`
+          });
 
-        naver.maps.Event.addListener(marker, 'click', () => {
-          if (window.activeInfoWindow) window.activeInfoWindow.close();
-          window.activeInfoWindow = info;
-          info.open(map, marker);
-        });
+          naver.maps.Event.addListener(marker, 'click', () => {
+            info.open(map, marker);
+          });
 
-        busStopMarkers.push(marker);
+          busMarkers.push(marker); // ✅ 마커 저장
+        }
       });
-
-      // 지도 중심 이동
-      const mid = stations[Math.floor(stations.length / 2)];
-      map.panTo(new naver.maps.LatLng(parseFloat(mid.tmY), parseFloat(mid.tmX)));
     })
     .catch(err => {
-      console.error("❌ 정류장 검색 실패", err);
-      alert("정류장 검색 중 오류 발생");
+      console.error("❌ 버스 위치 불러오기 실패", err);
     });
-};
+}
+
+// 🔹 주기적 갱신 트래킹 시작
+function startBusTracking(routeId) {
+  if (busTimer) clearInterval(busTimer); // 이전 타이머 제거
+  showBusPositions(routeId);              // 최초 호출
+  busTimer = setInterval(() => showBusPositions(routeId), 10000); // 10초마다 호출
+}
+
+// 🔹 버튼 클릭 시 특정 노선 추적 시작
+document.getElementById('sidebarBusBtn').addEventListener('click', () => {
+  const defaultRouteId = '100100118'; // 🚍 예시: 100번 (강남역-숭례문)
+  startBusTracking(defaultRouteId);
+});

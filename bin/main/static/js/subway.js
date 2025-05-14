@@ -1,11 +1,9 @@
-// ✅ 초기 설정
 let subwayLayerVisible = false;
 let subwayMarkers = [];
 let stationMarkers = [];
 let subwayRefreshInterval = null;
 const stationCoordMap = {};
 const stationLinesMap = {};
-
 const subwayLines = [
   "1호선", "2호선", "3호선", "4호선", "5호선",
   "6호선", "7호선", "8호선", "9호선",
@@ -13,31 +11,26 @@ const subwayLines = [
   "서해선", "김포골드라인"
 ];
 
-// ✅ 노선 그래프 자동 생성기
 async function generateSubwayGraph() {
-  const response = await fetch('/json/subway_station_master.json');
-  const json = await response.json();
-  const data = json.DATA;
-
+  const res = await fetch('/json/subway_station_master.json');
+  const data = (await res.json()).DATA;
   const lineMap = {};
-  data.forEach(station => {
-    const line = station.route.trim();
-    const name = station.bldn_nm.trim();
+
+  data.forEach(({ route, bldn_nm, bldn_id }) => {
+    const line = route.trim(), name = bldn_nm.trim();
     if (!lineMap[line]) lineMap[line] = [];
-    lineMap[line].push({ name, order: parseInt(station.bldn_id) });
+    lineMap[line].push({ name, order: parseInt(bldn_id) });
   });
 
   const graph = {};
   Object.entries(lineMap).forEach(([line, stations]) => {
     stations.sort((a, b) => a.order - b.order);
-    for (let i = 0; i < stations.length; i++) {
-      const curr = stations[i].name;
-      const prev = stations[i - 1]?.name;
-      const next = stations[i + 1]?.name;
-      if (!graph[curr]) graph[curr] = new Set();
-      if (prev) graph[curr].add(prev);
-      if (next) graph[curr].add(next);
-    }
+    stations.forEach((curr, i) => {
+      const prev = stations[i - 1]?.name, next = stations[i + 1]?.name;
+      if (!graph[curr.name]) graph[curr.name] = new Set();
+      if (prev) graph[curr.name].add(prev);
+      if (next) graph[curr.name].add(next);
+    });
   });
 
   const finalGraph = {};
@@ -48,75 +41,62 @@ async function generateSubwayGraph() {
   return finalGraph;
 }
 
-// ✅ 역 좌표 및 노선 매핑
 async function loadStationCoordMapFromJson() {
-  return fetch('/json/subway_station_master.json')
-    .then(res => res.json())
-    .then(json => {
-      json.DATA.forEach(station => {
-        const name = station.bldn_nm.trim();
-        const lat = parseFloat(station.lat);
-        const lng = parseFloat(station.lot);
-        stationCoordMap[name] = { lat, lng };
+  const res = await fetch('/json/subway_station_master.json');
+  const data = (await res.json()).DATA;
 
-        const line = station.route.trim();
-        if (!stationLinesMap[name]) stationLinesMap[name] = [];
-        if (!stationLinesMap[name].includes(line)) {
-          stationLinesMap[name].push(line);
-        }
-      });
-      console.log('📍 역 좌표 및 노선 매핑 완료');
-    })
-    .catch(err => console.error("🚨 역 좌표 로드 실패:", err));
+  data.forEach(({ bldn_nm, lat, lot, route }) => {
+    const name = bldn_nm.trim();
+    stationCoordMap[name] = { lat: parseFloat(lat), lng: parseFloat(lot) };
+    if (!stationLinesMap[name]) stationLinesMap[name] = [];
+    if (!stationLinesMap[name].includes(route.trim())) {
+      stationLinesMap[name].push(route.trim());
+    }
+  });
+  console.log("📍 역 좌표 및 노선 매핑 완료");
 }
 
 function loadSubwayStations() {
   fetch('/json/subway_station_master.json')
-    .then(response => response.json())
+    .then(res => res.json())
     .then(json => {
-      json.DATA.forEach(station => {
-        const lat = parseFloat(station.lat);
-        const lng = parseFloat(station.lot);
-        const name = station.bldn_nm;
+      json.DATA.forEach(({ lat, lot, bldn_nm }) => {
         const marker = new naver.maps.Marker({
-          position: new naver.maps.LatLng(lat, lng),
+          position: new naver.maps.LatLng(parseFloat(lat), parseFloat(lot)),
           map,
           icon: {
-            content: `<div style="background:#34c759;padding:4px 8px;border-radius:8px;font-size:12px;color:white;">🚉 ${name}</div>`,
+            content: `<div style="background:#34c759;padding:4px 8px;border-radius:8px;font-size:12px;color:white;">🚉 ${bldn_nm}</div>`,
             anchor: new naver.maps.Point(15, 15)
           }
         });
         stationMarkers.push(marker);
       });
     })
-    .catch(err => console.error('🚨 역 마커 로드 오류:', err));
+    .catch(console.error);
 }
 
 function handleLineFilterChange() {
   clearSubwayLayer();
   const selectedLines = Array.from(document.querySelectorAll('#lineCheckboxContainer input:checked')).map(cb => cb.value);
+
   selectedLines.forEach(line => {
-    const url = `http://swopenapi.seoul.go.kr/api/subway/616753694e776a64353258554c756b/xml/realtimePosition/0/1000/${line}`;
-    fetch(url)
+    fetch(`http://swopenapi.seoul.go.kr/api/subway/616753694e776a64353258554c756b/xml/realtimePosition/0/1000/${line}`)
       .then(res => res.text())
       .then(str => {
-        const parser = new DOMParser();
-        const xml = parser.parseFromString(str, "text/xml");
-        const rows = xml.getElementsByTagName('row');
+        const rows = new DOMParser().parseFromString(str, "text/xml").getElementsByTagName('row');
         for (let i = 0; i < rows.length; i++) {
           const statnNm = rows[i].getElementsByTagName('statnNm')[0]?.textContent?.trim();
           const trainNo = rows[i].getElementsByTagName('trainNo')[0]?.textContent;
           const coords = stationCoordMap[statnNm];
           if (!coords) continue;
-          const marker = new naver.maps.Marker({
+          subwayMarkers.push(new naver.maps.Marker({
             position: new naver.maps.LatLng(coords.lat, coords.lng),
             map,
             icon: {
               content: `<div style="background:#007AFF;padding:4px 8px;border-radius:6px;font-size:11px;color:white;">🚇 ${statnNm}<br>#${trainNo}<br>(${line})</div>`,
               anchor: new naver.maps.Point(15, 15)
             }
-          });
-          subwayMarkers.push(marker);
+          }));
         }
       })
       .catch(err => console.warn(`⚠️ ${line} 위치 오류:`, err));
@@ -129,10 +109,7 @@ async function findSubwayRoute() {
   const resultBox = document.getElementById('routeResultBox');
   resultBox.innerHTML = '';
 
-  if (!start || !end) {
-    alert("🚩 탑승역과 하차역을 모두 입력하세요.");
-    return;
-  }
+  if (!start || !end) return alert("🚩 탑승역과 하차역을 모두 입력하세요.");
   if (!(start in stationCoordMap) || !(end in stationCoordMap)) {
     resultBox.innerHTML = `<div class="alert alert-warning">⛔ 입력한 역이 존재하지 않거나 좌표 데이터가 없습니다.</div>`;
     return;
@@ -158,23 +135,21 @@ async function findSubwayRoute() {
   const arrivalTime = new Date(now.getTime() + estimatedTime * 60000);
   const arrivalStr = arrivalTime.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: true });
 
-  const infoBox = document.createElement('div');
-  infoBox.className = 'alert alert-info mb-2';
-  infoBox.innerHTML = `
-    <b>총 역 수:</b> ${path.length}개<br>
-    <b>예상 소요 시간:</b> ⏱ 약 ${estimatedTime}분<br>
-    <b>도착 예상 시각:</b> 🕒 ${arrivalStr}
-  `;
-  resultBox.appendChild(infoBox);
+  resultBox.innerHTML = `
+    <div class="alert alert-info mb-2">
+      <b>총 역 수:</b> ${path.length}개<br>
+      <b>예상 소요 시간:</b> ⏱ 약 ${estimatedTime}분<br>
+      <b>도착 예상 시각:</b> 🕒 ${arrivalStr}
+    </div>`;
 
-  const showAllButton = document.createElement('button');
-  showAllButton.className = 'btn btn-outline-secondary btn-sm mb-2';
-  showAllButton.textContent = '전체 역 마커 보기';
-  showAllButton.onclick = () => {
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-outline-secondary btn-sm mb-2';
+  btn.textContent = '전체 역 마커 보기';
+  btn.onclick = () => {
     clearStationMarkers();
     loadSubwayStations();
   };
-  resultBox.appendChild(showAllButton);
+  resultBox.appendChild(btn);
 
   resultBox.insertAdjacentHTML('beforeend', await renderRouteListHTML(path));
   showOnlyPathMarkers(path);
@@ -184,16 +159,14 @@ function findSubwayPathBFS(start, end) {
   const queue = [[start]];
   const visited = new Set();
   const graph = window.subwayGraph;
-  while (queue.length > 0) {
+  while (queue.length) {
     const path = queue.shift();
     const last = path[path.length - 1];
     if (last === end) return path;
     if (!visited.has(last) && graph[last]) {
       visited.add(last);
       graph[last].forEach(next => {
-        if (!visited.has(next)) {
-          queue.push([...path, next]);
-        }
+        if (!visited.has(next)) queue.push([...path, next]);
       });
     }
   }
@@ -201,22 +174,10 @@ function findSubwayPathBFS(start, end) {
 }
 
 async function renderRouteListHTML(path) {
-  let html = '';
-  let currentLine = null;
-  let sectionStations = [];
-
-  const getCommonLine = (a, b) => {
-    const linesA = stationLinesMap[a] || [];
-    const linesB = stationLinesMap[b] || [];
-    return linesA.find(line => linesB.includes(line));
-  };
-
   const arrivalInfo = await fetch("http://swopenapi.seoul.go.kr/api/subway/616753694e776a64353258554c756b/xml/realtimeStationArrival/0/1000/")
     .then(res => res.text())
-    .then(xmlStr => {
-      const parser = new DOMParser();
-      const xml = parser.parseFromString(xmlStr, "text/xml");
-      const rows = xml.getElementsByTagName("row");
+    .then(str => {
+      const rows = new DOMParser().parseFromString(str, "text/xml").getElementsByTagName("row");
       const map = {};
       for (let i = 0; i < rows.length; i++) {
         const name = rows[i].getElementsByTagName("statnNm")[0]?.textContent?.trim();
@@ -227,40 +188,39 @@ async function renderRouteListHTML(path) {
       }
       return map;
     })
-    .catch(err => {
-      console.warn("❌ 실시간 도착정보 불러오기 실패", err);
-      return {};
-    });
+    .catch(() => ({}));
+
+  const getCommonLine = (a, b) =>
+    (stationLinesMap[a] || []).find(line => (stationLinesMap[b] || []).includes(line));
+
+  let html = '';
+  let currentLine = null;
+  let sectionStations = [];
 
   for (let i = 0; i < path.length; i++) {
-    const curr = path[i];
-    const prev = path[i - 1];
-    const messages = arrivalInfo[curr] || [];
-    const arrivalHTML = messages.length
-      ? `<div style="font-size:12px;color:#555;">${messages.map(m => `🚈 ${m}`).join("<br>")}</div>`
-      : '';
+    const curr = path[i], prev = path[i - 1];
+    const arrivalHTML = (arrivalInfo[curr] || []).map(m => `🚈 ${m}`).join("<br>");
+    const stationDisplay = `<div>${curr}${arrivalHTML ? '<br>' + arrivalHTML : ''}</div>`;
 
     if (i === 0) {
-      sectionStations.push(`<div>${curr}${arrivalHTML}</div>`);
+      sectionStations.push(stationDisplay);
       continue;
     }
 
     const commonLine = getCommonLine(prev, curr);
     if (!currentLine) {
       currentLine = commonLine;
-      sectionStations.push(`<div>${curr}${arrivalHTML}</div>`);
-      continue;
-    }
-
-    if (commonLine === currentLine) {
-      sectionStations.push(`<div>${curr}${arrivalHTML}</div>`);
+      sectionStations.push(stationDisplay);
+    } else if (commonLine === currentLine) {
+      sectionStations.push(stationDisplay);
     } else {
       html += renderLineSection(currentLine, sectionStations);
       html += renderTransferBadge(prev, currentLine, commonLine);
       currentLine = commonLine;
-      sectionStations = [`<div>${prev}${arrivalHTML}</div>`, `<div>${curr}${arrivalHTML}</div>`];
+      sectionStations = [stationDisplay];
     }
   }
+
   html += renderLineSection(currentLine, sectionStations);
   return html;
 }
@@ -272,8 +232,7 @@ function renderLineSection(line, stations) {
       <ul class="list-group">
         ${stations.map(st => `<li class="list-group-item">${st}</li>`).join('')}
       </ul>
-    </div>
-  `;
+    </div>`;
 }
 
 function renderTransferBadge(station, fromLine, toLine) {
@@ -282,8 +241,7 @@ function renderTransferBadge(station, fromLine, toLine) {
       <span class="badge bg-warning text-dark">
         ⚡ ${station} 환승: ${fromLine} → ${toLine}
       </span>
-    </div>
-  `;
+    </div>`;
 }
 
 function showOnlyPathMarkers(path) {
@@ -305,41 +263,26 @@ function showOnlyPathMarkers(path) {
 
 function haversineDistance(lat1, lon1, lat2, lon2) {
   const R = 6371;
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
+  const dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) ** 2 +
     Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
     Math.sin(dLon / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
-
-function toRad(x) {
-  return x * Math.PI / 180;
-}
+const toRad = x => x * Math.PI / 180;
 
 function renderLineCheckboxes() {
   const container = document.getElementById('lineCheckboxContainer');
   container.innerHTML = '';
   subwayLines.forEach(line => {
     const id = `line-${line}`;
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.id = id;
-    checkbox.value = line;
-    checkbox.checked = false;
-    checkbox.classList.add('form-check-input');
-    const label = document.createElement('label');
-    label.setAttribute('for', id);
-    label.classList.add('form-check-label', 'me-2');
-    label.innerText = line;
-    const wrapper = document.createElement('div');
-    wrapper.classList.add('form-check', 'form-check-inline');
-    wrapper.appendChild(checkbox);
-    wrapper.appendChild(label);
-    container.appendChild(wrapper);
-    checkbox.addEventListener('change', handleLineFilterChange);
+    container.insertAdjacentHTML('beforeend', `
+      <div class="form-check form-check-inline">
+        <input type="checkbox" class="form-check-input" id="${id}" value="${line}">
+        <label for="${id}" class="form-check-label me-2">${line}</label>
+      </div>`);
   });
+  container.querySelectorAll('input').forEach(cb => cb.addEventListener('change', handleLineFilterChange));
 }
 
 function clearSubwayLayer() {
@@ -352,19 +295,15 @@ function clearStationMarkers() {
   stationMarkers = [];
 }
 
-// ✅ 다른 사이드 버튼 클릭 시 지하철 OFF 처리
 document.querySelectorAll(".sidebar button").forEach(btn => {
-  btn.addEventListener("click", (e) => {
+  btn.addEventListener("click", e => {
     if (e.currentTarget.id === 'sidebarSubwayBtn') return;
-    if (subwayLayerVisible) {
-      subwayLayerVisible = false;
-      document.getElementById('subwayFilterPanel')?.style.setProperty('display', 'none');
-      clearSubwayLayer();
-      clearStationMarkers();
-      clearInterval(subwayRefreshInterval);
-      subwayRefreshInterval = null;
-      console.log("🚇 지하철 OFF (다른 기능 클릭)");
-    }
+    subwayLayerVisible = false;
+    document.getElementById('subwayFilterPanel')?.style.setProperty('display', 'none');
+    clearSubwayLayer();
+    clearStationMarkers();
+    clearInterval(subwayRefreshInterval);
+    subwayRefreshInterval = null;
   });
 });
 
@@ -372,10 +311,10 @@ window.subwayLayerVisible = subwayLayerVisible;
 window.subwayMarkers = subwayMarkers;
 window.stationMarkers = stationMarkers;
 window.subwayRefreshInterval = subwayRefreshInterval;
-
 window.generateSubwayGraph = generateSubwayGraph;
 window.loadStationCoordMapFromJson = loadStationCoordMapFromJson;
 window.loadSubwayStations = loadSubwayStations;
 window.clearSubwayLayer = clearSubwayLayer;
 window.clearStationMarkers = clearStationMarkers;
 window.renderLineCheckboxes = renderLineCheckboxes;
+window.findSubwayRoute = findSubwayRoute;

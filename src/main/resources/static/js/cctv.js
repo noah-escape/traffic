@@ -1,15 +1,10 @@
 window.ITS_API_KEY;
 
-let allCctvDataITS = [];
-let allCctvDataEX = [];
+let allCctvDataITS = [], allCctvDataEX = [], cctvMarkers = [];
 let hls = null;
-let cctvMarkers = [];
-let currentVideoUrl = '';
-let currentCctvType = 'ex';
-let sortAscending = true;
-let isDataLoaded = false;
-let exList = [];
-let itsList = [];
+let currentVideoUrl = '', currentCctvType = 'ex';
+let sortAscending = true, isDataLoaded = false;
+let exList = [], itsList = [];
 
 function cleanCctvName(raw) {
   return raw.replace(/\[[^\]]*\]/g, '').trim();
@@ -20,36 +15,19 @@ function extractRoadFromCctv(cctvname) {
   if (!match) return null;
   let name = match[1].replace(/\s/g, '');
   const suffixExceptions = ['창선', '환선', '지선', '산선', '성선', '양선', '포선'];
-  if (name.endsWith('선') && !suffixExceptions.some(sfx => name.endsWith(sfx))) {
-    name = name.replace(/선$/, '고속도로');
-  }
-  return name;
+  return (name.endsWith('선') && !suffixExceptions.some(sfx => name.endsWith(sfx)))
+    ? name.replace(/선$/, '고속도로') : name;
 }
 
 function findCctvMatch(name, roadName) {
-  const allData = [...allCctvDataITS, ...allCctvDataEX];
   const cleaned = cleanCctvName(name);
-  const candidates = allData.filter(d => cleanCctvName(d.cctvname) === cleaned);
+  const candidates = [...allCctvDataITS, ...allCctvDataEX].filter(d => cleanCctvName(d.cctvname) === cleaned);
   if (!candidates.length) return null;
-  const normalizedRoadName = roadName.replace(/\s/g, '');
-  const extractedMatch = candidates.find(d => {
-    const extracted = extractRoadFromCctv(d.cctvname);
-    return extracted && normalizedRoadName.includes(extracted);
-  });
-  if (extractedMatch) return extractedMatch;
-  const looseMatch = candidates.find(d => d.cctvname.replace(/\s/g, '').includes(normalizedRoadName));
-  if (looseMatch) return looseMatch;
-  return candidates[0];
-}
-
-function loadCctvJsonList() {
-  return Promise.all([
-    fetch('/json/ex_list.json').then(r => r.json()),
-    fetch('/json/its_list.json').then(r => r.json())
-  ]).then(([ex, its]) => {
-    exList = ex;
-    itsList = its;
-  });
+  const normalized = roadName.replace(/\s/g, '');
+  return candidates.find(d => {
+    const ex = extractRoadFromCctv(d.cctvname);
+    return ex && normalized.includes(ex);
+  }) || candidates.find(d => d.cctvname.replace(/\s/g, '').includes(normalized)) || candidates[0];
 }
 
 function fetchWithRetry(url, retries = 3) {
@@ -59,14 +37,21 @@ function fetchWithRetry(url, retries = 3) {
   });
 }
 
+function loadCctvJsonList() {
+  return Promise.all([
+    fetch('/json/ex_list.json').then(r => r.json()),
+    fetch('/json/its_list.json').then(r => r.json())
+  ]).then(([ex, its]) => { exList = ex; itsList = its; });
+}
+
 function preloadAllCctvs() {
   document.getElementById('loadingSpinner').style.display = 'block';
   const base = 'https://openapi.its.go.kr:9443/cctvInfo';
-  const params = type => `?apiKey=${window.ITS_API_KEY}&type=${type}&cctvType=1&minX=124.6&maxX=132.0&minY=33.0&maxY=39.0&getType=json`;
+  const buildUrl = type => `${base}?apiKey=${window.ITS_API_KEY}&type=${type}&cctvType=1&minX=124.6&maxX=132.0&minY=33.0&maxY=39.0&getType=json`;
 
   Promise.all([
-    fetchWithRetry(base + params('its')).then(r => r.json()),
-    fetchWithRetry(base + params('ex')).then(r => r.json()),
+    fetchWithRetry(buildUrl('its')).then(r => r.json()),
+    fetchWithRetry(buildUrl('ex')).then(r => r.json()),
     loadCctvJsonList()
   ]).then(async ([itsRes, exRes]) => {
     allCctvDataITS = itsRes.response?.data || [];
@@ -75,7 +60,7 @@ function preloadAllCctvs() {
     await loadRoadList();
     document.getElementById('loadingSpinner').style.display = 'none';
   }).catch(err => {
-    console.error('CCTV 로드 실패', err);
+    console.error('❌ CCTV 로드 실패:', err);
     document.getElementById('loadingSpinner').style.display = 'none';
     alert('CCTV 데이터를 불러오지 못했습니다.');
   });
@@ -86,7 +71,6 @@ function generateRoadIconBase64(type, number) {
   canvas.width = type === 'ex' ? 60 : 100;
   canvas.height = 60;
   const ctx = canvas.getContext('2d');
-
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   if (type === 'its') {
@@ -129,35 +113,31 @@ async function loadRoadList() {
   list.innerHTML = '';
 
   const roads = currentCctvType === 'ex' ? exList : itsList;
-  const sortedRoads = [...roads].sort((a, b) => {
-    const numA = parseInt(String(a.road_number).replace(/\D/g, ''));
-    const numB = parseInt(String(b.road_number).replace(/\D/g, ''));
-    return numA - numB;
-  });
+  const sortedRoads = roads.sort((a, b) =>
+    parseInt(a.road_number.replace(/\D/g, '')) - parseInt(b.road_number.replace(/\D/g, ''))
+  );
 
   const roadElements = await Promise.all(sortedRoads.map(async road => {
     const iconUrl = await generateRoadIconBase64(currentCctvType, road.road_number);
     const li = document.createElement('li');
     li.className = 'list-group-item list-group-item-action';
-
     li.innerHTML = `
-      <div style="display: flex; flex-direction: column;">
-        <div style="display: flex; align-items: center; justify-content: space-between;">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <img src="${iconUrl}" style="width: 36px; height: 36px; flex-shrink: 0;" />
+      <div style="display:flex; flex-direction:column;">
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <img src="${iconUrl}" style="width:36px;height:36px;flex-shrink:0;" />
             <strong>${road.road_name}</strong>
           </div>
-          <button class="btn btn-sm btn-outline-secondary sort-btn" style="display: none;" title="정렬 순서 변경">↕</button>
+          <button class="btn btn-sm btn-outline-secondary sort-btn" style="display:none;" title="정렬 순서 변경">↕</button>
         </div>
-        <div class="road-section-summary" style="font-size: 0.9em; color: #666; margin-left: 44px;"></div>
+        <div class="road-section-summary" style="font-size:0.9em; color:#666; margin-left:44px;"></div>
       </div>
     `;
-
     li.addEventListener('click', () => toggleSection(li, road));
     return li;
   }));
 
-  roadElements.forEach(li => list.appendChild(li));
+  roadElements.forEach(el => list.appendChild(el));
 }
 
 function toggleSection(li, road) {
@@ -173,12 +153,11 @@ function toggleSection(li, road) {
   }
 
   loadRoadCctvMarkers(road);
-  summary.innerHTML = `<strong>${road.route_section}</strong> <span style="font-size:0.85em;"></span>`;
-
+  summary.innerHTML = `<strong>${road.route_section}</strong>`;
   const ul = document.createElement('ul');
   ul.className = 'road-section';
 
-  const cctvs = sortAscending ? road.cctvs : road.cctvs.slice().reverse();
+  const cctvs = sortAscending ? road.cctvs : [...road.cctvs].reverse();
   cctvs.forEach(name => {
     const data = findCctvMatch(name, road.road_name);
     if (!data) return;
@@ -187,8 +166,7 @@ function toggleSection(li, road) {
     sub.textContent = name;
     sub.addEventListener('click', e => {
       e.stopPropagation();
-      const latlng = new naver.maps.LatLng(+data.coordy, +data.coordx);
-      playVideo(data.cctvurl, data.cctvname, latlng);
+      playVideo(data.cctvurl, data.cctvname, new naver.maps.LatLng(+data.coordy, +data.coordx));
     });
     ul.appendChild(sub);
   });
@@ -209,51 +187,53 @@ function toggleSection(li, road) {
 function loadRoadCctvMarkers(road) {
   clearCctvMarkers();
   const bounds = new naver.maps.LatLngBounds();
-  (road.cctvs || []).forEach(name => {
+
+  road.cctvs?.forEach(name => {
     const data = findCctvMatch(name, road.road_name);
-    if (!data) return;
-    const lat = +data.coordy, lng = +data.coordx;
-    if (isNaN(lat) || isNaN(lng)) return;
+    if (!data || isNaN(+data.coordx) || isNaN(+data.coordy)) return;
+    const position = new naver.maps.LatLng(+data.coordy, +data.coordx);
     const marker = new naver.maps.Marker({
       map,
-      position: new naver.maps.LatLng(lat, lng),
+      position,
       title: name,
       icon: {
-        url: '/image/cctv-icon.png', // ✅ 여기에 원하는 이미지 경로
+        url: '/image/cctv-icon.png',
         size: new naver.maps.Size(44, 66),
-        scaledSize: new naver.maps.Size(32, 32),
-        origin: new naver.maps.Point(0, 0),
         anchor: new naver.maps.Point(22, 22)
       }
     });
-    naver.maps.Event.addListener(marker, 'click', () => playVideo(data.cctvurl, data.cctvname, marker.getPosition()));
+    naver.maps.Event.addListener(marker, 'click', () => playVideo(data.cctvurl, data.cctvname, position));
     cctvMarkers.push(marker);
-    bounds.extend(marker.getPosition());
+    bounds.extend(position);
   });
+
   if (cctvMarkers.length) map.fitBounds(bounds);
 }
 
 function playVideo(url, name, position) {
-  const c = document.getElementById('videoContainer');
-  const v = document.getElementById('cctvVideo');
-  const t = document.getElementById('videoTitle');
-  t.textContent = name;
+  const container = document.getElementById('videoContainer');
+  const video = document.getElementById('cctvVideo');
+  const title = document.getElementById('videoTitle');
+
+  title.textContent = name;
   currentVideoUrl = url;
+
   if (hls) hls.destroy();
   hls = new Hls();
   hls.loadSource(url);
-  hls.attachMedia(v);
-  hls.on(Hls.Events.MANIFEST_PARSED, () => v.play().catch(console.warn));
-  c.style.display = 'block';
-  v.style.display = 'block';
+  hls.attachMedia(video);
+  hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(console.warn));
+
+  container.style.display = 'block';
+  video.style.display = 'block';
   map.panTo(position);
+
   const rect = document.getElementById('map').getBoundingClientRect();
-  const cx = rect.left + rect.width / 2;
-  const cy = rect.top + rect.height / 2;
-  c.style.left = `${cx - c.offsetWidth / 2}px`;
-  c.style.top = `${cy - c.offsetHeight / 2 + 130}px`;
+  container.style.left = `${rect.left + rect.width / 2 - container.offsetWidth / 2}px`;
+  container.style.top = `${rect.top + rect.height / 2 - container.offsetHeight / 2 + 130}px`;
+
   document.getElementById('closeVideoBtn').onclick = hideVideo;
-  document.getElementById('fullscreenBtn').onclick = () => v.requestFullscreen?.();
+  document.getElementById('fullscreenBtn').onclick = () => video.requestFullscreen?.();
   document.getElementById('openNewTabBtn').onclick = () => openInNewTab(currentVideoUrl, name);
   makeVideoContainerDraggable();
 }
@@ -293,39 +273,26 @@ function clearCctvMarkers() {
 function makeVideoContainerDraggable() {
   const container = document.getElementById('videoContainer');
   const header = container.querySelector('.video-header');
-
-  container.style.position = 'absolute';
-
   let dragging = false, offsetX = 0, offsetY = 0;
 
+  container.style.position = 'absolute';
   header.style.cursor = 'grab';
 
-  header.addEventListener('mousedown', (e) => {
-    const rect = header.getBoundingClientRect();
-    const relativeY = e.clientY - rect.top;
-
-    // ✅ 상단 절반만 드래그 가능
-    if (relativeY > rect.height / 2) return;
-
+  header.addEventListener('mousedown', e => {
+    if (e.clientY - header.getBoundingClientRect().top > header.offsetHeight / 2) return;
     dragging = true;
-
-    // ✅ 마우스 위치와 컨테이너 왼쪽 위 사이 거리 계산
-    const containerRect = container.getBoundingClientRect();
-    offsetX = e.clientX - containerRect.left;
-    offsetY = e.clientY - containerRect.top;
-
+    const rect = container.getBoundingClientRect();
+    offsetX = e.clientX - rect.left;
+    offsetY = e.clientY - rect.top;
     header.style.cursor = 'grabbing';
     e.preventDefault();
   });
 
-  document.addEventListener('mousemove', (e) => {
+  document.addEventListener('mousemove', e => {
     if (!dragging) return;
-
-    // ✅ 마우스 위치 기준으로 정확히 따라감
     const nx = Math.min(Math.max(0, e.clientX - offsetX), window.innerWidth - container.offsetWidth);
     const ny = Math.min(Math.max(0, e.clientY - offsetY), window.innerHeight - container.offsetHeight);
-
-    window.requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
       container.style.left = `${nx}px`;
       container.style.top = `${ny}px`;
     });
@@ -337,44 +304,34 @@ function makeVideoContainerDraggable() {
   });
 }
 
+// 초기화
 document.addEventListener('DOMContentLoaded', () => {
-  map = new naver.maps.Map('map', {
-    center: new naver.maps.LatLng(37.5665, 126.9780),
-    zoom: 7
-  });
-  document.querySelectorAll('.map-type-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const type = btn.dataset.type;
-      map.setMapTypeId(naver.maps.MapTypeId[type]);
-    });
-  });
   document.getElementById('highway')?.addEventListener('click', () => {
     currentCctvType = 'ex';
     loadRoadList();
   });
+
   document.getElementById('normalroad')?.addEventListener('click', () => {
     currentCctvType = 'its';
     loadRoadList();
   });
+
+  document.getElementById('tabHighway')?.addEventListener('click', () => {
+    currentCctvType = 'ex';
+    clearCctvMarkers();
+    loadRoadList();
+  });
+
+  document.getElementById('tabNormalroad')?.addEventListener('click', () => {
+    currentCctvType = 'its';
+    clearCctvMarkers();
+    loadRoadList();
+  });
+
   preloadAllCctvs();
 });
 
-document.getElementById('tabHighway')?.addEventListener('click', () => {
-  currentCctvType = 'ex';
-  document.getElementById('roadList').style.display = 'block';
-  clearCctvMarkers();
-  loadRoadList();
-});
-
-document.getElementById('tabNormalroad')?.addEventListener('click', () => {
-  currentCctvType = 'its';
-  document.getElementById('roadList').style.display = 'block';
-  clearCctvMarkers();
-  loadRoadList();
-});
-
-// ✅ 전역 등록
-window.preloadAllCctvs = preloadAllCctvs;
+// 전역 등록
 window.loadRoadList = loadRoadList;
 window.clearCctvMarkers = clearCctvMarkers;
 window.hideVideo = hideVideo;
