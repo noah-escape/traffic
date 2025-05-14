@@ -22,7 +22,10 @@ public class ApiProxyController {
   private final WebClient defaultClient;
   private final WebClient webClient;
 
-  private final Dotenv dotenv = Dotenv.load(); // ✅ .env 로드
+  // ✅ .env 로드 (경로 명시)
+  private final Dotenv dotenv = Dotenv.configure()
+      .directory("./") // .env 위치 명시
+      .load();
 
   @Autowired
   public ApiProxyController(WebClient.Builder builder) {
@@ -33,7 +36,6 @@ public class ApiProxyController {
     this.defaultClient = builder.build();
   }
 
-  // 🔹 네이버 길찾기
   @GetMapping("/naver-direction")
   public Mono<String> getNaverDirectionRoute(
       @RequestParam double startLat,
@@ -55,7 +57,6 @@ public class ApiProxyController {
         .bodyToMono(String.class);
   }
 
-  // 🔹 네이버 지오코딩
   @GetMapping("/naver-geocode")
   public Mono<String> geocode(@RequestParam String query) {
     return naverClient.get()
@@ -70,7 +71,6 @@ public class ApiProxyController {
         .bodyToMono(String.class);
   }
 
-  // 🔹 네이버 장소 검색
   @GetMapping("/naver-place")
   public Mono<String> searchPlace(@RequestParam String query) {
     return naverClient.get()
@@ -86,7 +86,6 @@ public class ApiProxyController {
         .bodyToMono(String.class);
   }
 
-  // 🔹 카카오 장소 검색
   @GetMapping("/kakao-place")
   public Mono<String> searchKakaoPlace(@RequestParam String query) {
     return kakaoClient.get()
@@ -100,7 +99,6 @@ public class ApiProxyController {
         .bodyToMono(String.class);
   }
 
-  // 🔹 서울시 버스 정류장 검색
   @GetMapping("/busStationList")
   public Mono<String> getBusStationsByName(@RequestParam String keyword) {
     return seoulBusClient.get()
@@ -114,13 +112,21 @@ public class ApiProxyController {
         .bodyToMono(String.class);
   }
 
-  // 🔹 버스 실시간 위치
   @GetMapping("/busPos")
   public Mono<String> getBusPositions(@RequestParam String routeId) {
+    String apiKey = dotenv.get("SEOUL_BUS_API_KEY");
+
+    // ✅ 디버그 로그 추가
+    if (apiKey == null || apiKey.isBlank()) {
+      System.err.println("❌ API 키가 .env에서 로드되지 않았습니다.");
+    } else {
+      System.out.println("✅ SEOUL_BUS_API_KEY 로드됨: " + apiKey);
+    }
+
     return seoulBusClient.get()
         .uri(uriBuilder -> uriBuilder
             .path("/api/rest/buspos/getBusPosByRtid")
-            .queryParam("serviceKey", dotenv.get("SEOUL_BUS_API_KEY"))
+            .queryParam("serviceKey", apiKey)
             .queryParam("busRouteId", routeId)
             .queryParam("resultType", "json")
             .build())
@@ -128,7 +134,6 @@ public class ApiProxyController {
         .bodyToMono(String.class);
   }
 
-  // 🔹 ITS 도로 이벤트 전체
   @GetMapping("/road-event-all")
   public Mono<String> getAllRoadEvents() {
     return defaultClient.get()
@@ -138,7 +143,6 @@ public class ApiProxyController {
         .bodyToMono(String.class);
   }
 
-  // 🔹 ITS 도로 이벤트 (영역)
   @GetMapping("/road-event")
   public Mono<String> getRoadEventInBounds(
       @RequestParam double minX,
@@ -169,7 +173,6 @@ public class ApiProxyController {
         .bodyToMono(String.class);
   }
 
-  // 🔹 지하철 실시간 위치
   @GetMapping("/subway/arrival")
   public Mono<String> getSubwayArrival() {
     String key = dotenv.get("SEOUL_SUBWAY_API_KEY");
@@ -191,7 +194,6 @@ public class ApiProxyController {
         .bodyToMono(String.class);
   }
 
-  // 🔹 서울시 따릉이
   @GetMapping("/bike-list")
   public Mono<String> getBikeList() {
     return webClient.get()
