@@ -44,7 +44,7 @@ window.loadSeoulCityParking = function () {
     fetch('/api/parking')
         .then(res => res.json())
         .then(list => {
-            console.log("📍 주차장 목록:", list);
+            // console.log("📍 주차장 목록:", list);
             window.clearParkingMarkers();
             window.parkingListData = list;
             window.initRegionSelectors();
@@ -161,13 +161,9 @@ window.initRegionSelectors = function () {
         guSelect.innerHTML += `<option value="${gu}">${gu}</option>`;
     });
 
-    let lastSelectedGu = null;
-
+    // ✅ 함수 분리해서 onchange, onclick 모두 연결
     function handleGuChange() {
         const selectedGu = guSelect.value;
-
-        // ✅ 항상 이동 (값이 같든 다르든)
-        lastSelectedGu = selectedGu;
 
         dongSelect.innerHTML = '<option value="">전체 동</option>';
         if (dongMap[selectedGu]) {
@@ -179,50 +175,44 @@ window.initRegionSelectors = function () {
         if (guCenterMap[selectedGu]) {
             const center = guCenterMap[selectedGu];
             const latLng = new naver.maps.LatLng(center.lat, center.lng);
+
             if (window.INITIAL_ZOOM !== null) {
                 map.setZoom(window.INITIAL_ZOOM);
             }
+
             map.panTo(latLng);
         }
 
         filterParkingByRegion();
     }
 
-    // ✅ 핵심: 강제로 select의 value를 초기화해주면, 같은 구를 다시 선택할 수 있음
-    guSelect.onchange = () => {
-        handleGuChange();
+    guSelect.onchange = handleGuChange;
+    guSelect.onclick = handleGuChange; // ✅ 같은 구 다시 눌러도 작동
 
-        // 💡 트릭: 강제로 value를 "" → 같은 값 재선택 가능하도록
-        guSelect.blur(); // 포커스 제거
-        setTimeout(() => {
-            guSelect.selectedIndex = -1;
-        }, 0);
-    };
+    dongSelect.onchange = filterParkingByRegion;
+};
 
+window.filterParkingByRegion = function () {
+    const gu = document.getElementById('parkingGuSelect').value;
+    const dong = document.getElementById('parkingDongSelect').value;
+    const keyword = document.getElementById('parkingSearchInput').value.trim().toLowerCase();
 
+    let filtered = window.parkingListData || [];
 
-    window.filterParkingByRegion = function () {
-        const gu = document.getElementById('parkingGuSelect').value;
-        const dong = document.getElementById('parkingDongSelect').value;
-        const keyword = document.getElementById('parkingSearchInput').value.trim().toLowerCase();
+    if (gu) filtered = filtered.filter(p => p.address.includes(gu));
+    if (dong) filtered = filtered.filter(p => p.address.includes(dong));
+    if (keyword) filtered = filtered.filter(p => p.name.toLowerCase().includes(keyword));
 
-        let filtered = window.parkingListData || [];
+    renderParkingList(filtered);
+};
 
-        if (gu) filtered = filtered.filter(p => p.address.includes(gu));
-        if (dong) filtered = filtered.filter(p => p.address.includes(dong));
-        if (keyword) filtered = filtered.filter(p => p.name.toLowerCase().includes(keyword));
+window.searchParking = function () {
+    filterParkingByRegion();
+};
 
-        renderParkingList(filtered);
-    };
-
-    window.searchParking = function () {
-        filterParkingByRegion();
-    };
-
-    window.resetParkingPanel = function () {
-        document.getElementById('parkingSearchInput').value = '';
-        document.getElementById('parkingGuSelect').value = '';
-        document.getElementById('parkingDongSelect').value = '';
-        filterParkingByRegion();
-    };
-}
+window.resetParkingPanel = function () {
+    document.getElementById('parkingSearchInput').value = '';
+    document.getElementById('parkingGuSelect').value = '';
+    document.getElementById('parkingDongSelect').value = '';
+    filterParkingByRegion();
+};
