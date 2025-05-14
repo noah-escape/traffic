@@ -85,7 +85,8 @@ aside.sidebar {
 #stationDetailPanel,
 #eventListPanel,
 #bikeFilterPanel,
-#subwayFilterPanel {
+#subwayFilterPanel,
+#parkingFilterPanel {
   position: absolute;
   width: var(--sidebar-width);
   left: var(--sidebar-width);

@@ -79,10 +79,15 @@ public class BoardController {
   }
 
   @GetMapping("/list")
-  public String list(@RequestParam(name = "categoryId", required = false, defaultValue = "2") int categoryId,
+  public String list(@RequestParam(name = "categoryId", required = false) int categoryId,
       @RequestParam(name = "page", defaultValue = "1") int page, // 사용자 기준 1부터 시작
       RedirectAttributes redirectAttributes,
       Model model) {
+
+    // ✅ categoryId가 2나 3이 아니면 기본값을 자유게시판(2)로 설정
+    if (categoryId != 2 && categoryId != 3) {
+      categoryId = 2;
+    }
 
     int totalCount = boardService.getTotalCountByCategory(categoryId);
     int totalPages = (int) Math.ceil((double) totalCount / 10); // 페이지 크기 10 기준
@@ -103,7 +108,7 @@ public class BoardController {
     String categoryName = switch (categoryId) {
       case 2 -> "자유게시판";
       case 3 -> "민원게시판";
-      default -> "게시판";
+      default -> "자유게시판";
     };
 
     model.addAttribute("notices", notices);
