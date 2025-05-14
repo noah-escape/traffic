@@ -267,6 +267,7 @@ body.dark-mode #bikeFilterPanel {
   cursor: pointer;
   border-radius: 4px;
 }
+
 .map-type-btn:hover {
   background: #e0e0e0;
 }
@@ -608,6 +609,67 @@ body.dark-mode .sidebar {
 body.dark-mode h3,
 body.dark-mode h5,
 body.dark-mode h4,
-body.dark-mode p{
+body.dark-mode p {
   color: var(--text-color);
+}
+
+#mapTypeControl .btn {
+  background-color: rgba(255, 255, 255, 0.95);
+  /* 반투명 흰 배경 */
+  border: 1px solid #ccc;
+  color: #333;
+  font-weight: 500;
+}
+
+#mapTypeControl .btn.active {
+  background-color: #343a40;
+  /* Bootstrap primary */
+  color: white;
+  border-color: #343a40;
+}
+
+#customZoomScroll {
+  background-color: rgba(255, 255, 255, 0.95);
+  padding: 0.5rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.15);
+}
+
+#customZoomScroll .btn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1;
+}
+
+#zoomSlider {
+  writing-mode: vertical-rl;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 120px;
+  width: 6px;
+  border-radius: 3px;
+  background: linear-gradient(to top, #0d6efd 0%, #0d6efd 0%, #dee2e6 0%, #dee2e6 100%);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: bottom;
+  cursor: pointer;
+}
+
+#zoomSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  background: #6c757d;
+  border-radius: 50%;
+  border: none;
+}
+
+#zoomSlider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  background: #6c757d;
+  border-radius: 50%;
+  border: none;
 }

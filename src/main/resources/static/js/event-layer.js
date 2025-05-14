@@ -3,29 +3,26 @@ let latestEventData = [];
 let skipNextIdle = false;
 let detailOverlay = null;
 
-// ✅ 도로 이벤트 마커 초기화 (마커 및 상세정보 박스 제거)
+// ✅ 마커 전체 제거 + 상세 박스 제거
 window.clearEventMarkers = function () {
   eventMarkers.forEach(m => m.setMap(null));
   eventMarkers = [];
 
-  if (detailOverlay) {
-    detailOverlay.setMap(null);
-    detailOverlay = null;
-  }
+  detailOverlay?.setMap(null);
+  detailOverlay = null;
 
   const box = document.getElementById('eventInfoBox');
   if (box) box.style.display = 'none';
 };
 
-// ✅ 도로 이벤트 마커 생성 및 클릭 시 상세정보 표시
+// ✅ 마커 로딩 및 클릭 이벤트 등록
 window.loadEventMarkers = function (eventData) {
   if (!eventData?.body?.items) return;
 
   window.clearEventMarkers();
-  const events = eventData.body.items;
-  latestEventData = events;
+  latestEventData = eventData.body.items;
 
-  events.forEach((event, index) => {
+  latestEventData.forEach((event, index) => {
     const lat = parseFloat(event.coordY);
     const lng = parseFloat(event.coordX);
     if (isNaN(lat) || isNaN(lng)) return;
@@ -40,26 +37,24 @@ window.loadEventMarkers = function (eventData) {
       }
     });
 
-    // ✅ 마커 클릭 시 상세 박스 표시 및 단독 마커 유지
     naver.maps.Event.addListener(marker, 'click', () => {
       skipNextIdle = true;
-      const position = marker.getPosition();
-      map.panTo(position);
+      map.panTo(marker.getPosition());
 
-      window.clearEventMarkers(); // 기존 마커 제거
+      window.clearEventMarkers();
       marker.setMap(map);
       eventMarkers.push(marker);
 
-      showCustomBox(event, position); // 상세 박스 표시
+      showCustomBox(event, marker.getPosition());
     });
 
     eventMarkers.push(marker);
   });
 };
 
-// ✅ 마커 아래에 상세 박스를 표시하는 함수
+// ✅ 상세 오버레이 박스 생성
 function showCustomBox(event, latLng) {
-  if (detailOverlay) detailOverlay.setMap(null);
+  detailOverlay?.setMap(null);
 
   const div = document.createElement('div');
   div.className = 'custom-event-box';
@@ -70,27 +65,21 @@ function showCustomBox(event, latLng) {
     💬 ${event.message || '정보 없음'}
   `;
 
-  // ✅ Naver Custom Overlay로 직접 위치 계산
   detailOverlay = new naver.maps.OverlayView();
   detailOverlay.onAdd = function () {
-    const layer = this.getPanes().overlayLayer;
-    layer.appendChild(div);
+    this.getPanes().overlayLayer.appendChild(div);
   };
   detailOverlay.draw = function () {
-    const projection = this.getProjection();
-    const pixel = projection.fromCoordToOffset(latLng);
-    div.style.position = 'absolute';
-    div.style.left = (pixel.x - 100) + 'px';  // 마커 중심 기준
-    div.style.top = (pixel.y + 10) + 'px';    // 마커 아래
+    const proj = this.getProjection();
+    const point = proj.fromCoordToOffset(latLng);
+    div.style.left = (point.x - 100) + 'px';
+    div.style.top = (point.y + 10) + 'px';
   };
-  detailOverlay.onRemove = function () {
-    if (div.parentNode) div.parentNode.removeChild(div);
-  };
-
+  detailOverlay.onRemove = () => div.remove();
   detailOverlay.setMap(map);
 }
 
-// ✅ 아이콘 URL 매핑
+// ✅ 아이콘 URL 결정
 function getEventIcon(eventType, eventDetailType) {
   const iconMap = {
     detail: {
@@ -99,46 +88,34 @@ function getEventIcon(eventType, eventDetailType) {
       '지정체': '/image/event/event-traffic_congestion.png',
       '시설물보수작업': '/image/event/event-facility_maintenance.png',
       '이벤트/홍보': '/image/event/event-promotion.png',
-      '고장' : '/image/event/event-vehicle_breakdown.png'
+      '고장': '/image/event/event-vehicle_breakdown.png'
     },
-
     type: {
       '기상': '/image/event/event-weather.png',
       '재난': '/image/event/event-disaster.png',
       '공사': '/image/event/event-work.png',
       '교통사고': '/image/event/event-accident.png',
-      '기타돌발': '/image/event/event-default.png',
+      '기타돌발': '/image/event/event-default.png'
     }
   };
 
   const detail = normalize(eventDetailType);
   const type = normalize(eventType);
 
-  // ✅ detail 우선
-  if (detail && iconMap.detail[detail]) {
-    return iconMap.detail[detail];
-  }
-
-  // ✅ type fallback
-  if (type && iconMap.type[type]) {
-    return iconMap.type[type];
-  }
-
-  // ✅ default
-  return '/image/event/event-default.png';
+  return iconMap.detail[detail] || iconMap.type[type] || '/image/event/event-default.png';
 }
 
 function normalize(str) {
   return str?.trim().replace(/["']/g, '');
 }
 
-// ✅ 날짜 포맷: YYYY-MM-DD HH:mm
 function formatDate(str) {
-  if (!str || str.length !== 14) return '-';
-  return `${str.slice(0, 4)}-${str.slice(4, 6)}-${str.slice(6, 8)} ${str.slice(8, 10)}:${str.slice(10, 12)}`;
+  return str?.length === 14
+    ? `${str.slice(0, 4)}-${str.slice(4, 6)}-${str.slice(6, 8)} ${str.slice(8, 10)}:${str.slice(10, 12)}`
+    : '-';
 }
 
-// ✅ 오른쪽 목록 패널 구성
+// ✅ 오른쪽 패널 구성
 window.renderEventListPanel = function (events) {
   const container = document.getElementById('eventListContent');
   if (!container) return;
@@ -146,8 +123,7 @@ window.renderEventListPanel = function (events) {
   latestEventData = events;
   container.innerHTML = events.map((event, i) => `
     <div class="event-card p-2 border bg-white rounded shadow-sm"
-        data-index="${i}"
-        style="cursor: pointer;">
+        data-index="${i}" style="cursor: pointer;">
       <div class="fw-bold text-primary">${event.roadName} (${event.roadNo})</div>
       <div class="small text-muted">📌 ${event.eventType}${event.eventDetailType ? ` - ${event.eventDetailType}` : ''}</div>
       <div class="small text-muted">🕓 ${formatDate(event.startDate)}</div>
@@ -156,13 +132,12 @@ window.renderEventListPanel = function (events) {
   `).join('');
 };
 
-// ✅ 목록 Hover → 마커 하나만 강조
+// ✅ Hover 시 마커 1개 표시
 document.getElementById('eventListContent')?.addEventListener('mouseover', e => {
   const card = e.target.closest('.event-card');
   if (!card) return;
 
-  const index = parseInt(card.dataset.index);
-  const event = latestEventData[index];
+  const event = latestEventData[parseInt(card.dataset.index)];
   if (!event) return;
 
   window.clearEventMarkers();
@@ -171,7 +146,7 @@ document.getElementById('eventListContent')?.addEventListener('mouseover', e => 
     position: new naver.maps.LatLng(parseFloat(event.coordY), parseFloat(event.coordX)),
     map,
     icon: {
-      url: getEventIcon(event.eventType, event.eventDetailType),    
+      url: getEventIcon(event.eventType, event.eventDetailType),
       size: new naver.maps.Size(44, 66),
       anchor: new naver.maps.Point(22, 66)
     }
@@ -179,13 +154,12 @@ document.getElementById('eventListContent')?.addEventListener('mouseover', e => 
   eventMarkers.push(marker);
 });
 
-// ✅ 목록 클릭 → 해당 마커 단독 표시 + 상세 정보 보여줌
+// ✅ 클릭 시 상세 표시
 document.getElementById('eventListContent')?.addEventListener('click', e => {
   const card = e.target.closest('.event-card');
   if (!card) return;
 
-  const index = parseInt(card.dataset.index);
-  const event = latestEventData[index];
+  const event = latestEventData[parseInt(card.dataset.index)];
   if (!event) return;
 
   skipNextIdle = true;
@@ -209,7 +183,7 @@ document.getElementById('eventListContent')?.addEventListener('click', e => {
   showCustomBox(event, latLng);
 });
 
-// ✅ 지도 중심 기준으로 도로 이벤트 데이터 불러오기
+// ✅ 지도 화면 내 이벤트 불러오기
 window.loadRoadEventsInView = function () {
   if (!panelStates.event) return;
 
@@ -226,17 +200,13 @@ window.loadRoadEventsInView = function () {
     .catch(err => console.error("❌ 도로 이벤트 로딩 실패", err));
 };
 
-// ✅ 지도 이동 후 → 마커 및 상세내용 초기화 + 이벤트 다시 로드
+// ✅ 지도 이동 시 자동 재로딩
 document.addEventListener('DOMContentLoaded', () => {
   const waitForMap = setInterval(() => {
     if (window.map) {
       clearInterval(waitForMap);
-      naver.maps.Event.addListener(window.map, 'idle', () => {
-        if (skipNextIdle) {
-          skipNextIdle = false;
-          return;
-        }
-
+      naver.maps.Event.addListener(map, 'idle', () => {
+        if (skipNextIdle) return (skipNextIdle = false);
         if (panelStates.event) {
           window.clearEventMarkers();
           window.loadRoadEventsInView();
