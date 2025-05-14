@@ -29,18 +29,70 @@ function hideVideoContainer() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('🚀 지도 초기화');
-
   updatePanelVars();
   adjustMapSizeToSidebar();
 
   map = new naver.maps.Map('map', {
-    center: new naver.maps.LatLng(37.5665, 126.9780),
-    zoom: 14
+    center: new naver.maps.LatLng(37.5700, 127.0100),
+    zoom: 14,
+    mapTypeControl: false,
+    scrollWheel: true,
+    zoomControl: false
   });
   window.map = map;
 
-  // ✅ CCTV 패널 toggle + 최초 1회 로딩
+  // ✅ 지도 타입 버튼
+  document.querySelectorAll('#mapTypeControl .btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const type = btn.dataset.type;
+      switch (type) {
+        case 'NORMAL':
+          map.setMapTypeId(naver.maps.MapTypeId.NORMAL);
+          break;
+        case 'SATELLITE':
+          map.setMapTypeId(naver.maps.MapTypeId.SATELLITE);
+          break;
+        case 'HYBRID':
+          map.setMapTypeId(naver.maps.MapTypeId.HYBRID);
+          break;
+      }
+      document.querySelectorAll('#mapTypeControl .btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  const zoomSlider = document.getElementById('zoomSlider');
+
+  function updateZoomSliderFromMap() {
+    const zoom = map.getZoom();
+    zoomSlider.value = 26 - zoom; // ✅ 반전: min+max = 26
+  }
+
+  zoomSlider.addEventListener('input', () => {
+    const reversedZoom = 26 - parseInt(zoomSlider.value); // ✅ 반전
+    map.setZoom(reversedZoom);
+  });
+
+  document.getElementById('zoomInBtn').addEventListener('click', () => {
+    const z = Math.min(20, map.getZoom() + 1);
+    map.setZoom(z);
+    updateZoomSliderFromMap();
+  });
+
+  document.getElementById('zoomOutBtn').addEventListener('click', () => {
+    const z = Math.max(6, map.getZoom() - 1);
+    map.setZoom(z);
+    updateZoomSliderFromMap();
+  });
+
+  naver.maps.Event.addListener(map, 'zoom_changed', updateZoomSliderFromMap);
+
+  // 초기화
+  zoomSlider.min = 6;
+  zoomSlider.max = 20;
+  updateZoomSliderFromMap();
+
+  // ✅ CCTV 패널
   let cctvLoaded = false;
   const sidebarCctvBtn = document.getElementById('sidebarCctvBtn');
   sidebarCctvBtn?.addEventListener('click', () => {
@@ -50,7 +102,6 @@ document.addEventListener('DOMContentLoaded', () => {
     panel.style.display = panel.style.display === 'flex' ? 'none' : 'flex';
     if (panel.style.display === 'flex') {
       if (!cctvLoaded && window.preloadAllCctvs) {
-        console.log("📡 CCTV 최초 로딩");
         window.preloadAllCctvs();
         cctvLoaded = true;
       }
@@ -111,11 +162,14 @@ document.addEventListener('DOMContentLoaded', () => {
       id: 'sidebarTrafficBtn',
       key: 'traffic',
       onActivate: () => {
-        window.loadRealTimeTraffic?.();
+        if (!window.trafficLayer) {
+          window.trafficLayer = new naver.maps.TrafficLayer({ interval: 300000 });
+        }
+        window.trafficLayer.setMap(map);
         document.getElementById('trafficLegendBox')?.style.setProperty('display', 'block');
       },
       onDeactivate: () => {
-        window.clearRealTimeTraffic?.();
+        window.trafficLayer?.setMap(null);
         document.getElementById('trafficLegendBox')?.style.setProperty('display', 'none');
       }
     },
@@ -170,14 +224,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   ];
 
-  // ✅ 버튼 클릭 이벤트 등록
+  // ✅ 버튼 클릭 등록
   buttonConfigs.forEach(({ id, key, panelId, onActivate, onDeactivate }) => {
     const button = document.getElementById(id);
     if (!button) return;
 
     button.addEventListener('click', () => {
       const isActivating = !panelStates[key];
-
       resetPanelsAndCloseVideo();
       buttonConfigs.forEach(conf => conf.onDeactivate?.());
 
@@ -190,20 +243,16 @@ document.addEventListener('DOMContentLoaded', () => {
         panelStates[key] = true;
         button.classList.add('active');
         const panel = document.getElementById(panelId);
-        if (panel) {
-          panel.style.display = 'flex';
-        }
+        if (panel) panel.style.display = 'flex';
         onActivate?.();
       }
 
       adjustMapSizeToSidebar();
-      setTimeout(() => {
-        naver.maps.Event.trigger(map, 'resize');
-      }, 300);
+      setTimeout(() => naver.maps.Event.trigger(map, 'resize'), 300);
     });
   });
 
-  // ✅ 자전거 마커 지도 이동 시 debounce 로딩
+  // ✅ 자전거 마커 지도 이동 시 debounce
   naver.maps.Event.addListener(map, 'idle', () => {
     if (!panelStates.bike) return;
 
@@ -219,28 +268,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 500);
   });
 
-  // ✅ 모바일 메뉴 토글 → 지도 크기 재조정
+  // ✅ 모바일 메뉴 토글 대응
   const mobileMenu = document.getElementById('mobileMenu');
   if (mobileMenu) {
     new MutationObserver(() => {
       adjustMapSizeToSidebar();
-      setTimeout(() => {
-        naver.maps.Event.trigger(map, 'resize');
-      }, 300);
+      setTimeout(() => naver.maps.Event.trigger(map, 'resize'), 300);
     }).observe(mobileMenu, { attributes: true, attributeFilter: ['class'] });
   }
 
-  // ✅ URL param으로 자동 패널 열기
+  // ✅ URL param 패널 자동 열기
   const urlParams = new URLSearchParams(window.location.search);
   const autoPanelKey = urlParams.get('panel');
   if (autoPanelKey) {
-    const autoBtnId = `sidebar${capitalize(autoPanelKey)}Btn`;
-    const autoBtn = document.getElementById(autoBtnId);
-    if (autoBtn) {
-      setTimeout(() => {
-        autoBtn.click();
-      }, 400);
-    }
+    const autoBtn = document.getElementById(`sidebar${capitalize(autoPanelKey)}Btn`);
+    if (autoBtn) setTimeout(() => autoBtn.click(), 400);
   }
 });
 
@@ -283,9 +325,7 @@ function updateLayoutVars() {
     document.documentElement.style.setProperty('--sidebar-width', `${w}px`);
   }
 
-  setTimeout(() => {
-    naver.maps.Event.trigger(map, 'resize');
-  }, 100);
+  setTimeout(() => naver.maps.Event.trigger(map, 'resize'), 100);
 }
 
 function adjustMapHeight() {
@@ -316,7 +356,6 @@ document.querySelectorAll('.navbar-collapse')
 document.addEventListener('DOMContentLoaded', () => {
   adjustMapHeight();
   window.addEventListener('resize', adjustMapHeight);
-
   document.querySelectorAll('.dropdown-toggle')
     .forEach(toggle => toggle.addEventListener('click', () => {
       setTimeout(adjustMapHeight, 300);
