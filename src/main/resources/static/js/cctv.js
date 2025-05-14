@@ -332,7 +332,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // 전역 등록
-window.preloadAllCctvs = preloadAllCctvs;
 window.loadRoadList = loadRoadList;
 window.clearCctvMarkers = clearCctvMarkers;
 window.hideVideo = hideVideo;
