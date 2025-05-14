@@ -3,7 +3,6 @@ let busInterval = null;
 let bikeRefreshTimeout = null;
 let lastBikeRefreshTime = 0;
 
-// 현재 사이드 패널 상태
 let panelStates = {
   bus: false,
   bike: false,
@@ -11,10 +10,10 @@ let panelStates = {
   traffic: false,
   event: false,
   cctv: false,
-  subway: false
+  subway: false,
+  parking: false
 };
 
-// 패널 및 영상창 초기화
 function resetPanelsAndCloseVideo() {
   for (const k in panelStates) {
     panelStates[k] = false;
@@ -25,47 +24,99 @@ function resetPanelsAndCloseVideo() {
   hideVideoContainer();
 }
 
-// 영상창 닫기
 function hideVideoContainer() {
   const container = document.getElementById('videoContainer');
   if (container) container.style.display = 'none';
 }
 
-// 페이지 초기화
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('✅ DOMContentLoaded');
-
   updatePanelVars();
-  adjustMapSizeToSidebar(); // 🔥 초기 사이즈 조정
+  adjustMapSizeToSidebar();
 
   map = new naver.maps.Map('map', {
-    center: new naver.maps.LatLng(37.5665, 126.9780),
-    zoom: 14
+    center: new naver.maps.LatLng(37.5700, 127.0100),
+    zoom: 14,
+    mapTypeControl: false,
+    scrollWheel: true,
+    zoomControl: false
   });
   window.map = map;
 
-  // ✅ 지도 로딩 시 전국 CCTV 데이터 preload
-  if (window.preloadAllCctvs) {
-    console.log('✅ 전국 CCTV 데이터 preload 시작');
-    window.preloadAllCctvs();
-  } else {
-    console.warn('⚠️ preloadAllCctvs가 아직 준비되지 않았습니다.');
+  // ✅ 최초 줌 상태 저장
+  window.INITIAL_ZOOM = map.getZoom();
+
+  // ✅ 지도 타입 버튼
+  document.querySelectorAll('#mapTypeControl .btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const type = btn.dataset.type;
+      switch (type) {
+        case 'NORMAL':
+          map.setMapTypeId(naver.maps.MapTypeId.NORMAL);
+          break;
+        case 'SATELLITE':
+          map.setMapTypeId(naver.maps.MapTypeId.SATELLITE);
+          break;
+        case 'HYBRID':
+          map.setMapTypeId(naver.maps.MapTypeId.HYBRID);
+          break;
+      }
+      document.querySelectorAll('#mapTypeControl .btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  const zoomSlider = document.getElementById('zoomSlider');
+
+  function updateZoomSliderFromMap() {
+    const zoom = map.getZoom();
+    zoomSlider.value = 26 - zoom; // ✅ 반전: min+max = 26
   }
 
-  // 사이드바 버튼 핸들링
+  zoomSlider.addEventListener('input', () => {
+    const reversedZoom = 26 - parseInt(zoomSlider.value); // ✅ 반전
+    map.setZoom(reversedZoom);
+  });
+
+  document.getElementById('zoomInBtn').addEventListener('click', () => {
+    const z = Math.min(20, map.getZoom() + 1);
+    map.setZoom(z);
+    updateZoomSliderFromMap();
+  });
+
+  document.getElementById('zoomOutBtn').addEventListener('click', () => {
+    const z = Math.max(6, map.getZoom() - 1);
+    map.setZoom(z);
+    updateZoomSliderFromMap();
+  });
+
+  naver.maps.Event.addListener(map, 'zoom_changed', updateZoomSliderFromMap);
+
+  // 초기화
+  zoomSlider.min = 6;
+  zoomSlider.max = 20;
+  updateZoomSliderFromMap();
+
+  // ✅ CCTV 패널
+  let cctvLoaded = false;
   const sidebarCctvBtn = document.getElementById('sidebarCctvBtn');
-  sidebarCctvBtn.addEventListener('click', () => {
+  sidebarCctvBtn?.addEventListener('click', () => {
     const panel = document.getElementById('cctvFilterPanel');
+    if (!panel) return;
+
     panel.style.display = panel.style.display === 'flex' ? 'none' : 'flex';
     if (panel.style.display === 'flex') {
-      window.loadRoadList();
+      if (!cctvLoaded && window.preloadAllCctvs) {
+        window.preloadAllCctvs();
+        cctvLoaded = true;
+      }
+      window.loadRoadList?.();
     } else {
-      window.clearCctvMarkers();
-      window.hideVideo();
+      window.clearCctvMarkers?.();
+      window.hideVideo?.();
     }
   });
 
-  // 버튼별 기능 정의
+  // ✅ 패널 버튼 등록
   const buttonConfigs = [
     {
       id: 'sidebarBusBtn',
@@ -115,11 +166,14 @@ document.addEventListener('DOMContentLoaded', () => {
       id: 'sidebarTrafficBtn',
       key: 'traffic',
       onActivate: () => {
-        window.loadRealTimeTraffic?.();
+        if (!window.trafficLayer) {
+          window.trafficLayer = new naver.maps.TrafficLayer({ interval: 300000 });
+        }
+        window.trafficLayer.setMap(map);
         document.getElementById('trafficLegendBox')?.style.setProperty('display', 'block');
       },
       onDeactivate: () => {
-        window.clearRealTimeTraffic?.();
+        window.trafficLayer?.setMap(null);
         document.getElementById('trafficLegendBox')?.style.setProperty('display', 'none');
       }
     },
@@ -155,7 +209,6 @@ document.addEventListener('DOMContentLoaded', () => {
       panelId: 'subwayFilterPanel',
       onActivate: () => {
         window.subwayLayerVisible = true;
-        console.log("🚇 지하철 ON");
         Promise.all([
           window.generateSubwayGraph?.(),
           window.loadStationCoordMapFromJson?.()
@@ -167,27 +220,53 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       onDeactivate: () => {
         window.subwayLayerVisible = false;
-        console.log("🚇 지하철 OFF");
         window.clearSubwayLayer?.();
         window.clearStationMarkers?.();
         clearInterval(window.subwayRefreshInterval);
         window.subwayRefreshInterval = null;
       }
-    }    
+    },
+    {
+      id: 'sidebarParkingBtn',
+      key: 'parking',
+      panelId: 'parkingFilterPanel',
+      onActivate: () => {
+        // 💡 먼저 데이터를 불러오기 시작
+        const promise = window.loadSeoulCityParking();
+
+        // 이후에 패널 열기
+        panelStates.parking = true;
+        const panel = document.getElementById('parkingFilterPanel');
+        if (panel) {
+          panel.style.display = 'flex';
+        }
+
+        // 지도 크기 조정
+        adjustMapSizeToSidebar();
+        setTimeout(() => {
+          naver.maps.Event.trigger(map, 'resize');
+        }, 300);
+
+        return promise;
+      },
+      onDeactivate: () => {
+        panelStates.parking = false;
+        window.clearParkingMarkers();
+      }
+    }
+
   ];
 
-  // 버튼 핸들링 및 사이즈 조절
+  // ✅ 버튼 클릭 등록
   buttonConfigs.forEach(({ id, key, panelId, onActivate, onDeactivate }) => {
     const button = document.getElementById(id);
     if (!button) return;
 
     button.addEventListener('click', () => {
       const isActivating = !panelStates[key];
-
       resetPanelsAndCloseVideo();
       buttonConfigs.forEach(conf => conf.onDeactivate?.());
 
-      // ✅ 팝업 확실히 제거
       if (window.routeClickInfoWindow) {
         window.routeClickInfoWindow.setMap(null);
         window.routeClickInfoWindow = null;
@@ -197,67 +276,53 @@ document.addEventListener('DOMContentLoaded', () => {
         panelStates[key] = true;
         button.classList.add('active');
         const panel = document.getElementById(panelId);
-        if (panel) {
-          panel.style.display = 'flex';
-        }
+        if (panel) panel.style.display = 'flex';
         onActivate?.();
       }
 
-      adjustMapSizeToSidebar(); // 🔥 패널 상태에 따라 지도 크기 재조정
-
-      setTimeout(() => {
-        naver.maps.Event.trigger(map, 'resize');
-      }, 300);
+      adjustMapSizeToSidebar();
+      setTimeout(() => naver.maps.Event.trigger(map, 'resize'), 300);
     });
   });
 
-  // 지도 이동 시 따릉이 자동 갱신
+  // ✅ 자전거 마커 지도 이동 시 debounce
   naver.maps.Event.addListener(map, 'idle', () => {
     if (!panelStates.bike) return;
+
     const now = Date.now();
-    const elapsed = now - lastBikeRefreshTime;
-    if (elapsed < 5000) return;
+    if (now - lastBikeRefreshTime < 5000) return;
 
     clearTimeout(bikeRefreshTimeout);
     bikeRefreshTimeout = setTimeout(() => {
-      window.loadBikeStations?.();
-      lastBikeRefreshTime = Date.now();
+      if (typeof window.loadBikeStations === 'function') {
+        window.loadBikeStations();
+        lastBikeRefreshTime = Date.now();
+      }
     }, 500);
   });
 
-  // 모바일 메뉴 열림 감지 시 지도 사이즈 재조정
+  // ✅ 모바일 메뉴 토글 대응
   const mobileMenu = document.getElementById('mobileMenu');
   if (mobileMenu) {
     new MutationObserver(() => {
       adjustMapSizeToSidebar();
-      setTimeout(() => {
-        naver.maps.Event.trigger(map, 'resize');
-      }, 300);
-    }).observe(mobileMenu, {
-      attributes: true,
-      attributeFilter: ['class'],
-    });
+      setTimeout(() => naver.maps.Event.trigger(map, 'resize'), 300);
+    }).observe(mobileMenu, { attributes: true, attributeFilter: ['class'] });
   }
 
+  // ✅ URL param 패널 자동 열기
   const urlParams = new URLSearchParams(window.location.search);
   const autoPanelKey = urlParams.get('panel');
   if (autoPanelKey) {
-    const autoBtnId = `sidebar${autoPanelKey.charAt(0).toUpperCase() + autoPanelKey.slice(1)}Btn`;
-    const autoBtn = document.getElementById(autoBtnId);
-    if (autoBtn) {
-      setTimeout(() => {
-        autoBtn.click(); // 자동 클릭
-      }, 400);
-    }
+    const autoBtn = document.getElementById(`sidebar${capitalize(autoPanelKey)}Btn`);
+    if (autoBtn) setTimeout(() => autoBtn.click(), 400);
   }
 });
 
-// 문자열 첫 글자 대문자
 function capitalize(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-// 네브바 높이 갱신
 function updatePanelVars() {
   const navbar = document.querySelector('nav.navbar');
   if (!navbar) return;
@@ -265,7 +330,6 @@ function updatePanelVars() {
   document.documentElement.style.setProperty('--navbar-height', `${navHeight}px`);
 }
 
-// 사이드바 + 네브바 크기에 맞춰 지도 크기 조절
 function adjustMapSizeToSidebar() {
   const sidebar = document.querySelector('aside.sidebar');
   const mapElement = document.getElementById('map');
@@ -279,16 +343,6 @@ function adjustMapSizeToSidebar() {
   mapElement.style.width = `calc(100vw - ${sidebarWidth}px)`;
   mapElement.style.height = `calc(100vh - ${navbarHeight}px)`;
 }
-
-// 초기 세팅
-window.addEventListener('load', () => {
-  updatePanelVars();
-  adjustMapSizeToSidebar();
-});
-window.addEventListener('resize', () => {
-  updatePanelVars();
-  adjustMapSizeToSidebar();
-});
 
 function updateLayoutVars() {
   const navbar = document.querySelector('.navbar');
@@ -304,33 +358,39 @@ function updateLayoutVars() {
     document.documentElement.style.setProperty('--sidebar-width', `${w}px`);
   }
 
-  // 지도 리사이즈 적용
-  setTimeout(() => {
-    naver.maps.Event.trigger(map, 'resize');
-  }, 100);
+  setTimeout(() => naver.maps.Event.trigger(map, 'resize'), 100);
 }
-
-window.addEventListener('DOMContentLoaded', updateLayoutVars);
-window.addEventListener('resize', updateLayoutVars);
-
-// 게시판 드롭다운 등 메뉴 펼쳐짐 감지
-document.querySelectorAll('.navbar-collapse')
-  .forEach(el => el.addEventListener('transitionend', updateLayoutVars));
 
 function adjustMapHeight() {
   const navbar = document.querySelector('.navbar');
   const map = document.getElementById('map');
-  const navbarHeight = navbar.offsetHeight;
-  map.style.height = `calc(100vh - ${navbarHeight}px)`;
+  if (navbar && map) {
+    const navbarHeight = navbar.offsetHeight;
+    map.style.height = `calc(100vh - ${navbarHeight}px)`;
+  }
 }
+
+window.addEventListener('load', () => {
+  updatePanelVars();
+  adjustMapSizeToSidebar();
+});
+
+window.addEventListener('resize', () => {
+  updatePanelVars();
+  adjustMapSizeToSidebar();
+});
+
+window.addEventListener('DOMContentLoaded', updateLayoutVars);
+window.addEventListener('resize', updateLayoutVars);
+
+document.querySelectorAll('.navbar-collapse')
+  .forEach(el => el.addEventListener('transitionend', updateLayoutVars));
 
 document.addEventListener('DOMContentLoaded', () => {
   adjustMapHeight();
   window.addEventListener('resize', adjustMapHeight);
-  const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
-  dropdownToggles.forEach(toggle => {
-    toggle.addEventListener('click', () => {
+  document.querySelectorAll('.dropdown-toggle')
+    .forEach(toggle => toggle.addEventListener('click', () => {
       setTimeout(adjustMapHeight, 300);
-    });
-  });
+    }));
 });

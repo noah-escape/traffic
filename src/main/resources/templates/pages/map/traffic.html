@@ -7,7 +7,7 @@
 
   <!-- ✅ Favicon -->
   <link rel="icon" href="/image/main/icon.png" type="image/png">
-  
+
   <!-- ✅ Bootstrap & 외부 공통 리소스 -->
   <link href="https://fonts.googleapis.com/css2?family=Pretendard&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -118,19 +118,38 @@
   <div class="main-content d-flex">
     <!-- 사이드바 버튼 -->
     <aside class="sidebar">
-      <button onclick="toggleLayer('vms')" title="전광판"><i class="fas fa-bolt"></i></button>
       <button id="sidebarCctvBtn" title="CCTV"><i class="fas fa-video"></i></button>
-      <button id="sidebarTrafficBtn" title="실시간 교통"><i class="fas fa-car-crash"></i></button>
+      <button id="sidebarTrafficBtn" title="실시간 정체현황"><i class="fas fa-solid fa-gauge-high"></i></button>
       <button id="sidebarEventBtn" title="도로 이벤트"><i
           class="fas fa-triangle-exclamation popup-box event-popup"></i></button>
       <button id="sidebarBusBtn" title="버스 위치"><i class="fas fa-bus"></i></button>
       <button id="sidebarRouteBtn" title="길찾기"><i class="fas fa-route"></i></button>
       <button id="sidebarBikeBtn" title="따릉이 대여소"><i class="fas fa-bicycle popup-box bike-popup"></i></button>
       <button id="sidebarSubwayBtn" title="지하철"><i class="fas fa-train-subway"></i></button>
+      <button id="sidebarParkingBtn" title="주차장"><i class="fas fa-p"></i></button>
     </aside>
 
     <!-- 지도 -->
     <div id="map" style="width: 100%; height: 100vh;"></div>
+
+    <!-- 지도 타입 버튼 -->
+    <div id="mapTypeControl" class="btn-group btn-group-sm position-absolute top-0 end-0 m-3 shadow" role="group">
+      <button class="btn btn-outline-light active" data-type="NORMAL"><i class="fas fa-map"></i> 일반</button>
+      <button class="btn btn-outline-light" data-type="SATELLITE"><i class="fas fa-satellite"></i> 위성</button>
+      <button class="btn btn-outline-light" data-type="HYBRID"><i class="fas fa-layer-group"></i> 지형</button>
+    </div>
+
+    <!-- 커스텀 줌 컨트롤 -->
+    <div id="customZoomScroll"
+      class="position-absolute top-50 translate-middle-y end-0 me-3 z-1000 d-flex flex-column align-items-center">
+      <button class="btn btn-light btn-sm mb-1" id="zoomInBtn"><i class="fas fa-plus"></i></button>
+
+      <!-- 세로 슬라이더 -->
+      <input type="range" id="zoomSlider" min="6" max="20" value="14" step="1">
+
+      <button class="btn btn-light btn-sm mt-1" id="zoomOutBtn"><i class="fas fa-minus"></i></button>
+    </div>
+
 
     <!-- CCTV 영상창 -->
     <div id="videoContainer" style="display: none;">
@@ -152,10 +171,10 @@
         <button id="tabHighway" class="btn btn-outline-primary btn-sm w-100 mx-1">고속도로</button>
         <button id="tabNormalroad" class="btn btn-outline-primary btn-sm w-100 mx-1">국도</button>
       </div>
-    
+
       <!-- ✅ 도로 리스트 (기본 보임) -->
       <ul id="roadList" class="list-group cctv-list scrollable-list"></ul>
-    
+
       <!-- ✅ 지도 타입 버튼 (하단 고정) -->
       <div id="mapTypeButtons" class="map-type-buttons">
         <button class="map-type-btn" data-type="NORMAL">일반지도</button>
@@ -245,39 +264,83 @@
       </div>
     </div>
 
-
-
-
-
 <!-- 🚇 지하철 패널 내부 -->
 <div id="subwayFilterPanel" style="display: none; flex-direction: column;">
   <h5 class="mt-3 px-3">🚇 지하철 정보</h5>
 
-  <!-- 호선 체크 필터 -->
-  <div class="px-3 mb-2">
-    <label class="form-label">표시할 호선 선택</label>
-    <div id="lineCheckboxContainer" class="d-flex flex-wrap gap-2"></div>
+      <!-- 호선 체크 필터 -->
+      <div class="px-3 mb-2">
+        <label class="form-label">표시할 호선 선택</label>
+        <div id="lineCheckboxContainer" class="d-flex flex-wrap gap-2"></div>
+      </div>
+
+      <!-- 출발/도착역 입력 -->
+      <div class="px-3">
+        <div class="input-group mb-2">
+          <input id="startStationInput" class="form-control" placeholder="🚩 탑승역 (예: 서울역)" />
+        </div>
+        <div class="input-group mb-2">
+          <input id="endStationInput" class="form-control" placeholder="🏁 하차역 (예: 종각)" />
+        </div>
+
+        <!-- 경로 검색 버튼 -->
+        <button class="btn btn-success w-100 mb-2" onclick="findSubwayRoute()">🔍 경로 검색</button>
+      </div>
+
+      <!-- ✅ 경로 결과 출력 -->
+      <div id="routeResultBox" class="px-3 mb-3" style="font-size: 14px;"></div>
+    </div>
+
+<!-- 🅿️ 주차장 검색 패널 -->
+<div id="parkingFilterPanel" class="sidebar-panel" style="display: none; flex-direction: column;">
+  <!-- 헤더 -->
+  <div class="bg-primary text-white py-2 px-3 d-flex justify-content-between align-items-center">
+    <h5 class="mb-0"><i class="bi bi-car-front-fill me-1"></i> 서울시 주차장</h5>
+    <button class="btn btn-sm btn-light" onclick="resetParkingPanel()" title="목록 초기화">
+  <i class="bi bi-arrow-clockwise"></i>
+</button>
   </div>
 
-  <!-- 출발/도착역 입력 -->
-  <div class="px-3">
-    <div class="input-group mb-2">
-      <input id="startStationInput" class="form-control" placeholder="🚩 탑승역 (예: 서울역)" />
-    </div>
-    <div class="input-group mb-2">
-      <input id="endStationInput" class="form-control" placeholder="🏁 하차역 (예: 종각)" />
-    </div>
-
-    <!-- 경로 검색 버튼 -->
-    <button class="btn btn-success w-100 mb-2" onclick="findSubwayRoute()">🔍 경로 검색</button>
+  <!-- 본문 -->
+  <div class="flex-grow-1 p-3 d-flex flex-column">
+    <!-- 검색창 확장 -->
+<div class="row g-2 mb-3">
+  <div class="col">
+    <select id="parkingGuSelect" class="form-select form-select-sm" onchange="filterParkingByRegion()">
+      <option value="">전체 구</option>
+      <!-- JS에서 동적으로 구 목록 추가 -->
+    </select>
   </div>
-
-  <!-- ✅ 경로 결과 출력 -->
-  <div id="routeResultBox" class="px-3 mb-3" style="font-size: 14px;"></div>
+  <div class="col">
+    <select id="parkingDongSelect" class="form-select form-select-sm" onchange="filterParkingByRegion()">
+      <option value="">전체 동</option>
+      <!-- JS에서 동적으로 동 목록 추가 -->
+    </select>
+  </div>
 </div>
 
+<!-- 기존 input 유지 -->
+<div class="input-group mb-3">
+  <input id="parkingSearchInput" type="text" class="form-control form-control-sm" placeholder="주차장 이름 검색" />
+  <button class="btn btn-sm btn-outline-primary" onclick="searchParking()" title="검색"><i class="bi bi-search"></i></button>
+</div>
 
+<!-- 결과 수 표시 영역 -->
+<div class="mb-2">
+  <small id="parkingCountText" class="text-muted">총 <span id="parkingCount">0</span>건 검색됨</small>
+</div>
 
+    <!-- 리스트 영역 -->
+    <div id="parkingListBox" class="list-group flex-grow-1 overflow-auto border rounded" style="min-height: 100px;">
+      <!-- 리스트 항목이 여기에 추가됩니다 -->
+    </div>
+  </div>
+
+  <!-- 푸터 -->
+  <div class="border-top py-2 px-3 bg-light text-center">
+    <small class="text-muted">※ 주차장 이름을 입력하여 검색할 수 있습니다.</small>
+  </div>
+</div>
 
 
 
@@ -288,6 +351,7 @@
 <script type="module" src="/js/direction.js"></script>
 <script type="module" src="/js/event-layer.js"></script>
 <script src="/js/subway.js"></script>
+<script src="/js/parking.js" defer></script>
 <script src="/js/realtime-traffic.js" defer></script>
 <script src="/js/traffic.js" defer></script> <!-- 메인 -->
 
