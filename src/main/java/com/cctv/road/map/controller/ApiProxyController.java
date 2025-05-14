@@ -1,9 +1,6 @@
 package com.cctv.road.map.controller;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import io.github.cdimascio.dotenv.Dotenv;
 import reactor.core.publisher.Mono;
 
 @RestController
@@ -22,36 +20,17 @@ public class ApiProxyController {
   private final WebClient seoulBusClient;
   private final WebClient kakaoClient;
   private final WebClient defaultClient;
-
-  @Value("${naver.map.client-id}")
-  private String naverClientId;
-
-  @Value("${naver.map.client-secret}")
-  private String naverClientSecret;
-
-  @Value("${kakao.rest-api-key}")
-  private String kakaoRestApiKey;
-
-  @Value("${its.api.key}")
-  private String itsApiKey;
-
-  @Value("${SEOUL_SUBWAY_API_KEY}")
-  private String seoulSubwayApiKey;
-
-  @Value("${seoul.bike.api-key}")
-  private String seoulBikeApiKey;
-
-  @Value("${seoul.bus.api-key}")
-  private String seoulBusApiKey;
-
   private final WebClient webClient;
 
+  private final Dotenv dotenv = Dotenv.load(); // ✅ .env 로드
+
+  @Autowired
   public ApiProxyController(WebClient.Builder builder) {
     this.naverClient = builder.baseUrl("https://naveropenapi.apigw.ntruss.com").build();
     this.seoulBusClient = builder.baseUrl("http://ws.bus.go.kr").build();
     this.kakaoClient = builder.baseUrl("https://dapi.kakao.com").build();
     this.webClient = builder.baseUrl("http://openapi.seoul.go.kr:8088").build();
-    this.defaultClient = builder.build(); // 기타 API 호출용
+    this.defaultClient = builder.build();
   }
 
   // 🔹 네이버 길찾기
@@ -69,8 +48,8 @@ public class ApiProxyController {
             .queryParam("goal", goalLng + "," + goalLat)
             .queryParam("option", "trafast")
             .build())
-        .header("X-NCP-APIGW-API-KEY-ID", naverClientId)
-        .header("X-NCP-APIGW-API-KEY", naverClientSecret)
+        .header("X-NCP-APIGW-API-KEY-ID", dotenv.get("NAVER_MAP_CLIENT_ID"))
+        .header("X-NCP-APIGW-API-KEY", dotenv.get("NAVER_MAP_CLIENT_SECRET"))
         .accept(MediaType.APPLICATION_JSON)
         .retrieve()
         .bodyToMono(String.class);
@@ -84,8 +63,8 @@ public class ApiProxyController {
             .path("/map-geocode/v2/geocode")
             .queryParam("query", query)
             .build())
-        .header("X-NCP-APIGW-API-KEY-ID", naverClientId)
-        .header("X-NCP-APIGW-API-KEY", naverClientSecret)
+        .header("X-NCP-APIGW-API-KEY-ID", dotenv.get("NAVER_MAP_CLIENT_ID"))
+        .header("X-NCP-APIGW-API-KEY", dotenv.get("NAVER_MAP_CLIENT_SECRET"))
         .accept(MediaType.APPLICATION_JSON)
         .retrieve()
         .bodyToMono(String.class);
@@ -100,8 +79,8 @@ public class ApiProxyController {
             .queryParam("query", query)
             .queryParam("coordinate", "127.1054328,37.3595953")
             .build())
-        .header("X-NCP-APIGW-API-KEY-ID", naverClientId)
-        .header("X-NCP-APIGW-API-KEY", naverClientSecret)
+        .header("X-NCP-APIGW-API-KEY-ID", dotenv.get("NAVER_MAP_CLIENT_ID"))
+        .header("X-NCP-APIGW-API-KEY", dotenv.get("NAVER_MAP_CLIENT_SECRET"))
         .accept(MediaType.APPLICATION_JSON)
         .retrieve()
         .bodyToMono(String.class);
@@ -115,7 +94,7 @@ public class ApiProxyController {
             .path("/v2/local/search/keyword.json")
             .queryParam("query", query)
             .build())
-        .header("Authorization", "KakaoAK " + kakaoRestApiKey)
+        .header("Authorization", "KakaoAK " + dotenv.get("KAKAO_REST_API_KEY"))
         .accept(MediaType.APPLICATION_JSON)
         .retrieve()
         .bodyToMono(String.class);
@@ -127,7 +106,7 @@ public class ApiProxyController {
     return seoulBusClient.get()
         .uri(uriBuilder -> uriBuilder
             .path("/api/rest/stationinfo/getStationByName")
-            .queryParam("serviceKey", seoulBusApiKey)
+            .queryParam("serviceKey", dotenv.get("SEOUL_BUS_API_KEY"))
             .queryParam("stSrch", keyword)
             .queryParam("resultType", "json")
             .build())
@@ -135,13 +114,13 @@ public class ApiProxyController {
         .bodyToMono(String.class);
   }
 
-  // 🔹 서울시 버스 실시간 위치 조회
+  // 🔹 버스 실시간 위치
   @GetMapping("/busPos")
   public Mono<String> getBusPositions(@RequestParam String routeId) {
     return seoulBusClient.get()
         .uri(uriBuilder -> uriBuilder
             .path("/api/rest/buspos/getBusPosByRtid")
-            .queryParam("serviceKey", seoulBusApiKey)
+            .queryParam("serviceKey", dotenv.get("SEOUL_BUS_API_KEY"))
             .queryParam("busRouteId", routeId)
             .queryParam("resultType", "json")
             .build())
@@ -149,47 +128,17 @@ public class ApiProxyController {
         .bodyToMono(String.class);
   }
 
-  // 🔹 서울시 버스 정류소 검색
-  @GetMapping("/busStopList")
-  public Mono<String> getBusStops(@RequestParam String keyword) {
-    return seoulBusClient.get()
-        .uri(uriBuilder -> uriBuilder
-            .path("/api/rest/stationinfo/getStationByName")
-            .queryParam("serviceKey", seoulBusApiKey)
-            .queryParam("stSrch", keyword)
-            .queryParam("resultType", "json")
-            .build())
+  // 🔹 ITS 도로 이벤트 전체
+  @GetMapping("/road-event-all")
+  public Mono<String> getAllRoadEvents() {
+    return defaultClient.get()
+        .uri("https://openapi.its.go.kr:9443/eventInfo?apiKey={apiKey}&type=all&eventType=all&getType=json",
+            dotenv.get("ITS_API_KEY"))
         .retrieve()
         .bodyToMono(String.class);
   }
 
-  // 🔹 ITS 교통 속도 정보
-  @GetMapping("/traffic-data")
-  public Mono<String> getTrafficData(@RequestParam String bbox) {
-    String timestamp = LocalDateTime.now().minusMinutes(5)
-        .format(DateTimeFormatter.ofPattern("yyyyMMddHHmm"));
-
-    WebClient trafficClient = WebClient.builder()
-        .baseUrl("https://openapi.its.go.kr:9443")
-        .exchangeStrategies(ExchangeStrategies.builder()
-            .codecs(config -> config.defaultCodecs().maxInMemorySize(5 * 1024 * 1024))
-            .build())
-        .build();
-
-    return trafficClient.get()
-        .uri(uriBuilder -> uriBuilder
-            .path("/trafficInfo")
-            .queryParam("apiKey", itsApiKey)
-            .queryParam("getType", "json")
-            .queryParam("type", "all")
-            .queryParam("req_yyyymmddhhmi", timestamp)
-            .queryParam("bbox", bbox)
-            .build())
-        .retrieve()
-        .bodyToMono(String.class);
-  }
-
-  // 🔹 ITS 도로 이벤트 (영역 내)
+  // 🔹 ITS 도로 이벤트 (영역)
   @GetMapping("/road-event")
   public Mono<String> getRoadEventInBounds(
       @RequestParam double minX,
@@ -207,7 +156,7 @@ public class ApiProxyController {
     return eventClient.get()
         .uri(uriBuilder -> uriBuilder
             .path("/eventInfo")
-            .queryParam("apiKey", itsApiKey)
+            .queryParam("apiKey", dotenv.get("ITS_API_KEY"))
             .queryParam("type", "all")
             .queryParam("eventType", "all")
             .queryParam("getType", "json")
@@ -220,28 +169,35 @@ public class ApiProxyController {
         .bodyToMono(String.class);
   }
 
-  // 🔹 ITS 전체 도로 이벤트
-  @GetMapping("/road-event-all")
-  public Mono<String> getAllRoadEvents() {
+  // 🔹 지하철 실시간 위치
+  @GetMapping("/subway/arrival")
+  public Mono<String> getSubwayArrival() {
+    String key = dotenv.get("SEOUL_SUBWAY_API_KEY");
+    String url = String.format(
+        "http://swopenapi.seoul.go.kr/api/subway/%s/xml/realtimeStationArrival/0/1000/",
+        key);
+
+    System.out.println("📡 지하철 도착정보 요청: " + url);
+
     return defaultClient.get()
-        .uri("https://openapi.its.go.kr:9443/eventInfo?apiKey={apiKey}&type=all&eventType=all&getType=json", itsApiKey)
+        .uri(url)
         .retrieve()
+        .onStatus(status -> !status.is2xxSuccessful(),
+            response -> response.bodyToMono(String.class).flatMap(body -> {
+              System.err.println("❌ API 오류 상태코드: " + response.statusCode());
+              System.err.println("❌ API 오류 응답 본문:\n" + body);
+              return Mono.error(new RuntimeException("지하철 도착 정보 API 실패: " + body));
+            }))
         .bodyToMono(String.class);
   }
 
-  // 🔹 자바스크립트용: SUBWAY API 키 전달
-  @GetMapping("/subway-key")
-  public Mono<String> getSubwayApiKey() {
-    return Mono.just(seoulSubwayApiKey);
-  }
-
-  // 🔹 따릉이 API
+  // 🔹 서울시 따릉이
   @GetMapping("/bike-list")
   public Mono<String> getBikeList() {
-    return webClient.get() // ❌ webClient는 필드에 선언되지 않음
+    return webClient.get()
         .uri(uriBuilder -> uriBuilder
             .path("/{apiKey}/json/bikeList/1/1000/")
-            .build(seoulBikeApiKey))
+            .build(dotenv.get("SEOUL_BIKE_API_KEY")))
         .accept(MediaType.APPLICATION_JSON)
         .retrieve()
         .bodyToMono(String.class);
