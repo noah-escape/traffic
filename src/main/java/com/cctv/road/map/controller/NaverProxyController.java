@@ -36,6 +36,9 @@ public class NaverProxyController {
   @Value("${its.api.key}")
   private String itsApiKey;
 
+  @Value("${seoul.city.parking.api-key}")
+  private String seoulParkingApiKey;
+
   public NaverProxyController(WebClient.Builder builder) {
     this.naverClient = builder.baseUrl("https://naveropenapi.apigw.ntruss.com").build();
     this.seoulBusClient = builder.baseUrl("http://ws.bus.go.kr").build();
@@ -277,4 +280,17 @@ public class NaverProxyController {
             }))
         .bodyToMono(String.class);
   }  
+
+  // ✅ 🅿️ 서울시 시영주차장 실시간 주차대수 정보
+  @GetMapping("/parking/seoul-city")
+    public Mono<String> getSeoulCityParkingData() {
+        String url = "http://openapi.seoul.go.kr:8088/" + seoulParkingApiKey +
+                "/json/GetParkingInfo/1/1000/";
+
+        return WebClient.create()
+                .get()
+                .uri(url)
+                .retrieve()
+                .bodyToMono(String.class);
+    }
 }

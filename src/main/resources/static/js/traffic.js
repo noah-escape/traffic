@@ -11,7 +11,8 @@ let panelStates = {
   traffic: false,
   event: false,
   cctv: false,
-  subway: false
+  subway: false,
+  parking: false
 };
 
 // 패널 및 영상창 초기화
@@ -43,6 +44,9 @@ document.addEventListener('DOMContentLoaded', () => {
     zoom: 14
   });
   window.map = map;
+
+  // ✅ 최초 줌 상태 저장
+  window.INITIAL_ZOOM = map.getZoom();
 
   // ✅ 지도 로딩 시 전국 CCTV 데이터 preload
   if (window.preloadAllCctvs) {
@@ -155,7 +159,6 @@ document.addEventListener('DOMContentLoaded', () => {
       panelId: 'subwayFilterPanel',
       onActivate: () => {
         window.subwayLayerVisible = true;
-        console.log("🚇 지하철 ON");
         Promise.all([
           window.generateSubwayGraph?.(),
           window.loadStationCoordMapFromJson?.()
@@ -167,13 +170,41 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       onDeactivate: () => {
         window.subwayLayerVisible = false;
-        console.log("🚇 지하철 OFF");
         window.clearSubwayLayer?.();
         window.clearStationMarkers?.();
         clearInterval(window.subwayRefreshInterval);
         window.subwayRefreshInterval = null;
       }
-    }    
+    },
+    {
+      id: 'sidebarParkingBtn',
+      key: 'parking',
+      panelId: 'parkingFilterPanel',
+      onActivate: () => {
+        // 💡 먼저 데이터를 불러오기 시작
+        const promise = window.loadSeoulCityParking();
+
+        // 이후에 패널 열기
+        panelStates.parking = true;
+        const panel = document.getElementById('parkingFilterPanel');
+        if (panel) {
+          panel.style.display = 'flex';
+        }
+
+        // 지도 크기 조정
+        adjustMapSizeToSidebar();
+        setTimeout(() => {
+          naver.maps.Event.trigger(map, 'resize');
+        }, 300);
+
+        return promise;
+      },
+      onDeactivate: () => {
+        panelStates.parking = false;
+        window.clearParkingMarkers();
+      }
+    }
+
   ];
 
   // 버튼 핸들링 및 사이즈 조절
