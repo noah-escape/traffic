@@ -2,13 +2,9 @@ package com.cctv.road.map.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
-
 import io.github.cdimascio.dotenv.Dotenv;
 import reactor.core.publisher.Mono;
 
@@ -22,9 +18,8 @@ public class ApiProxyController {
   private final WebClient defaultClient;
   private final WebClient webClient;
 
-  // ✅ .env 로드 (경로 명시)
   private final Dotenv dotenv = Dotenv.configure()
-      .directory("./") // .env 위치 명시
+      .directory("./")
       .load();
 
   @Autowired
@@ -36,6 +31,7 @@ public class ApiProxyController {
     this.defaultClient = builder.build();
   }
 
+  // 🔹 네이버 길찾기
   @GetMapping("/naver-direction")
   public Mono<String> getNaverDirectionRoute(
       @RequestParam double startLat,
@@ -112,15 +108,15 @@ public class ApiProxyController {
         .bodyToMono(String.class);
   }
 
+  // 🔹 버스 실시간 위치
   @GetMapping("/busPos")
   public Mono<String> getBusPositions(@RequestParam String routeId) {
     String apiKey = dotenv.get("SEOUL_BUS_API_KEY");
 
-    // ✅ 디버그 로그 추가
     if (apiKey == null || apiKey.isBlank()) {
-      System.err.println("❌ API 키가 .env에서 로드되지 않았습니다.");
+      System.err.println("❌ [busPos] .env에서 SEOUL_BUS_API_KEY가 로드되지 않았습니다.");
     } else {
-      System.out.println("✅ SEOUL_BUS_API_KEY 로드됨: " + apiKey);
+      System.out.println("✅ [busPos] SEOUL_BUS_API_KEY: " + apiKey);
     }
 
     return seoulBusClient.get()
@@ -180,15 +176,15 @@ public class ApiProxyController {
         "http://swopenapi.seoul.go.kr/api/subway/%s/xml/realtimeStationArrival/0/1000/",
         key);
 
-    System.out.println("📡 지하철 도착정보 요청: " + url);
+    System.out.println("📡 [지하철] 도착정보 요청: " + url);
 
     return defaultClient.get()
         .uri(url)
         .retrieve()
         .onStatus(status -> !status.is2xxSuccessful(),
             response -> response.bodyToMono(String.class).flatMap(body -> {
-              System.err.println("❌ API 오류 상태코드: " + response.statusCode());
-              System.err.println("❌ API 오류 응답 본문:\n" + body);
+              System.err.println("❌ [지하철] 오류 상태코드: " + response.statusCode());
+              System.err.println("❌ [지하철] 오류 응답:\n" + body);
               return Mono.error(new RuntimeException("지하철 도착 정보 API 실패: " + body));
             }))
         .bodyToMono(String.class);
@@ -202,6 +198,26 @@ public class ApiProxyController {
             .build(dotenv.get("SEOUL_BIKE_API_KEY")))
         .accept(MediaType.APPLICATION_JSON)
         .retrieve()
+        .bodyToMono(String.class);
+  }
+
+  @GetMapping("/parking/seoul-city")
+  public Mono<String> getSeoulCityParkingData() {
+    String url = String.format(
+        "http://openapi.seoul.go.kr:8088/%s/json/GetParkingInfo/1/1000/",
+        dotenv.get("SEOUL_CITY_PARKING_API_KEY"));
+
+    System.out.println("📡 [주차장] 정보 요청: " + url);
+
+    return defaultClient.get()
+        .uri(url)
+        .retrieve()
+        .onStatus(status -> !status.is2xxSuccessful(),
+            response -> response.bodyToMono(String.class).flatMap(body -> {
+              System.err.println("❌ [주차장] 오류 상태코드: " + response.statusCode());
+              System.err.println("❌ [주차장] 오류 응답:\n" + body);
+              return Mono.error(new RuntimeException("주차장 정보 API 실패: " + body));
+            }))
         .bodyToMono(String.class);
   }
 }

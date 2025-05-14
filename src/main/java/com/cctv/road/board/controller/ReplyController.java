@@ -4,6 +4,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.cctv.road.board.dto.ReplyDTO;
 import com.cctv.road.board.service.ReplyService;
@@ -11,15 +12,19 @@ import com.cctv.road.member.entity.Member;
 import com.cctv.road.member.security.CustomUserDetails;
 
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
+
 
 @Controller
-@RequiredArgsConstructor
+@RequestMapping("/reply")
 public class ReplyController {
 
   private final ReplyService replyService;
 
-  @PostMapping("/reply/write")
+  public ReplyController(ReplyService replyService) {
+    this.replyService = replyService;
+  }
+
+  @PostMapping("/write")
   public String writeReply(@ModelAttribute ReplyDTO replyDTO,
       @AuthenticationPrincipal CustomUserDetails userDetails,
       HttpServletRequest request) {

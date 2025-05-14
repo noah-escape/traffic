@@ -171,13 +171,17 @@ body.dark-mode .view-container {
 }
 
 body.dark-mode h3,
-body.dark-mode .view-meta,
+body.dark-mode .view-meta span,
 body.dark-mode .view-content,
 body.dark-mode .reply-list h5,
 body.dark-mode .reply-list p,
 body.dark-mode .attachment-section h5,
 body.dark-mode .attachment-section p {
-  color: var(--text-color);
+  color: var(--text-color) !important;
+}
+
+body.dark-mode strong {
+  color: var(--golden-yellow);
 }
 
 /* 🌚 다크모드 - 댓글 폼 */
