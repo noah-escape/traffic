@@ -168,9 +168,9 @@ function renderParkingMarkers(filteredList) {
       </div>
     </div>
   `,
-  borderWidth: 0,
-  backgroundColor: 'transparent',
-  disableAnchor: true,
+        borderWidth: 0,
+        backgroundColor: 'transparent',
+        disableAnchor: true,
       });
 
       naver.maps.Event.addListener(marker, 'click', () => {
@@ -182,6 +182,16 @@ function renderParkingMarkers(filteredList) {
 
     parkingMarkers.push(marker);
   });
+
+  // ✅ 지도 클릭 시 InfoWindow 닫기 (중복 등록 방지용 플래그)
+  if (!map._parkingClickBound) {
+    naver.maps.Event.addListener(map, 'click', function () {
+      parkingMarkers.forEach(marker => {
+        if (marker._infoWindow) marker._infoWindow.close();
+      });
+    });
+    map._parkingClickBound = true; // 한 번만 등록되도록 설정
+  }
 }
 
 // ✅ API 데이터 로딩
@@ -356,9 +366,28 @@ window.filterParkingByRegion = function () {
   renderParkingMarkers(filtered);
 };
 
-window.searchParking = function () {
-  filterParkingByRegion();
-};
+// 이벤트 등록 및 함수 정의를 한 번에
+(function () {
+  const input = document.getElementById('parkingSearchInput');
+
+  // 엔터 키 이벤트 바인딩
+  input.addEventListener('keydown', function (event) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      doSearch();
+    }
+  });
+
+  // 버튼 클릭용 함수도 동일 함수 사용
+  window.searchParking = function () {
+    doSearch();
+  };
+
+  // 실제 검색 실행 함수
+  function doSearch() {
+    filterParkingByRegion();
+  }
+})();
 
 window.resetParkingPanel = function () {
   document.getElementById('parkingSearchInput').value = '';

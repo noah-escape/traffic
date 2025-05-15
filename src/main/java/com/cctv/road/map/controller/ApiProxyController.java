@@ -116,7 +116,7 @@ public class ApiProxyController {
     if (apiKey == null || apiKey.isBlank()) {
       System.err.println("❌ [busPos] .env에서 SEOUL_BUS_API_KEY가 로드되지 않았습니다.");
     } else {
-      System.out.println("✅ [busPos] SEOUL_BUS_API_KEY: " + apiKey);
+      // System.out.println("✅ [busPos] SEOUL_BUS_API_KEY: " + apiKey);
     }
 
     return seoulBusClient.get()

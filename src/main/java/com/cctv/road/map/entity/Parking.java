@@ -41,8 +41,6 @@ public class Parking {
   private String holidayStart;
   private String holidayEnd;
 
-  private Boolean isDisabledParking;
-
   private Double lat;
   private Double lng;
 

@@ -29,8 +29,6 @@ public class ParkingDTO {
     private String holidayStart;
     private String holidayEnd;
 
-    private Boolean isDisabledParking;
-
     private Double lat;
     private Double lng;
 
@@ -60,8 +58,6 @@ public class ParkingDTO {
         dto.setWeekdayEnd(parking.getWeekdayEnd());
         dto.setHolidayStart(parking.getHolidayStart());
         dto.setHolidayEnd(parking.getHolidayEnd());
-
-        dto.setIsDisabledParking(parking.getIsDisabledParking());
 
         dto.setLat(parking.getLat());
         dto.setLng(parking.getLng());
