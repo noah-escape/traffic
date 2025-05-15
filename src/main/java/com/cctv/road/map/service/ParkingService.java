@@ -3,6 +3,7 @@ package com.cctv.road.map.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
@@ -78,7 +79,6 @@ public class ParkingService {
                 parking.setWeekdayEnd(row.path("WD_OPER_END_TM").asText());
                 parking.setHolidayStart(row.path("LHLDY_OPER_BGNG_TM").asText());
                 parking.setHolidayEnd(row.path("LHLDY_OPER_END_TM").asText());
-                parking.setIsDisabledParking("Y".equals(row.path("SHRN_PKLT_YN").asText()));
                 parking.setLat(coord.get("lat"));
                 parking.setLng(coord.get("lng"));
                 parking.setSourceType("SEOUL");
@@ -93,6 +93,34 @@ public class ParkingService {
         .doOnError(e -> System.err.println("❌ 전체 플로우 중 에러 발생: " + e.getMessage()))
         .subscribe();
   }
+
+  @Scheduled(fixedRate = 60000) // ⏱️ 1분마다 실행
+public void updateRealTimeParkingCount() {
+    String url = "http://openapi.seoul.go.kr:8088/" + seoulParkingApiKey + "/json/GetParkingInfo/1/1000/";
+
+    WebClient.create().get()
+        .uri(url)
+        .retrieve()
+        .bodyToMono(JsonNode.class)
+        .map(json -> json.path("GetParkingInfo").path("row"))
+        .flatMapMany(Flux::fromIterable)
+        .doOnNext(row -> {
+            String name = row.path("PKLT_NM").asText();
+            int current = row.path("NOW_PRK_VHCL_CNT").asInt();
+            int capacity = row.path("TPKCT").asInt();
+
+            parkingRepository.findByName(name).ifPresent(parking -> {
+                parking.setCurrentCount(current);
+                parking.setCapacity(capacity);
+                parking.setAvailableCount(capacity - current);
+                parkingRepository.save(parking);
+                // System.out.println("✅ 실시간 갱신: " + name + " (" + current + "/" + capacity + ")");
+            });
+        })
+        .doOnError(e -> System.err.println("❌ 실시간 갱신 실패: " + e.getMessage()))
+        .subscribe();
+}
+
 
   private Mono<Map<String, Double>> geocode(String query) {
     return WebClient.create("https://naveropenapi.apigw.ntruss.com")

@@ -51,7 +51,7 @@ public class BoardDTO {
             dto.setImageFileNames(imageDTOList);
         
             // 디버깅용 출력
-            System.out.println("이미지 DTO 리스트: " + imageDTOList);
+            // System.out.println("이미지 DTO 리스트: " + imageDTOList);
         }
 
         return dto;
