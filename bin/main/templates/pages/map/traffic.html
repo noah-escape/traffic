@@ -190,7 +190,6 @@
           <i class="bi bi-arrow-clockwise"></i>
         </button>
       </div>
-
       <!-- 본문 -->
       <div class="panel-body d-flex flex-column gap-3">
         <div>
@@ -201,6 +200,11 @@
               <option th:value="${city}" th:text="${city}"></option>
             </th:block>
           </select>
+        </div>
+
+        <div class="input-group mb-3">
+          <input type="text" id="routeInput" class="form-control" placeholder="버스 번호 입력 (예: 1002)">
+          <button class="btn btn-primary" onclick="searchBusRoute()">검색</button>
         </div>
 
         <div>
