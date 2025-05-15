@@ -1,44 +1,34 @@
 package com.cctv.road.map.entity;
 
-import java.time.LocalDate;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.Data;
 
 @Entity
-@Table(name = "bus_station")
-@Getter
-@Setter
-@NoArgsConstructor
+@Data
 public class BusStop {
   @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
+
+  @Column(name = "route_id")
+  private String routeId;
+
+  @Column(name = "route_number")
+  private String routeNumber;
+
   @Column(name = "station_id")
-  private String id;
+  private String stationId;
 
   @Column(name = "station_name")
-  private String name;
+  private String stationName;
 
-  @Column(name = "latitude")
-  private double lat;
+  @Column(name = "station_order")
+  private Integer stationOrder;
 
-  @Column(name = "longitude")
-  private double lng;
-
-  @Column(name = "city_name")
-  private String city;
-
-  // ✅ 누락된 컬럼 추가
-  @Column(name = "short_number")
-  private String shortNumber;
-
-  @Column(name = "collect_date")
-  private LocalDate collectDate;
-
-  @Column(name = "city_code")
-  private String cityCode;
+  private Double longitude;
+  private Double latitude;
 }
