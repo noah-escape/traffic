@@ -600,6 +600,86 @@ body.dark-mode #bikeFilterPanel {
   /* 줄바꿈 시 약간 간격 */
 }
 
+/* 🅿️ 주차장 패널 */
+.parking-header {
+  background-color: var(--medium-blue);
+  color: white;
+}
+
+#parkingFilterPanel select.form-select,
+#parkingFilterPanel input.form-control {
+  background-color: white;
+  border: 1px solid var(--blue-gray-light);
+  font-size: 0.875rem;
+}
+
+#parkingFilterPanel .form-check-input:checked {
+  background-color: var(--medium-blue);
+  border-color: var(--medium-blue);
+}
+
+#parkingFilterPanel .form-check-label {
+  color: var(--text-color);
+}
+
+#parkingFilterPanel button.btn-outline-primary {
+  color: var(--medium-blue);
+  border-color: var(--medium-blue);
+}
+
+#parkingFilterPanel button.btn-outline-primary:hover {
+  background-color: var(--medium-blue);
+  color: white;
+}
+
+#parkingListBox .list-group-item {
+  border: none;
+  border-bottom: 1px solid #dee2e6;
+}
+
+#parkingListBox .list-group-item:hover {
+  cursor: pointer;
+}
+
+#parkingListBox .text-primary {
+  color: var(--medium-blue) !important;
+}
+
+#parkingCountText {
+  font-weight: 500;
+  color: var(--medium-blue);
+}
+
+.parking-infowindow-container {
+  background-color: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.05);
+  border: 1px solid #dee2e6;
+  padding: 1rem;
+  min-width: 280px;
+  font-size: 13px;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.parking-name {
+  font-weight: 600;
+  color: var(--medium-blue);
+  font-size: 1rem;
+}
+
+.section-title {
+  font-weight: 500;
+  color: var(--text-color);
+  font-size: 0.875rem;
+}
+
+.parking-stats {
+  background-color: #f8f9fa;
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  margin-top: 0.5rem;
+}
+
 body.light-mode .sidebar,
 body.dark-mode .sidebar {
   background-color: var(--light-blue);
