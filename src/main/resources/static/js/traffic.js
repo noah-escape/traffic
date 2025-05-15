@@ -246,12 +246,13 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
           naver.maps.Event.trigger(map, 'resize');
         }, 300);
-
+        showParkingLegend();
         return promise;
       },
       onDeactivate: () => {
         panelStates.parking = false;
         window.clearParkingMarkers();
+        hideParkingLegend();
       }
     }
 
