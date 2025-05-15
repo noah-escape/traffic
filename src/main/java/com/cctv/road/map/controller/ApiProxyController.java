@@ -149,7 +149,8 @@ public class ApiProxyController {
     WebClient eventClient = WebClient.builder()
         .baseUrl("https://openapi.its.go.kr:9443")
         .exchangeStrategies(ExchangeStrategies.builder()
-            .codecs(config -> config.defaultCodecs().maxInMemorySize(3 * 1024 * 1024))
+            .codecs(config -> config.defaultCodecs()
+                .maxInMemorySize(3 * 1024 * 1024))
             .build())
         .build();
 
@@ -185,7 +186,8 @@ public class ApiProxyController {
             response -> response.bodyToMono(String.class).flatMap(body -> {
               System.err.println("❌ [지하철] 오류 상태코드: " + response.statusCode());
               System.err.println("❌ [지하철] 오류 응답:\n" + body);
-              return Mono.error(new RuntimeException("지하철 도착 정보 API 실패: " + body));
+              return Mono.error(new RuntimeException(
+                  "지하철 도착 정보 API 실패: " + body));
             }))
         .bodyToMono(String.class);
   }
@@ -216,7 +218,8 @@ public class ApiProxyController {
             response -> response.bodyToMono(String.class).flatMap(body -> {
               System.err.println("❌ [주차장] 오류 상태코드: " + response.statusCode());
               System.err.println("❌ [주차장] 오류 응답:\n" + body);
-              return Mono.error(new RuntimeException("주차장 정보 API 실패: " + body));
+              return Mono.error(
+                  new RuntimeException("주차장 정보 API 실패: " + body));
             }))
         .bodyToMono(String.class);
   }
