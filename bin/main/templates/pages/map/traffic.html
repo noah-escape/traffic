@@ -171,7 +171,6 @@
         <button id="tabHighway" class="btn btn-outline-primary btn-sm w-100 mx-1">고속도로</button>
         <button id="tabNormalroad" class="btn btn-outline-primary btn-sm w-100 mx-1">국도</button>
       </div>
-
       <!-- ✅ 도로 리스트 (기본 보임) -->
       <ul id="roadList" class="list-group cctv-list scrollable-list"></ul>
 
@@ -182,14 +181,39 @@
         <button class="map-type-btn" data-type="HYBRID">항공지도</button>
       </div>
     </div>
-
-    <!-- 🚌 버스 검색 패널 -->
-    <div id="busFilterPanel" style="display: none;">
-      <div class="input-group mb-3">
-        <input id="busStopInput" class="form-control" placeholder="정류장 이름 입력 (예: 시청)" />
-        <button class="btn btn-primary" onclick="searchBusStops()">정류장 검색</button>
+    <!-- 🚌 정류장 마커 + 버스 추적 통합 패널 -->
+    <div id="busFilterPanel" class="sidebar-panel" style="display: none;">
+      <!-- 헤더 -->
+      <div class="bg-primary text-white py-2 px-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-signpost-2-fill me-1"></i> 버스 정보</h5>
+        <button class="btn btn-sm btn-light" onclick="resetParkingPanel()" title="목록 초기화">
+          <i class="bi bi-arrow-clockwise"></i>
+        </button>
       </div>
-      <ul id="busSearchResults" class="list-group"></ul>
+
+      <!-- 본문 -->
+      <div class="panel-body d-flex flex-column gap-3">
+        <div>
+          <label for="regionSelector" class="form-label">📍 시/도 선택</label>
+          <select id="regionSelector" class="form-select form-select-sm">
+            <option value="">시/도 선택</option>
+            <th:block th:each="city : ${cities}">
+              <option th:value="${city}" th:text="${city}"></option>
+            </th:block>
+          </select>
+        </div>
+
+        <div>
+          <button class="btn btn-outline-primary w-100 btn-sm" onclick="loadNearbyStops()">
+            <i class="bi bi-geo-alt-fill me-1"></i> 내 위치 기반 정류장
+          </button>
+        </div>
+      </div>
+
+      <!-- 푸터 -->
+      <div class="panel-footer text-center">
+        <small class="text-muted">※ 시/도를 선택하거나 위치 기반으로 정류장을 확인하세요.</small>
+      </div>
     </div>
 
     <!-- 길찾기 패널 -->
@@ -264,9 +288,9 @@
       </div>
     </div>
 
-<!-- 🚇 지하철 패널 내부 -->
-<div id="subwayFilterPanel" style="display: none; flex-direction: column;">
-  <h5 class="mt-3 px-3">🚇 지하철 정보</h5>
+    <!-- 🚇 지하철 패널 내부 -->
+    <div id="subwayFilterPanel" style="display: none; flex-direction: column;">
+      <h5 class="mt-3 px-3">🚇 지하철 정보</h5>
 
       <!-- 호선 체크 필터 -->
       <div class="px-3 mb-2">
@@ -291,56 +315,64 @@
       <div id="routeResultBox" class="px-3 mb-3" style="font-size: 14px;"></div>
     </div>
 
-<!-- 🅿️ 주차장 검색 패널 -->
-<div id="parkingFilterPanel" class="sidebar-panel" style="display: none; flex-direction: column;">
-  <!-- 헤더 -->
-  <div class="bg-primary text-white py-2 px-3 d-flex justify-content-between align-items-center">
-    <h5 class="mb-0"><i class="bi bi-car-front-fill me-1"></i> 서울시 주차장</h5>
-    <button class="btn btn-sm btn-light" onclick="resetParkingPanel()" title="목록 초기화">
-  <i class="bi bi-arrow-clockwise"></i>
-</button>
-  </div>
+    <!-- 🅿️ 주차장 검색 패널 -->
+    <div id="parkingFilterPanel" class="sidebar-panel" style="display: none; flex-direction: column;">
+      <!-- 헤더 -->
+      <div class="bg-primary text-white py-2 px-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-car-front-fill me-1"></i> 서울시 주차장</h5>
+        <button class="btn btn-sm btn-light" onclick="resetParkingPanel()" title="목록 초기화">
+          <i class="bi bi-arrow-clockwise"></i>
+        </button>
+      </div>
 
-  <!-- 본문 -->
-  <div class="flex-grow-1 p-3 d-flex flex-column">
-    <!-- 검색창 확장 -->
-<div class="row g-2 mb-3">
-  <div class="col">
-    <select id="parkingGuSelect" class="form-select form-select-sm" onchange="filterParkingByRegion()">
-      <option value="">전체 구</option>
-      <!-- JS에서 동적으로 구 목록 추가 -->
-    </select>
-  </div>
-  <div class="col">
-    <select id="parkingDongSelect" class="form-select form-select-sm" onchange="filterParkingByRegion()">
-      <option value="">전체 동</option>
-      <!-- JS에서 동적으로 동 목록 추가 -->
-    </select>
-  </div>
-</div>
+      <!-- 본문 -->
+      <div class="flex-grow-1 p-3 d-flex flex-column">
+        <!-- 검색창 확장 -->
+        <div class="row g-2 mb-3">
+          <div class="col">
+            <select id="parkingGuSelect" class="form-select form-select-sm" onchange="filterParkingByRegion()">
+              <option value="">전체 구</option>
+              <!-- JS에서 동적으로 구 목록 추가 -->
+            </select>
+          </div>
+          <div class="col">
+            <select id="parkingDongSelect" class="form-select form-select-sm" onchange="filterParkingByRegion()">
+              <option value="">전체 동</option>
+              <!-- JS에서 동적으로 동 목록 추가 -->
+            </select>
+          </div>
+        </div>
 
-<!-- 기존 input 유지 -->
-<div class="input-group mb-3">
-  <input id="parkingSearchInput" type="text" class="form-control form-control-sm" placeholder="주차장 이름 검색" />
-  <button class="btn btn-sm btn-outline-primary" onclick="searchParking()" title="검색"><i class="bi bi-search"></i></button>
-</div>
+        <select id="regionSelector" class="form-select w-auto">
+          <option value="">시/도 선택</option>
+          <th:block th:each="city : ${cities}">
+            <option th:value="${city}" th:text="${city}"></option>
+          </th:block>
+        </select>
 
-<!-- 결과 수 표시 영역 -->
-<div class="mb-2">
-  <small id="parkingCountText" class="text-muted">총 <span id="parkingCount">0</span>건 검색됨</small>
-</div>
+        <!-- 기존 input 유지 -->
+        <div class="input-group mb-3">
+          <input id="parkingSearchInput" type="text" class="form-control form-control-sm" placeholder="주차장 이름 검색" />
+          <button class="btn btn-sm btn-outline-primary" onclick="searchParking()" title="검색"><i
+              class="bi bi-search"></i></button>
+        </div>
 
-    <!-- 리스트 영역 -->
-    <div id="parkingListBox" class="list-group flex-grow-1 overflow-auto border rounded" style="min-height: 100px;">
-      <!-- 리스트 항목이 여기에 추가됩니다 -->
+        <!-- 결과 수 표시 영역 -->
+        <div class="mb-2">
+          <small id="parkingCountText" class="text-muted">총 <span id="parkingCount">0</span>건 검색됨</small>
+        </div>
+
+        <!-- 리스트 영역 -->
+        <div id="parkingListBox" class="list-group flex-grow-1 overflow-auto border rounded" style="min-height: 100px;">
+          <!-- 리스트 항목이 여기에 추가됩니다 -->
+        </div>
+      </div>
+
+      <!-- 푸터 -->
+      <div class="border-top py-2 px-3 bg-light text-center">
+        <small class="text-muted">※ 주차장 이름을 입력하여 검색할 수 있습니다.</small>
+      </div>
     </div>
-  </div>
-
-  <!-- 푸터 -->
-  <div class="border-top py-2 px-3 bg-light text-center">
-    <small class="text-muted">※ 주차장 이름을 입력하여 검색할 수 있습니다.</small>
-  </div>
-</div>
 
 
 
