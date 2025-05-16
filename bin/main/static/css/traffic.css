@@ -753,3 +753,8 @@ body.dark-mode {
 #busDetailContent p {
   margin-bottom: 0.5rem;
 }
+
+#busArrivalPanel .offcanvas-body > div {
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #eee;
+}
