@@ -123,13 +123,19 @@ document.addEventListener('DOMContentLoaded', () => {
       key: 'bus',
       panelId: 'busFilterPanel',
       onActivate: () => {
-        window.loadBusPositions?.();
-        busInterval = setInterval(window.loadBusPositions, 15000);
+        panelStates.bus = true;
+        // 기본 동작: 최근 사용 지역이 있으면 해당 지역 로드, 없으면 아무것도 안 함 또는 기본값 서울
+        const defaultRegion = '서울특별시';
+        if (defaultRegion) {
+          document.getElementById('regionSelector').value = defaultRegion;
+          window.loadBusStopsByRegion?.(defaultRegion);
+        }
+        // 노선 자동 추적은 제거하여, 사용자 선택에 맡김
       },
       onDeactivate: () => {
-        window.clearBusMarkers?.();
-        clearInterval(busInterval);
-        busInterval = null;
+        // 패널 닫힐 때 수행: 정류장 마커 제거 + 버스 추적 중지
+        window.clearStopMarkers?.();
+        window.stopBusTracking?.();
       }
     },
     {
