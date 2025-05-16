@@ -195,7 +195,7 @@
         <div>
           <label for="regionSelector" class="form-label">📍 시/도 선택</label>
           <select id="regionSelector" class="form-select form-select-sm">
-            <option value="">시/도 선택</option>
+            <option value="" selected>시/도 선택</option>
             <th:block th:each="city : ${cities}">
               <option th:value="${city}" th:text="${city}"></option>
             </th:block>
@@ -266,6 +266,28 @@
       </div>
     </div>
 
+    <!-- 🅿️ 주차장 범례 박스 (기본 숨김) -->
+    <div id="parkingLegendBox" class="position-absolute bottom-0 end-0 m-3 p-3 bg-white shadow-sm rounded small"
+      style="display: none; z-index: 1000;">
+      <strong class="d-block mb-2 text-center"><i class="fa-solid fa-square-parking"></i> 주차장 상태</strong>
+      <div class="d-flex align-items-center mb-1">
+        <img src="/image/parking/green-icon.png" width="25" class="me-2" />
+        <span>원활 (30% 이상)</span>
+      </div>
+      <div class="d-flex align-items-center mb-1">
+        <img src="/image/parking/yellow-icon.png" width="25" class="me-2" />
+        <span>혼잡 (0~30%)</span>
+      </div>
+      <div class="d-flex align-items-center mb-1">
+        <img src="/image/parking/red-icon.png" width="25" class="me-2" />
+        <span>만차</span>
+      </div>
+      <div class="d-flex align-items-center">
+        <img src="/image/parking/gray-icon.png" width="25" class="me-2" />
+        <span>검색 제외</span>
+      </div>
+    </div>
+
 
     <!--따릉이 상세정보 왼쪽 패널 -->
     <div id="stationDetailPanel" class="info-panel" style="display: none;">
@@ -320,56 +342,69 @@
     </div>
 
     <!-- 🅿️ 주차장 검색 패널 -->
-    <div id="parkingFilterPanel" class="sidebar-panel" style="display: none; flex-direction: column;">
-      <!-- 헤더 -->
-      <div class="bg-primary text-white py-2 px-3 d-flex justify-content-between align-items-center">
-        <h5 class="mb-0"><i class="bi bi-car-front-fill me-1"></i> 서울시 주차장</h5>
-        <button class="btn btn-sm btn-light" onclick="resetParkingPanel()" title="목록 초기화">
-          <i class="bi bi-arrow-clockwise"></i>
-        </button>
+    <div id="parkingFilterPanel" style="display: none; flex-direction: column;">
+      <!-- ✅ 고정 영역 전체 -->
+      <div class="parking-header-sticky" style="position: sticky; top: 0; z-index: 10;">
+        <!-- 헤더 -->
+        <div class="parking-header py-2 px-3 d-flex justify-content-between align-items-center">
+          <h5 class="mb-0"><i class="bi bi-car-front-fill me-1"></i> 서울시 주차장</h5>
+          <button class="btn btn-sm btn-light" onclick="resetParkingPanel()" title="목록 초기화">
+            <i class="bi bi-arrow-clockwise"></i>
+          </button>
+        </div>
+
+        <!-- 필터 & 검색 -->
+        <div class="p-3 border-bottom">
+          <div class="row g-2 mb-2">
+            <div class="col">
+              <select id="parkingGuSelect" class="form-select form-select-sm" onchange="filterParkingByRegion()">
+                <option value="">전체 구</option>
+              </select>
+            </div>
+            <div class="col">
+              <select id="parkingDongSelect" class="form-select form-select-sm" onchange="filterParkingByRegion()">
+                <option value="">전체 동</option>
+              </select>
+            </div>
+          </div>
+          <div class="row g-2 mb-2">
+            <div class="col">
+              <select id="payTypeSelect" class="form-select form-select-sm" onchange="applyAdvancedParkingFilters()">
+                <option value="">전체 요금</option>
+                <option value="유료">유료</option>
+                <option value="무료">무료</option>
+              </select>
+            </div>
+            <div class="col">
+              <select id="parkingTypeSelect" class="form-select form-select-sm"
+                onchange="applyAdvancedParkingFilters()">
+                <option value="">전체 종류</option>
+                <option value="노상 주차장">노상</option>
+                <option value="노외 주차장">노외</option>
+              </select>
+            </div>
+          </div>
+          <div class="input-group mb-3">
+            <input id="parkingSearchInput" type="text" class="form-control form-control-sm" placeholder="주차장 이름 검색" />
+            <button class="btn btn-sm btn-outline-primary" onclick="searchParking()" title="검색">
+              <i class="bi bi-search"></i>
+            </button>
+          </div>
+          <div class="form-check form-switch mb-2">
+            <input class="form-check-input" type="checkbox" id="onlyAvailableCheckbox"
+              onchange="filterParkingByRegion()">
+            <label class="form-check-label small" for="onlyAvailableCheckbox">주차 가능 주차장만 보기</label>
+          </div>
+
+          <div>
+            <small id="parkingCountText" class="text-muted">총 <span id="parkingCount">0</span>건 검색됨</small>
+          </div>
+        </div>
       </div>
 
-      <!-- 본문 -->
-      <div class="flex-grow-1 p-3 d-flex flex-column">
-        <!-- 검색창 확장 -->
-        <div class="row g-2 mb-3">
-          <div class="col">
-            <select id="parkingGuSelect" class="form-select form-select-sm" onchange="filterParkingByRegion()">
-              <option value="">전체 구</option>
-              <!-- JS에서 동적으로 구 목록 추가 -->
-            </select>
-          </div>
-          <div class="col">
-            <select id="parkingDongSelect" class="form-select form-select-sm" onchange="filterParkingByRegion()">
-              <option value="">전체 동</option>
-              <!-- JS에서 동적으로 동 목록 추가 -->
-            </select>
-          </div>
-        </div>
-
-        <select id="regionSelector" class="form-select w-auto">
-          <option value="">시/도 선택</option>
-          <th:block th:each="city : ${cities}">
-            <option th:value="${city}" th:text="${city}"></option>
-          </th:block>
-        </select>
-
-        <!-- 기존 input 유지 -->
-        <div class="input-group mb-3">
-          <input id="parkingSearchInput" type="text" class="form-control form-control-sm" placeholder="주차장 이름 검색" />
-          <button class="btn btn-sm btn-outline-primary" onclick="searchParking()" title="검색"><i
-              class="bi bi-search"></i></button>
-        </div>
-
-        <!-- 결과 수 표시 영역 -->
-        <div class="mb-2">
-          <small id="parkingCountText" class="text-muted">총 <span id="parkingCount">0</span>건 검색됨</small>
-        </div>
-
-        <!-- 리스트 영역 -->
-        <div id="parkingListBox" class="list-group flex-grow-1 overflow-auto border rounded" style="min-height: 100px;">
-          <!-- 리스트 항목이 여기에 추가됩니다 -->
-        </div>
+      <!-- 리스트 영역 -->
+      <div id="parkingListBox" class="list-group flex-grow-1 overflow-auto border-top" style="min-height: 100px;">
+        <!-- 리스트 항목이 여기에 추가됩니다 -->
       </div>
 
       <!-- 푸터 -->
@@ -378,7 +413,43 @@
       </div>
     </div>
 
+    <!-- 🚌 도착 정보 모달 -->
+    <div class="modal fade" id="arrivalModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">정류소 도착 정보</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body" id="arrivalModalBody"></div>
+        </div>
+      </div>
+    </div>
 
+    <!-- 🚌 버스 상세 정보 우측 패널 -->
+    <div id="busDetailPanel" class="offcanvas offcanvas-end" tabindex="-1">
+      <div class="offcanvas-header bg-primary text-white">
+        <h5 class="offcanvas-title" id="busDetailTitle">버스 상세 정보</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+      </div>
+      <div class="offcanvas-body">
+        <div id="busDetailContent" class="d-flex flex-column gap-2"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 🛣️ 정류소 노선 모달 -->
+  <div class="modal fade" id="routeListModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">경유 노선</h5>
+        </div>
+        <div class="modal-body" id="routeListModalBody">로딩 중...</div>
+      </div>
+    </div>
+  </div>
 
 </body>
 <script th:src="@{/js/cctv.js}" defer></script> <!-- 수정 -->

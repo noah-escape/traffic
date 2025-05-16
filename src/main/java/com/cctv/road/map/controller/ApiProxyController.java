@@ -1,11 +1,18 @@
 package com.cctv.road.map.controller;
 
+import java.io.StringReader;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -18,8 +25,15 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ResponseStatusException;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 
+import com.cctv.road.map.dto.BusArrivalDto;
+import com.cctv.road.map.dto.BusRouteDto;
 import com.cctv.road.map.dto.BusRouteStopDto;
+import com.cctv.road.map.dto.BusStopDto;
 import com.cctv.road.map.repository.BusStopRepository;
 
 import io.github.cdimascio.dotenv.Dotenv;
@@ -181,22 +195,133 @@ public class ApiProxyController {
     }
   }
 
-
   @GetMapping("/bus/routes")
   public ResponseEntity<List<BusRouteStopDto>> getStopsByRouteNumber(@RequestParam String routeNumber) {
-    List<BusRouteStopDto> stops = busStopRepository.findByRouteNumberOrderByStationOrderAsc(routeNumber)
+    List<BusRouteStopDto> stops = busStopRepository.findByRouteNameOrderByStationOrderAsc(routeNumber)
         .stream()
         .map(stop -> new BusRouteStopDto(
-            stop.getStationId(),
+            stop.getNodeId(),
             stop.getStationName(),
             stop.getLatitude(),
             stop.getLongitude(),
             stop.getStationOrder(),
             stop.getRouteId(),
-            stop.getRouteNumber()))
+            stop.getRouteName()))
+        .toList();
+
+    return ResponseEntity.ok(stops);
+  }
+
+  @GetMapping("/bus/stops")
+  public ResponseEntity<List<BusStopDto>> getBusStopsByRegion(@RequestParam String region) {
+    List<BusStopDto> stops = busStopRepository.findAll().stream()
+        .map(stop -> new BusStopDto(
+            stop.getNodeId(), // id
+            stop.getStationName(), // name
+            stop.getLatitude(), // lat
+            stop.getLongitude() // lng
+        ))
         .collect(Collectors.toList());
 
     return ResponseEntity.ok(stops);
+  }
+
+  @GetMapping("/bus/regions")
+  public ResponseEntity<List<String>> getAvailableBusRegions() {
+    List<String> regions = List.of(
+        "서울특별시", "부산광역시", "대구광역시", "인천광역시", "광주광역시", "대전광역시", "울산광역시",
+        "세종특별자치시", "경기도", "강원특별자치도", "충청북도", "충청남도", "전라북도",
+        "전라남도", "경상북도", "경상남도", "제주특별자치도");
+    return ResponseEntity.ok(regions);
+  }
+
+  @GetMapping("/bus/arrivals")
+  public ResponseEntity<List<BusArrivalDto>> getArrivals(
+      @RequestParam String stopId,
+      @RequestParam String arsId) {
+
+    String encodedKey = dotenv.get("SEOUL_BUS_API_KEY").trim();
+
+    String url = String.format(
+        "http://ws.bus.go.kr/api/rest/arrive/getLowArrInfoByStId?serviceKey=%s&stId=%s&arsId=%s",
+        encodedKey, stopId, arsId);
+
+    try {
+      HttpResponse<String> resp = HttpClient.newHttpClient()
+          .send(HttpRequest.newBuilder()
+              .uri(URI.create(url))
+              .header("Accept", "application/xml")
+              .GET()
+              .build(),
+              HttpResponse.BodyHandlers.ofString());
+
+      DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+      DocumentBuilder builder = factory.newDocumentBuilder();
+      Document doc = builder.parse(new InputSource(new StringReader(resp.body())));
+
+      NodeList itemList = doc.getElementsByTagName("itemList");
+      List<BusArrivalDto> results = new ArrayList<>();
+
+      for (int i = 0; i < itemList.getLength(); i++) {
+        Element item = (Element) itemList.item(i);
+
+        String routeNumber = getTagValue("rtNm", item);
+        String arrivalMsg = getTagValue("arrmsg1", item);
+        String congestionCode = getTagValue("reride_Num1", item);
+        String congestion = switch (congestionCode) {
+          case "3" -> "여유";
+          case "4" -> "보통";
+          case "5" -> "혼잡";
+          default -> "정보 없음";
+        };
+
+        // 여기서 stopId, arsId도 추가
+        results.add(new BusArrivalDto(routeNumber, arrivalMsg, congestion, stopId, arsId));
+      }
+
+      return ResponseEntity.ok(results);
+
+    } catch (Exception e) {
+      System.err.println("❌ 버스 도착 정보 호출 실패: " + e.getMessage());
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .body(List.of(new BusArrivalDto("오류", "도착 정보 파싱 실패", "정보 없음")));
+    }
+  }
+
+  @GetMapping("/bus/routes/by-stop")
+  public ResponseEntity<List<BusRouteDto>> getRoutesByStop(@RequestParam String stopId) {
+    List<Object[]> raw = busStopRepository.findRoutesByNodeId(stopId);
+
+    List<BusRouteDto> routes = raw.stream()
+        .map(row -> new BusRouteDto((String) row[0], (String) row[1]))
+        .toList();
+
+    return ResponseEntity.ok(routes);
+  }
+
+  @GetMapping("/bus/detail")
+  public ResponseEntity<Map<String, String>> getRouteDetail(@RequestParam String routeNumber) {
+    String routeId = busStopRepository.findRouteIdByRouteNumber(routeNumber);
+    if (routeId == null) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "해당 노선 없음"));
+    }
+
+    // 실제 API로부터 받아오거나 하드코딩 예시
+    Map<String, String> result = new HashMap<>();
+    result.put("routeNumber", routeNumber);
+    result.put("interval", "10분"); // TODO: 서울시 API 연결 가능
+    result.put("firstTime", "05:30");
+    result.put("lastTime", "23:40");
+
+    return ResponseEntity.ok(result);
+  }
+
+  private static String getTagValue(String tag, Element element) {
+    NodeList list = element.getElementsByTagName(tag);
+    if (list.getLength() > 0 && list.item(0).getFirstChild() != null) {
+      return list.item(0).getFirstChild().getNodeValue();
+    }
+    return "";
   }
 
   @GetMapping("/road-event-all")

@@ -6,8 +6,8 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class BusStopDto {
-  private String id;
-  private String name;
-  private double lat;
-  private double lng;
+  private String id; // nodeId
+  private String name; // stationName
+  private double lat; // y
+  private double lng; // x
 }

@@ -233,33 +233,40 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     },
     {
-      id: 'sidebarParkingBtn',
-      key: 'parking',
-      panelId: 'parkingFilterPanel',
-      onActivate: () => {
-        // 💡 먼저 데이터를 불러오기 시작
-        const promise = window.loadSeoulCityParking();
+  id: 'sidebarParkingBtn',
+  key: 'parking',
+  panelId: 'parkingFilterPanel',
+  onActivate: () => {
+    // 💡 먼저 데이터를 불러오기 시작
+    const promise = window.loadSeoulCityParking();
 
-        // 이후에 패널 열기
-        panelStates.parking = true;
-        const panel = document.getElementById('parkingFilterPanel');
-        if (panel) {
-          panel.style.display = 'flex';
-        }
-
-        // 지도 크기 조정
-        adjustMapSizeToSidebar();
-        setTimeout(() => {
-          naver.maps.Event.trigger(map, 'resize');
-        }, 300);
-
-        return promise;
-      },
-      onDeactivate: () => {
-        panelStates.parking = false;
-        window.clearParkingMarkers();
-      }
+    // 이후에 패널 열기
+    panelStates.parking = true;
+    const panel = document.getElementById('parkingFilterPanel');
+    if (panel) {
+      panel.style.display = 'flex';
     }
+
+    // 📍 내 위치 표시
+    if (typeof window.showCurrentLocationOnMap === 'function') {
+      window.showCurrentLocationOnMap();
+    }
+
+    // 지도 크기 조정
+    adjustMapSizeToSidebar();
+    setTimeout(() => {
+      naver.maps.Event.trigger(map, 'resize');
+    }, 300);
+    showParkingLegend();
+    return promise;
+  },
+  onDeactivate: () => {
+    panelStates.parking = false;
+    window.clearParkingMarkers();
+    hideParkingLegend();
+  }
+}
+
 
   ];
 
