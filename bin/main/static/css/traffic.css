@@ -754,7 +754,47 @@ body.dark-mode {
   margin-bottom: 0.5rem;
 }
 
-#busArrivalPanel .offcanvas-body > div {
+#busArrivalPanel .offcanvas-body>div {
   padding-bottom: 0.5rem;
   border-bottom: 1px solid #eee;
+}
+
+.arrival-card {
+  gap: 0.5rem;
+}
+
+.bus-number-box {
+  background-color: #f1f3f5;
+  color: #212529;
+  font-weight: bold;
+  font-size: 1rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  display: inline-block;
+  max-width: 100px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.arrival-status {
+  font-size: 0.85rem;
+  white-space: nowrap;
+  color: #495057;
+}
+
+.btn-detail {
+  white-space: nowrap;
+  padding: 3px 10px;
+  font-size: 0.75rem;
+  border: 1px solid #0d6efd;
+  border-radius: 6px;
+  color: #0d6efd;
+  background-color: white;
+  transition: 0.2s;
+}
+
+.btn-detail:hover {
+  background-color: #0d6efd;
+  color: white;
 }

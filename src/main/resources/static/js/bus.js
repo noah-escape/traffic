@@ -271,7 +271,6 @@ function onBusStopClick(stopId, arsId = "01") {
 
 function showArrivalModal(arrivals) {
   const container = document.getElementById("arrivalPanelBody");
-
   if (!container) return;
 
   if (!arrivals || arrivals.length === 0) {
@@ -285,15 +284,20 @@ function showArrivalModal(arrivals) {
       else if (congestionText === "보통") congestionClass = "text-warning";
       else if (congestionText === "혼잡") congestionClass = "text-danger";
 
+      const arrivalText = item.arrivalTime || "출발대기";
+      const routeNumber = item.routeNumber;
+
       return `
-        <div class="d-flex justify-content-between align-items-center border-bottom py-2">
-          <div>
-            <strong>${item.routeNumber}</strong>
-            <span class="ms-2 ${congestionClass}">🚥 ${congestionText}</span>
-            <span class="ms-2">⏱️ ${item.arrivalTime || "도착 시간 없음"}</span>
+        <div class="arrival-card d-flex justify-content-between align-items-start border-bottom py-2">
+          <div class="d-flex flex-column">
+            <div class="bus-number-box mb-1" title="${routeNumber}">${routeNumber}</div>
+            <div class="arrival-status small ${congestionClass}">
+              🚥 ${congestionText} ⏱ ${arrivalText}
+            </div>
           </div>
-          <button class="btn btn-sm btn-outline-primary route-detail-btn"
-            data-route="${item.routeNumber}">상세</button>
+          <div class="align-self-center">
+            <button class="btn btn-detail route-detail-btn" data-route="${routeNumber}">상세</button>
+          </div>
         </div>
       `;
     }).join('');
@@ -388,9 +392,32 @@ window.searchBusRoute = async function () {
   }
 };
 
-function loadRouteDetail(routeNumber) {
-  console.log("📦 loadRouteDetail 호출", routeNumber);
-  openBusRoutePanel(routeNumber);
+async function loadRouteDetail(routeNumber, triggerEl) {
+  try {
+    const res = await fetch(`/api/proxy/bus/detail?routeNumber=${routeNumber}`);
+    const data = await res.json();
+
+    const html = `
+      <div class="fw-bold mb-1">${data.routeNumber}번 버스</div>
+      <div>🕒 배차: ${data.interval || '정보 없음'}</div>
+      <div>🚏 첫차: ${data.firstTime || '정보 없음'}</div>
+      <div>🌙 막차: ${data.lastTime || '정보 없음'}</div>
+    `;
+
+    const popup = document.getElementById('routeDetailPopup');
+    const content = document.getElementById('routeDetailPopupContent');
+    content.innerHTML = html;
+
+    // 위치 조정
+    const rect = triggerEl.getBoundingClientRect();
+    popup.style.top = `${rect.top + window.scrollY + 5}px`;
+    popup.style.left = `${rect.left + window.scrollX - 260}px`; // 버튼 왼쪽에 표시
+
+    popup.classList.remove('d-none');
+
+  } catch (err) {
+    console.error("상세 정보 불러오기 실패", err);
+  }
 }
 
 async function openBusRoutePanel(routeNumber) {
@@ -449,8 +476,14 @@ async function loadArrivalAtStop(stopId, arsId) {
 document.body.addEventListener("click", e => {
   if (e.target.classList.contains("route-detail-btn")) {
     const route = e.target.dataset.route;
-    console.log("➡️ 상세 클릭:", route);
-    loadRouteDetail(route);
+    loadRouteDetail(route, e.target);
+  }
+});
+
+document.addEventListener("click", function (e) {
+  const popup = document.getElementById("routeDetailPopup");
+  if (!popup.contains(e.target) && !e.target.classList.contains("route-detail-btn")) {
+    popup.classList.add("d-none");
   }
 });
 
