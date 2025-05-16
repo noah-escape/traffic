@@ -181,44 +181,54 @@
         <button class="map-type-btn" data-type="HYBRID">항공지도</button>
       </div>
     </div>
+
     <!-- 🚌 정류장 마커 + 버스 추적 통합 패널 -->
-    <div id="busFilterPanel" class="sidebar-panel" style="display: none;">
-      <!-- 헤더 -->
-      <div class="bg-primary text-white py-2 px-3 d-flex justify-content-between align-items-center">
-        <h5 class="mb-0"><i class="bi bi-signpost-2-fill me-1"></i> 버스 정보</h5>
-        <button class="btn btn-sm btn-light" onclick="resetParkingPanel()" title="목록 초기화">
-          <i class="bi bi-arrow-clockwise"></i>
-        </button>
-      </div>
-      <!-- 본문 -->
-      <div class="panel-body d-flex flex-column gap-3">
-        <div>
-          <label for="regionSelector" class="form-label">📍 시/도 선택</label>
-          <select id="regionSelector" class="form-select form-select-sm">
-            <option value="" selected>시/도 선택</option>
-            <th:block th:each="city : ${cities}">
-              <option th:value="${city}" th:text="${city}"></option>
-            </th:block>
-          </select>
-        </div>
+    <div id="busFilterPanel" class="bus-panel" style="display: none;">
 
-        <div class="input-group mb-3">
-          <input type="text" id="routeInput" class="form-control" placeholder="버스 번호 입력 (예: 1002)">
-          <button class="btn btn-primary" onclick="searchBusRoute()">검색</button>
-        </div>
-
-        <div>
-          <button class="btn btn-outline-primary w-100 btn-sm" onclick="loadNearbyStops()">
-            <i class="bi bi-geo-alt-fill me-1"></i> 내 위치 기반 정류장
+      <!-- 🔹 고정 헤더 -->
+      <div class="flex-shrink-0">
+        <div class="bg-primary text-white py-2 px-3 d-flex justify-content-between align-items-center">
+          <h5 class="mb-0"><i class="bi bi-signpost-2-fill me-1"></i> 버스 정보</h5>
+          <button class="btn btn-sm btn-light" onclick="resetParkingPanel()" title="목록 초기화">
+            <i class="bi bi-arrow-clockwise"></i>
           </button>
         </div>
+
+        <div class="p-3 d-flex flex-column gap-3">
+          <!-- 지역 선택 -->
+          <div>
+            <select id="regionSelector" class="form-select form-select-sm">
+              <option value="" selected>시/도 선택</option>
+              <th:block th:each="city : ${cities}">
+                <option th:value="${city}" th:text="${city}"></option>
+              </th:block>
+            </select>
+          </div>
+
+          <!-- 버스 번호 검색 -->
+          <div class="input-group">
+            <input type="text" id="routeInput" class="form-control" placeholder="버스 번호 입력 (예: 1002)">
+            <button class="btn btn-primary" onclick="searchBusRoute()">검색</button>
+          </div>
+
+          <!-- 도착 정보 제목만 고정 -->
+          <div id="arrivalPanelBox">
+            <h6 class="fw-bold border-bottom pb-2">🚌 도착 정보</h6>
+          </div>
+        </div>
       </div>
 
-      <!-- 푸터 -->
-      <div class="panel-footer text-center">
-        <small class="text-muted">※ 시/도를 선택하거나 위치 기반으로 정류장을 확인하세요.</small>
+      <!-- 🔹 스크롤되는 영역: 도착 정보 목록 -->
+      <div class="flex-grow-1 overflow-auto px-3 pb-3" id="arrivalPanelBody" style="font-size: 0.9rem;">
+        <div class="text-muted">원하시는 정류장을 선택하세요</div>
+      </div>
+
+      <!-- 🔹 푸터 고정 -->
+      <div class="panel-footer text-center flex-shrink-0 py-2 px-3 border-top bg-light">
+        <small class="text-muted">※ 시/도를 선택하거나 버스 번호로 검색하세요.</small>
       </div>
     </div>
+
 
     <!-- 길찾기 패널 -->
     <div id="routeFilterPanel" class="sidebar-panel" style="display: none;">
@@ -413,43 +423,37 @@
       </div>
     </div>
 
-    <!-- 🚌 도착 정보 모달 -->
-    <div class="modal fade" id="arrivalModal" tabindex="-1">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">정류소 도착 정보</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body" id="arrivalModalBody"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 🚌 버스 상세 정보 우측 패널 -->
-    <div id="busDetailPanel" class="offcanvas offcanvas-end" tabindex="-1">
-      <div class="offcanvas-header bg-primary text-white">
-        <h5 class="offcanvas-title" id="busDetailTitle">버스 상세 정보</h5>
+    <!-- 🚌 네이버 스타일 버스 상세 패널 -->
+    <div id="busRoutePanel" class="offcanvas offcanvas-end" tabindex="-1">
+      <div class="offcanvas-header bg-dark text-white">
+        <h5 class="offcanvas-title" id="busRoutePanelTitle">버스 노선</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
       </div>
-      <div class="offcanvas-body">
-        <div id="busDetailContent" class="d-flex flex-column gap-2"></div>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- 🛣️ 정류소 노선 모달 -->
-  <div class="modal fade" id="routeListModal" tabindex="-1">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">경유 노선</h5>
+      <div class="offcanvas-body p-0">
+        <!-- 상단 버스 정보 -->
+        <div class="p-3 border-bottom bg-light">
+          <h4 id="routeHeader" class="mb-1 text-primary fw-bold">755번</h4>
+          <div id="routeSubInfo" class="small text-muted">노선 정보 없음</div>
         </div>
-        <div class="modal-body" id="routeListModalBody">로딩 중...</div>
+
+        <!-- 정류장 리스트 -->
+        <div id="busStopListContainer" class="scrollable-list p-3" style="max-height: 65vh; overflow-y: auto;"></div>
       </div>
     </div>
-  </div>
+
+
+    <!-- 🛣️ 정류소 노선 리스트 (모달 유지) -->
+    <div class="modal fade" id="routeListModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">경유 노선</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body" id="routeListModalBody">로딩 중...</div>
+        </div>
+      </div>
+    </div>
 
 </body>
 <script th:src="@{/js/cctv.js}" defer></script> <!-- 수정 -->

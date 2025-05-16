@@ -190,7 +190,7 @@ function drawStopMarkers(stops) {
         map: map,
         title: stop.name,
         icon: {
-          url: "/image/bus/bus-stop.png", // 경로 수정
+          url: "/image/bus/bus-stop.png",
           size: new naver.maps.Size(16, 16),
           origin: new naver.maps.Point(0, 0),
           anchor: new naver.maps.Point(8, 16)
@@ -203,14 +203,13 @@ function drawStopMarkers(stops) {
 
       naver.maps.Event.addListener(marker, 'click', () => {
         info.open(map, marker);
-        onBusStopClick(stop.id, stop.arsId || "01"); // arsId 없으면 임시로 01
+        onBusStopClick(stop.id, stop.arsId || "01");
       });
 
       stopMarkers.push(marker);
     });
 
     index += batchSize;
-
     if (index < stops.length) {
       setTimeout(drawBatch, delay);
     }
@@ -261,19 +260,44 @@ async function loadBusStopsByRegion(region) {
 }
 
 function onBusStopClick(stopId, arsId = "01") {
-  // 도착 정보
   fetch(`/api/proxy/bus/arrivals?stopId=${stopId}&arsId=${arsId}`)
     .then(res => res.json())
-    .then(arrivals => {
-      showArrivalModal(arrivals);
-    });
+    .then(arrivals => showArrivalModal(arrivals));
 
-  // 경유 노선
   fetch(`/api/proxy/bus/routes?stopId=${stopId}`)
     .then(res => res.json())
-    .then(routes => {
-      showRouteListModal(routes);
-    });
+    .then(routes => showRouteListModal(routes));
+}
+
+function showArrivalModal(arrivals) {
+  const container = document.getElementById("arrivalPanelBody");
+
+  if (!container) return;
+
+  if (!arrivals || arrivals.length === 0) {
+    container.innerHTML = "<p>도착 예정인 버스가 없습니다.</p>";
+  } else {
+    container.innerHTML = arrivals.map(item => {
+      const congestionText = item.congestion || "정보 없음";
+      let congestionClass = "text-muted";
+
+      if (congestionText === "여유") congestionClass = "text-success";
+      else if (congestionText === "보통") congestionClass = "text-warning";
+      else if (congestionText === "혼잡") congestionClass = "text-danger";
+
+      return `
+        <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+          <div>
+            <strong>${item.routeNumber}</strong>
+            <span class="ms-2 ${congestionClass}">🚥 ${congestionText}</span>
+            <span class="ms-2">⏱️ ${item.arrivalTime || "도착 시간 없음"}</span>
+          </div>
+          <button class="btn btn-sm btn-outline-primary route-detail-btn"
+            data-route="${item.routeNumber}">상세</button>
+        </div>
+      `;
+    }).join('');
+  }
 }
 
 function showRouteListModal(routes) {
@@ -295,38 +319,6 @@ function showRouteListModal(routes) {
   }
 
   const modal = new bootstrap.Modal(document.getElementById('routeListModal'));
-  modal.show();
-}
-
-function showArrivalModal(arrivals) {
-  const container = document.getElementById("arrivalModalBody");
-
-  if (!arrivals || arrivals.length === 0) {
-    container.innerHTML = "<p>도착 예정인 버스가 없습니다.</p>";
-  } else {
-    container.innerHTML = arrivals.map(item => {
-      const congestionText = item.congestion || "정보 없음";
-      let congestionClass = "text-muted";
-
-      if (congestionText === "여유") congestionClass = "text-success";
-      else if (congestionText === "보통") congestionClass = "text-warning";
-      else if (congestionText === "혼잡") congestionClass = "text-danger";
-
-      return `
-        <div class="d-flex justify-content-between align-items-center border-bottom py-2">
-          <div>
-            <strong>${item.routeNumber}</strong>
-            <span class="ms-2 ${congestionClass}">🚥 ${congestionText}</span>
-            <span class="ms-2">⏱️ ${item.arrivalTime || "도착 시간 없음"}</span>
-          </div>
-          <button class="btn btn-sm btn-outline-primary"
-            onclick="loadRouteDetail('${item.routeNumber}', '${item.stopId}', '${item.arsId}')">상세</button>
-        </div>
-      `;
-    }).join('');
-  }
-
-  const modal = new bootstrap.Modal(document.getElementById('arrivalModal'));
   modal.show();
 }
 
@@ -397,59 +389,76 @@ window.searchBusRoute = async function () {
 };
 
 function loadRouteDetail(routeNumber) {
-  fetch(`/api/proxy/bus/detail?routeNumber=${encodeURIComponent(routeNumber)}`)
-    .then(res => res.json())
-    .then(data => {
-      showRouteDetailPanel(data);
-    })
-    .catch(err => {
-      alert("상세 정보를 불러오는 데 실패했습니다.");
-      console.error(err);
-    });
+  console.log("📦 loadRouteDetail 호출", routeNumber);
+  openBusRoutePanel(routeNumber);
 }
 
-function showRouteDetailPanel(data) {
-  const container = document.getElementById("busDetailContent");
+async function openBusRoutePanel(routeNumber) {
+  try {
+    const [routeDetail, stops] = await Promise.all([
+      fetch(`/api/proxy/bus/detail?routeNumber=${routeNumber}`).then(r => r.json()),
+      fetch(`/api/proxy/bus/routes?routeNumber=${routeNumber}`).then(r => r.json())
+    ]);
 
-  if (!data) {
-    container.innerHTML = "<p>상세 정보를 가져올 수 없습니다.</p>";
-  } else {
-    container.innerHTML = `
-      <div class="border p-3 rounded shadow-sm">
-        <h4 class="text-primary fw-bold">${data.routeNumber}번 버스</h4>
-        <hr />
-        <p><strong>🕒 배차 간격:</strong> ${data.interval || "정보 없음"}</p>
-        <p><strong>🚏 첫차 시간:</strong> ${data.firstTime || "정보 없음"}</p>
-        <p><strong>🌙 막차 시간:</strong> ${data.lastTime || "정보 없음"}</p>
+    document.getElementById("routeHeader").textContent = `${routeNumber}번`;
+    document.getElementById("routeSubInfo").textContent =
+      `배차 ${routeDetail.interval}, 첫차 ${routeDetail.firstTime}, 막차 ${routeDetail.lastTime}`;
+
+    const container = document.getElementById("busStopListContainer");
+    container.innerHTML = stops.map(stop => `
+      <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
+        <div>
+          <div class="fw-bold">${stop.stationName}</div>
+          <div class="text-muted small">(${stop.nodeId})</div>
+        </div>
+        <button class="btn btn-sm btn-outline-secondary"
+                onclick="loadArrivalAtStop('${stop.nodeId}', '${stop.arsId || '01'}')">도착</button>
       </div>
-    `;
-  }
+    `).join("");
 
-  const panel = new bootstrap.Offcanvas(document.getElementById("busDetailPanel"));
-  panel.show();
+    new bootstrap.Offcanvas(document.getElementById("busRoutePanel")).show();
+  } catch (err) {
+    console.error("노선 정보 로딩 실패", err);
+    alert("버스 노선 상세 정보를 가져오는 데 실패했습니다.");
+  }
 }
 
-function showRouteDetailModal(data) {
-  const container = document.getElementById("routeDetailModalBody");
+async function loadArrivalAtStop(stopId, arsId) {
+  try {
+    const res = await fetch(`/api/proxy/bus/arrivals?stopId=${stopId}&arsId=${arsId}`);
+    const arrivals = await res.json();
 
-  if (!data) {
-    container.innerHTML = "<p>상세 정보를 가져올 수 없습니다.</p>";
-  } else {
-    container.innerHTML = `
-      <h5>${data.routeNumber}번 버스</h5>
-      <p><strong>배차 간격:</strong> ${data.interval || "정보 없음"}</p>
-      <p><strong>첫차 시간:</strong> ${data.firstTime || "정보 없음"}</p>
-      <p><strong>막차 시간:</strong> ${data.lastTime || "정보 없음"}</p>
-    `;
+    const stopElem = [...document.querySelectorAll(`#busStopListContainer .border-bottom`)]
+      .find(div => div.innerHTML.includes(stopId));
+    if (!stopElem) return;
+
+    const arrivalHtml = arrivals.map(arrival => `
+      <div class="small text-primary mt-1">
+        🚌 ${arrival.routeNumber} → ${arrival.arrivalTime} (${arrival.congestion})
+      </div>
+    `).join("");
+
+    stopElem.insertAdjacentHTML('beforeend', arrivalHtml);
+  } catch (e) {
+    console.error("도착 정보 불러오기 오류", e);
+    alert("도착 정보를 불러오는 중 오류 발생");
   }
-
-  const modal = new bootstrap.Modal(document.getElementById('routeDetailModal'));
-  modal.show();
 }
+
+// 이벤트 위임 방식으로 상세 버튼 작동
+document.body.addEventListener("click", e => {
+  if (e.target.classList.contains("route-detail-btn")) {
+    const route = e.target.dataset.route;
+    console.log("➡️ 상세 클릭:", route);
+    loadRouteDetail(route);
+  }
+});
 
 // 전역 등록
+window.loadRouteDetail = loadRouteDetail;
+window.openBusRoutePanel = openBusRoutePanel;
+window.loadArrivalAtStop = loadArrivalAtStop;
 window.startBusTracking = startBusTracking;
 window.stopBusTracking = stopBusTracking;
 window.clearBusMarkers = clearBusMarkers;
 window.showBusPositions = showBusPositions;
-window.loadRouteDetail = loadRouteDetail;
