@@ -646,14 +646,14 @@ aside.sidebar {
 .form-select:focus,
 .form-control:focus,
 .form-check-input:focus {
-  border-color: #ced4da;      
-  box-shadow: none;            
+  border-color: #ced4da;
+  box-shadow: none;
 }
 
 .parking-infowindow-container {
   background-color: white;
   border-radius: 0.75rem;
-  box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.05);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
   border: 1px solid #dee2e6;
   padding: 1rem;
   min-width: 280px;
@@ -748,4 +748,8 @@ body.dark-mode {
   background: #6c757d;
   border-radius: 50%;
   border: none;
+}
+
+#busDetailContent p {
+  margin-bottom: 0.5rem;
 }

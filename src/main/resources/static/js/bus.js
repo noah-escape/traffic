@@ -14,7 +14,6 @@ function clearBusMarkers() {
 
 async function showBusPositions({ routeId, routeNumber }) {
   let url = '';
-
   if (routeId) {
     url = `/api/proxy/busPos?routeId=${encodeURIComponent(routeId)}`;
   } else if (routeNumber) {
@@ -30,15 +29,12 @@ async function showBusPositions({ routeId, routeNumber }) {
       headers: { 'Accept': 'application/json' }
     });
 
-    console.log('📡 Response status:', response.status);
-
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`API 호출 실패: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json();
-    console.log('📦 전체 응답:', data);
 
     if (!data.msgHeader || data.msgHeader.headerCd !== '0') {
       clearBusMarkers();
@@ -48,8 +44,6 @@ async function showBusPositions({ routeId, routeNumber }) {
 
     const itemList = data?.msgBody?.itemList;
     const buses = Array.isArray(itemList) ? itemList : (itemList ? [itemList] : []);
-
-    console.log('🚌 받아온 버스 수:', buses.length);
 
     if (buses.length === 0) {
       clearBusMarkers();
@@ -91,13 +85,11 @@ async function showBusPositions({ routeId, routeNumber }) {
 function startBusTracking({ routeId, routeNumber }) {
   if (busTimer) {
     clearInterval(busTimer);
-    console.log('🔄 기존 타이머 제거');
   }
 
   showBusPositions({ routeId, routeNumber });
 
   busTimer = setInterval(() => {
-    console.log('🔄 버스 위치 갱신:', new Date().toLocaleTimeString());
     showBusPositions({ routeId, routeNumber });
   }, 10000);
 }
@@ -106,28 +98,56 @@ function stopBusTracking() {
   if (busTimer) {
     clearInterval(busTimer);
     busTimer = null;
-    console.log('🛑 버스 트래킹 중지');
     clearBusMarkers();
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", async () => {
   const btn = document.getElementById('sidebarBusBtn');
   if (btn) {
     btn.addEventListener('click', () => {
-      const defaultRouteId = '100100118';
-      if (busTimer) {
-        stopBusTracking();
-      } else {
-        startBusTracking({ routeId: defaultRouteId });
-      }
+      if (busTimer) stopBusTracking();
     });
-  } else {
-    console.warn('❌ sidebarBusBtn 버튼이 DOM에 없습니다.');
   }
-});
 
-// ------------------- 정류장 --------------------
+  if (typeof initClusterer === "function") initClusterer();
+
+  try {
+    const res = await fetch("/api/proxy/bus/regions");
+    const cities = await res.json();
+    const selector = document.getElementById("regionSelector");
+
+    if (selector) {
+      cities.forEach(city => {
+        const opt = document.createElement("option");
+        opt.value = city;
+        opt.textContent = city;
+        selector.appendChild(opt);
+      });
+
+      selector.addEventListener("change", e => {
+        const region = e.target.value;
+        stopBusTracking();
+        clearStopMarkers();
+        if (region) loadBusStopsByRegion(region);
+      });
+    }
+  } catch (e) {
+    console.error("도시 목록 로딩 실패", e);
+  }
+
+  let idleTimer = null;
+  naver.maps.Event.addListener(map, 'idle', () => {
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => {
+      if (map.getZoom() < 12) {
+        clearStopMarkers();
+        return;
+      }
+      filterStopsInView();
+    }, 300);
+  });
+});
 
 const cityCenters = {
   '서울특별시': [37.5665, 126.9780],
@@ -157,32 +177,57 @@ function clearStopMarkers() {
 function drawStopMarkers(stops) {
   clearStopMarkers();
 
-  const markers = stops.map(stop => {
-    const marker = new naver.maps.Marker({
-      position: new naver.maps.LatLng(parseFloat(stop.lat), parseFloat(stop.lng)),
-      title: stop.name
+  let index = 0;
+  const batchSize = 200;
+  const delay = 50;
+
+  function drawBatch() {
+    const nextBatch = stops.slice(index, index + batchSize);
+
+    nextBatch.forEach(stop => {
+      const marker = new naver.maps.Marker({
+        position: new naver.maps.LatLng(parseFloat(stop.lat), parseFloat(stop.lng)),
+        map: map,
+        title: stop.name,
+        icon: {
+          url: "/image/bus/bus-stop.png", // 경로 수정
+          size: new naver.maps.Size(16, 16),
+          origin: new naver.maps.Point(0, 0),
+          anchor: new naver.maps.Point(8, 16)
+        }
+      });
+
+      const info = new naver.maps.InfoWindow({
+        content: `<div style="padding:4px;">🚌 ${stop.name}</div>`
+      });
+
+      naver.maps.Event.addListener(marker, 'click', () => {
+        info.open(map, marker);
+        onBusStopClick(stop.id, stop.arsId || "01"); // arsId 없으면 임시로 01
+      });
+
+      stopMarkers.push(marker);
     });
 
-    const info = new naver.maps.InfoWindow({
-      content: `<div style="padding:4px;">🚌 ${stop.name}</div>`
-    });
+    index += batchSize;
 
-    naver.maps.Event.addListener(marker, 'click', () => {
-      info.open(map, marker);
-      onBusStopClick(stop.id);
-    });
+    if (index < stops.length) {
+      setTimeout(drawBatch, delay);
+    }
+  }
 
-    return marker;
-  });
-
-  markers.forEach(marker => marker.setMap(map)); 
-  stopMarkers = markers;
+  drawBatch();
 }
+
+let lastBounds = null;
+const MAX_MARKERS = 500;
 
 function filterStopsInView() {
   if (!map || allStops.length === 0) return;
 
   const bounds = map.getBounds();
+  if (lastBounds && bounds.equals(lastBounds)) return;
+  lastBounds = bounds;
 
   const visibleStops = allStops.filter(stop => {
     const lat = parseFloat(stop.lat);
@@ -190,7 +235,11 @@ function filterStopsInView() {
     return bounds.hasLatLng(new naver.maps.LatLng(lat, lng));
   });
 
-  drawStopMarkers(visibleStops);
+  if (visibleStops.length > MAX_MARKERS) {
+    console.warn(`정류장 ${visibleStops.length}개 → ${MAX_MARKERS}개 제한`);
+  }
+
+  drawStopMarkers(visibleStops.slice(0, MAX_MARKERS));
 }
 
 async function loadBusStopsByRegion(region) {
@@ -211,7 +260,15 @@ async function loadBusStopsByRegion(region) {
   }
 }
 
-function onBusStopClick(stopId) {
+function onBusStopClick(stopId, arsId = "01") {
+  // 도착 정보
+  fetch(`/api/proxy/bus/arrivals?stopId=${stopId}&arsId=${arsId}`)
+    .then(res => res.json())
+    .then(arrivals => {
+      showArrivalModal(arrivals);
+    });
+
+  // 경유 노선
   fetch(`/api/proxy/bus/routes?stopId=${stopId}`)
     .then(res => res.json())
     .then(routes => {
@@ -219,43 +276,64 @@ function onBusStopClick(stopId) {
     });
 }
 
+function showRouteListModal(routes) {
+  const container = document.getElementById("routeListModalBody");
+  if (!container) return;
+
+  if (!Array.isArray(routes) || routes.length === 0) {
+    container.innerHTML = "<p>이 정류장을 경유하는 버스가 없습니다.</p>";
+  } else {
+    container.innerHTML = routes.map(route => `
+      <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+        <div>
+          <strong>${route.routeNumber}</strong>
+          <span class="text-muted">(${route.routeType})</span>
+        </div>
+        <button class="btn btn-sm btn-primary" onclick="onRouteSelected('${route.routeId}')">실시간 위치</button>
+      </div>
+    `).join('');
+  }
+
+  const modal = new bootstrap.Modal(document.getElementById('routeListModal'));
+  modal.show();
+}
+
+function showArrivalModal(arrivals) {
+  const container = document.getElementById("arrivalModalBody");
+
+  if (!arrivals || arrivals.length === 0) {
+    container.innerHTML = "<p>도착 예정인 버스가 없습니다.</p>";
+  } else {
+    container.innerHTML = arrivals.map(item => {
+      const congestionText = item.congestion || "정보 없음";
+      let congestionClass = "text-muted";
+
+      if (congestionText === "여유") congestionClass = "text-success";
+      else if (congestionText === "보통") congestionClass = "text-warning";
+      else if (congestionText === "혼잡") congestionClass = "text-danger";
+
+      return `
+        <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+          <div>
+            <strong>${item.routeNumber}</strong>
+            <span class="ms-2 ${congestionClass}">🚥 ${congestionText}</span>
+            <span class="ms-2">⏱️ ${item.arrivalTime || "도착 시간 없음"}</span>
+          </div>
+          <button class="btn btn-sm btn-outline-primary"
+            onclick="loadRouteDetail('${item.routeNumber}', '${item.stopId}', '${item.arsId}')">상세</button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  const modal = new bootstrap.Modal(document.getElementById('arrivalModal'));
+  modal.show();
+}
+
 function onRouteSelected(routeId) {
   stopBusTracking();
   startBusTracking({ routeId });
 }
-
-window.addEventListener("DOMContentLoaded", async () => {
-
-  initClusterer();
-
-  const res = await fetch("/api/proxy/bus/regions");
-  const cities = await res.json();
-  const selector = document.getElementById("regionSelector");
-
-  cities.forEach(city => {
-    const opt = document.createElement("option");
-    opt.value = city;
-    opt.textContent = city;
-    selector.appendChild(opt);
-  });
-
-  naver.maps.Event.addListener(map, 'idle', () => {
-    if (map.getZoom() < 12) {
-      clearStopMarkers();
-      return;
-    }
-    filterStopsInView();
-  });
-});
-
-document.getElementById("regionSelector").addEventListener("change", e => {
-  const region = e.target.value;
-  stopBusTracking();
-  clearStopMarkers();
-  if (region) {
-    loadBusStopsByRegion(region);
-  }
-});
 
 function clearRouteDisplay() {
   if (routeLine) {
@@ -311,17 +389,67 @@ window.searchBusRoute = async function () {
     map.setCenter(path[0]);
     map.setZoom(13);
 
-    // 🔥 실시간 추적 시작 (버스 번호로)
     startBusTracking({ routeNumber });
-
   } catch (err) {
     console.error("버스 경로 조회 실패", err);
     alert("버스 노선 정보를 불러오는 데 실패했습니다.");
   }
 };
 
+function loadRouteDetail(routeNumber) {
+  fetch(`/api/proxy/bus/detail?routeNumber=${encodeURIComponent(routeNumber)}`)
+    .then(res => res.json())
+    .then(data => {
+      showRouteDetailPanel(data);
+    })
+    .catch(err => {
+      alert("상세 정보를 불러오는 데 실패했습니다.");
+      console.error(err);
+    });
+}
+
+function showRouteDetailPanel(data) {
+  const container = document.getElementById("busDetailContent");
+
+  if (!data) {
+    container.innerHTML = "<p>상세 정보를 가져올 수 없습니다.</p>";
+  } else {
+    container.innerHTML = `
+      <div class="border p-3 rounded shadow-sm">
+        <h4 class="text-primary fw-bold">${data.routeNumber}번 버스</h4>
+        <hr />
+        <p><strong>🕒 배차 간격:</strong> ${data.interval || "정보 없음"}</p>
+        <p><strong>🚏 첫차 시간:</strong> ${data.firstTime || "정보 없음"}</p>
+        <p><strong>🌙 막차 시간:</strong> ${data.lastTime || "정보 없음"}</p>
+      </div>
+    `;
+  }
+
+  const panel = new bootstrap.Offcanvas(document.getElementById("busDetailPanel"));
+  panel.show();
+}
+
+function showRouteDetailModal(data) {
+  const container = document.getElementById("routeDetailModalBody");
+
+  if (!data) {
+    container.innerHTML = "<p>상세 정보를 가져올 수 없습니다.</p>";
+  } else {
+    container.innerHTML = `
+      <h5>${data.routeNumber}번 버스</h5>
+      <p><strong>배차 간격:</strong> ${data.interval || "정보 없음"}</p>
+      <p><strong>첫차 시간:</strong> ${data.firstTime || "정보 없음"}</p>
+      <p><strong>막차 시간:</strong> ${data.lastTime || "정보 없음"}</p>
+    `;
+  }
+
+  const modal = new bootstrap.Modal(document.getElementById('routeDetailModal'));
+  modal.show();
+}
+
 // 전역 등록
 window.startBusTracking = startBusTracking;
 window.stopBusTracking = stopBusTracking;
 window.clearBusMarkers = clearBusMarkers;
 window.showBusPositions = showBusPositions;
+window.loadRouteDetail = loadRouteDetail;

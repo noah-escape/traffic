@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -57,18 +58,18 @@ public class SecurityConfig {
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http
-        .csrf(csrf -> csrf
-            .ignoringRequestMatchers("/api/proxy/**")) // CSRF 완전 제외
+        .cors(Customizer.withDefaults())
+        .csrf(csrf -> csrf.ignoringRequestMatchers("/api/proxy/**")) // ✅ CSRF 예외 처리
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/api/proxy/**").permitAll()
             .requestMatchers(
+                "/api/proxy/**", "/api/proxy/bus/**",
                 "/", "/login", "/register/**",
                 "/css/**", "/js/**", "/image/**", "/favicon.ico",
                 "/json/**", "/pages/**", "/api/**",
                 "/member/find/**", "/find-id", "/find-password",
-                "/board/list/**", "/board/view/**")
-            .permitAll()
-            .anyRequest().authenticated())
+                "/board/list/**", "/board/view/**"
+            ).permitAll()
+            .anyRequest().authenticated()) // ✅ 나머지는 인증 필요
         .formLogin(form -> form
             .loginPage("/login")
             .defaultSuccessUrl("/", true)

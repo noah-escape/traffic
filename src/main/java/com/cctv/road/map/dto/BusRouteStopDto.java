@@ -8,8 +8,8 @@ import lombok.Data;
 public class BusRouteStopDto {
   private String stationId;
   private String stationName;
-  private double latitude;
-  private double longitude;
+  private double lat;
+  private double lng;
   private int stationOrder;
   private String routeId;
   private String routeNumber;

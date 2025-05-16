@@ -195,7 +195,7 @@
         <div>
           <label for="regionSelector" class="form-label">📍 시/도 선택</label>
           <select id="regionSelector" class="form-select form-select-sm">
-            <option value="">시/도 선택</option>
+            <option value="" selected>시/도 선택</option>
             <th:block th:each="city : ${cities}">
               <option th:value="${city}" th:text="${city}"></option>
             </th:block>
@@ -413,7 +413,43 @@
       </div>
     </div>
 
+    <!-- 🚌 도착 정보 모달 -->
+    <div class="modal fade" id="arrivalModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">정류소 도착 정보</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body" id="arrivalModalBody"></div>
+        </div>
+      </div>
+    </div>
 
+    <!-- 🚌 버스 상세 정보 우측 패널 -->
+    <div id="busDetailPanel" class="offcanvas offcanvas-end" tabindex="-1">
+      <div class="offcanvas-header bg-primary text-white">
+        <h5 class="offcanvas-title" id="busDetailTitle">버스 상세 정보</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+      </div>
+      <div class="offcanvas-body">
+        <div id="busDetailContent" class="d-flex flex-column gap-2"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 🛣️ 정류소 노선 모달 -->
+  <div class="modal fade" id="routeListModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">경유 노선</h5>
+        </div>
+        <div class="modal-body" id="routeListModalBody">로딩 중...</div>
+      </div>
+    </div>
+  </div>
 
 </body>
 <script th:src="@{/js/cctv.js}" defer></script> <!-- 수정 -->

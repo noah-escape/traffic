@@ -103,13 +103,6 @@ aside.sidebar {
   flex-direction: column;
 }
 
-body.dark-mode #cctvFilterPanel,
-body.dark-mode #busFilterPanel,
-body.dark-mode #bikeFilterPanel {
-  background-color: var(--background-dark);
-  color: white;
-}
-
 /* ✅ 상단 내용 영역 (스크롤 가능) */
 .panel-body {
   flex: 1;
@@ -600,17 +593,100 @@ body.dark-mode #bikeFilterPanel {
   /* 줄바꿈 시 약간 간격 */
 }
 
+/* 🅿️ 주차장 패널 */
+.parking-header {
+  background-color: var(--blue-gray);
+  color: white;
+}
+
+#parkingFilterPanel select.form-select,
+#parkingFilterPanel input.form-control {
+  background-color: white;
+  border: 1px solid var(--blue-gray-light);
+  font-size: 0.875rem;
+}
+
+#parkingFilterPanel .form-check-input:checked {
+  background-color: var(--medium-blue);
+  border-color: var(--medium-blue);
+}
+
+#parkingFilterPanel .form-check-label {
+  color: var(--text-color);
+}
+
+#parkingFilterPanel button.btn-outline-primary {
+  color: var(--medium-blue);
+  border-color: var(--medium-blue);
+}
+
+#parkingFilterPanel button.btn-outline-primary:hover {
+  background-color: var(--medium-blue);
+  color: white;
+}
+
+#parkingListBox .list-group-item {
+  border: none;
+  border-bottom: 1px solid #dee2e6;
+}
+
+#parkingListBox .list-group-item:hover {
+  cursor: pointer;
+}
+
+#parkingListBox .text-primary {
+  color: var(--blue-gray) !important;
+}
+
+#parkingCountText {
+  font-weight: 500;
+  color: var(--medium-blue);
+}
+
+.form-select:focus,
+.form-control:focus,
+.form-check-input:focus {
+  border-color: #ced4da;
+  box-shadow: none;
+}
+
+.parking-infowindow-container {
+  background-color: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+  border: 1px solid #dee2e6;
+  padding: 1rem;
+  min-width: 280px;
+  font-size: 15px;
+}
+
+.parking-name {
+  font-weight: 600;
+  color: var(--golden-yellow);
+  font-size: 1.05rem;
+}
+
+.section-title {
+  font-weight: 500;
+  color: var(--text-color);
+  font-size: 0.875rem;
+}
+
+.parking-stats {
+  background-color: #f8f9fa;
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  margin-top: 0.5rem;
+}
+
 body.light-mode .sidebar,
 body.dark-mode .sidebar {
   background-color: var(--light-blue);
   color: var(--text-color);
 }
 
-body.dark-mode h3,
-body.dark-mode h5,
-body.dark-mode h4,
-body.dark-mode p {
-  color: var(--text-color);
+body.dark-mode {
+  --text-color: #212529;
 }
 
 #mapTypeControl .btn {
@@ -672,4 +748,8 @@ body.dark-mode p {
   background: #6c757d;
   border-radius: 50%;
   border: none;
+}
+
+#busDetailContent p {
+  margin-bottom: 0.5rem;
 }
