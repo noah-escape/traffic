@@ -423,24 +423,12 @@
       </div>
     </div>
 
-    <!-- 🚌 네이버 스타일 버스 상세 패널 -->
-    <div id="busRoutePanel" class="offcanvas offcanvas-end" tabindex="-1">
-      <div class="offcanvas-header bg-dark text-white">
-        <h5 class="offcanvas-title" id="busRoutePanelTitle">버스 노선</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
-      </div>
-      <div class="offcanvas-body p-0">
-        <!-- 상단 버스 정보 -->
-        <div class="p-3 border-bottom bg-light">
-          <h4 id="routeHeader" class="mb-1 text-primary fw-bold">755번</h4>
-          <div id="routeSubInfo" class="small text-muted">노선 정보 없음</div>
-        </div>
-
-        <!-- 정류장 리스트 -->
-        <div id="busStopListContainer" class="scrollable-list p-3" style="max-height: 65vh; overflow-y: auto;"></div>
-      </div>
-    </div>
-
+<!-- 버스 상세 팝업 -->
+<div id="routeDetailPopup" class="card shadow-sm border position-absolute d-none" style="z-index: 2000; width: 250px;">
+  <div class="card-body p-3 small">
+    <div id="routeDetailPopupContent">로딩 중...</div>
+  </div>
+</div>
 
     <!-- 🛣️ 정류소 노선 리스트 (모달 유지) -->
     <div class="modal fade" id="routeListModal" tabindex="-1">
