@@ -5,7 +5,6 @@ let allStops = [];
 let clusterer;
 let routeLine = null;
 let routeMarkers = [];
-let map;
 
 // 🔹 기존 마커 제거
 function clearBusMarkers() {
@@ -150,21 +149,9 @@ const cityCenters = {
   '제주특별자치도': [33.4996, 126.5312]
 };
 
-function initClusterer() {
-  if (!clusterer) {
-    clusterer = new naver.maps.MarkerClustering({
-      map: map,
-      maxZoom: 16,
-      gridSize: 60,
-      markers: []
-    });
-  }
-}
-
 function clearStopMarkers() {
   stopMarkers.forEach(m => m.setMap(null));
   stopMarkers = [];
-  clusterer?.clear();
 }
 
 function drawStopMarkers(stops) {
@@ -188,8 +175,8 @@ function drawStopMarkers(stops) {
     return marker;
   });
 
+  markers.forEach(marker => marker.setMap(map)); 
   stopMarkers = markers;
-  clusterer.setMarkers(markers);
 }
 
 function filterStopsInView() {
@@ -238,10 +225,6 @@ function onRouteSelected(routeId) {
 }
 
 window.addEventListener("DOMContentLoaded", async () => {
-  map = new naver.maps.Map('map', {
-    center: new naver.maps.LatLng(37.57, 126.98),
-    zoom: 13
-  });
 
   initClusterer();
 
@@ -336,3 +319,9 @@ window.searchBusRoute = async function () {
     alert("버스 노선 정보를 불러오는 데 실패했습니다.");
   }
 };
+
+// 전역 등록
+window.startBusTracking = startBusTracking;
+window.stopBusTracking = stopBusTracking;
+window.clearBusMarkers = clearBusMarkers;
+window.showBusPositions = showBusPositions;
