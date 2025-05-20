@@ -866,3 +866,23 @@ body.dark-mode {
   font-size: 0.85rem;
   z-index: 3000;
 }
+.route-popup-panel {
+  position: absolute;
+  top: 80px;
+  right: 20px;
+  z-index: 1000;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+  padding: 15px;
+  width: 220px;
+}
+
+.route-popup-panel .popup-content {
+  font-size: 14px;
+}
+
+.route-popup-panel .fw-bold {
+  font-size: 16px;
+}
