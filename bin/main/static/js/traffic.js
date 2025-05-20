@@ -124,18 +124,57 @@ document.addEventListener('DOMContentLoaded', () => {
       panelId: 'busFilterPanel',
       onActivate: () => {
         panelStates.bus = true;
-        // 기본 동작: 최근 사용 지역이 있으면 해당 지역 로드, 없으면 아무것도 안 함 또는 기본값 서울
-        const defaultRegion = '서울특별시';
-        if (defaultRegion) {
-          document.getElementById('regionSelector').value = defaultRegion;
-          window.loadBusStopsByRegion?.(defaultRegion);
+
+        // ⛳ 시/도 셀렉터 초기화
+        const selector = document.getElementById('regionSelector');
+        if (selector) {
+          selector.selectedIndex = 0;
         }
-        // 노선 자동 추적은 제거하여, 사용자 선택에 맡김
+
+        // ⛳ 도착 패널 초기화
+        const arrivalPanel = document.getElementById("arrivalPanelBody");
+        if (arrivalPanel) {
+          arrivalPanel.innerHTML = `<div class="text-muted">원하시는 정류장을 선택하세요</div>`;
+        }
+
+        // ⛳ 경로/정류장 제거
+        window.clearRouteDisplay?.();
+        window.clearStopMarkers?.();
+
+        // ⛳ 상세 팝업 제거
+        const popup = document.getElementById('routeDetailPopup');
+        if (popup) popup.classList.add('d-none');
+
+        // ⛳ 오프캔버스 닫기
+        const routePanel = document.getElementById("busRoutePanel");
+        if (routePanel && bootstrap?.Offcanvas?.getInstance(routePanel)) {
+          bootstrap.Offcanvas.getInstance(routePanel).hide();
+        }
       },
       onDeactivate: () => {
-        // 패널 닫힐 때 수행: 정류장 마커 제거 + 버스 추적 중지
-        window.clearStopMarkers?.();
+        // ⛔ 모든 관련 정보 초기화
         window.stopBusTracking?.();
+        window.clearBusMarkers?.();
+        window.clearStopMarkers?.();
+        window.clearRouteDisplay?.();
+
+        const selector = document.getElementById('regionSelector');
+        if (selector) {
+          selector.selectedIndex = 0;
+        }
+
+        const arrivalPanel = document.getElementById("arrivalPanelBody");
+        if (arrivalPanel) {
+          arrivalPanel.innerHTML = `<div class="text-muted">원하시는 정류장을 선택하세요</div>`;
+        }
+
+        const popup = document.getElementById('routeDetailPopup');
+        if (popup) popup.classList.add('d-none');
+
+        const routePanel = document.getElementById("busRoutePanel");
+        if (routePanel && bootstrap?.Offcanvas?.getInstance(routePanel)) {
+          bootstrap.Offcanvas.getInstance(routePanel).hide();
+        }
       }
     },
     {
@@ -233,39 +272,39 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     },
     {
-  id: 'sidebarParkingBtn',
-  key: 'parking',
-  panelId: 'parkingFilterPanel',
-  onActivate: () => {
-    // 💡 먼저 데이터를 불러오기 시작
-    const promise = window.loadSeoulCityParking();
+      id: 'sidebarParkingBtn',
+      key: 'parking',
+      panelId: 'parkingFilterPanel',
+      onActivate: () => {
+        // 💡 먼저 데이터를 불러오기 시작
+        const promise = window.loadSeoulCityParking();
 
-    // 이후에 패널 열기
-    panelStates.parking = true;
-    const panel = document.getElementById('parkingFilterPanel');
-    if (panel) {
-      panel.style.display = 'flex';
+        // 이후에 패널 열기
+        panelStates.parking = true;
+        const panel = document.getElementById('parkingFilterPanel');
+        if (panel) {
+          panel.style.display = 'flex';
+        }
+
+        // 📍 내 위치 표시
+        if (typeof window.showCurrentLocationOnMap === 'function') {
+          window.showCurrentLocationOnMap();
+        }
+
+        // 지도 크기 조정
+        adjustMapSizeToSidebar();
+        setTimeout(() => {
+          naver.maps.Event.trigger(map, 'resize');
+        }, 300);
+        showParkingLegend();
+        return promise;
+      },
+      onDeactivate: () => {
+        panelStates.parking = false;
+        window.clearParkingMarkers();
+        hideParkingLegend();
+      }
     }
-
-    // 📍 내 위치 표시
-    if (typeof window.showCurrentLocationOnMap === 'function') {
-      window.showCurrentLocationOnMap();
-    }
-
-    // 지도 크기 조정
-    adjustMapSizeToSidebar();
-    setTimeout(() => {
-      naver.maps.Event.trigger(map, 'resize');
-    }, 300);
-    showParkingLegend();
-    return promise;
-  },
-  onDeactivate: () => {
-    panelStates.parking = false;
-    window.clearParkingMarkers();
-    hideParkingLegend();
-  }
-}
 
 
   ];

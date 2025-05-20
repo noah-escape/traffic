@@ -198,13 +198,10 @@
           <!-- 지역 선택 -->
           <div>
             <select id="regionSelector" class="form-select form-select-sm">
-              <option value="" selected>시/도 선택</option>
-              <th:block th:each="city : ${cities}">
-                <option th:value="${city}" th:text="${city}"></option>
-              </th:block>
+              <option value="" selected disabled hidden>시/도 선택</option>
             </select>
           </div>
-
+          
           <!-- 버스 번호 검색 -->
           <div class="input-group">
             <input type="text" id="routeInput" class="form-control" placeholder="버스 번호 입력 (예: 1002)">
@@ -429,19 +426,6 @@
     <div id="routeDetailPopupContent">로딩 중...</div>
   </div>
 </div>
-
-    <!-- 🛣️ 정류소 노선 리스트 (모달 유지) -->
-    <div class="modal fade" id="routeListModal" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">경유 노선</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body" id="routeListModalBody">로딩 중...</div>
-        </div>
-      </div>
-    </div>
 
 </body>
 <script th:src="@{/js/cctv.js}" defer></script> <!-- 수정 -->
