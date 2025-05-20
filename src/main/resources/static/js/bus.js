@@ -5,6 +5,11 @@ let allStops = [];
 let clusterer;
 let routeLine = null;
 let routeMarkers = [];
+let arrivalTimers = {};
+let visibleStops = [];     // 현재 지도 내 표시되는 정류소
+let routeStops = [];       // 검색한 노선의 정류소
+let currentRouteId = null; // 현재 활성화된 노선 ID
+
 
 // 🔹 기존 마커 제거
 function clearBusMarkers() {
@@ -62,7 +67,13 @@ async function showBusPositions({ routeId, routeNumber }) {
         const marker = new naver.maps.Marker({
           position: new naver.maps.LatLng(lat, lng),
           map: map,
-          title: `버스 번호: ${carNo}`
+          title: `버스 번호: ${carNo}`,
+          icon: {
+            url: '/image/bus/icon-bus.png',
+            size: new naver.maps.Size(24, 24),
+            origin: new naver.maps.Point(0, 0),
+            anchor: new naver.maps.Point(8, 24)
+          }
         });
 
         const info = new naver.maps.InfoWindow({
@@ -106,7 +117,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   const btn = document.getElementById('sidebarBusBtn');
   if (btn) {
     btn.addEventListener('click', () => {
-      if (busTimer) stopBusTracking();
+      stopBusTracking();      // 실시간 추적 중지
+      clearStopMarkers();     // 기존 정류소 마커 제거
+      clearRouteDisplay();    // 노선 경로 라인, 마커 제거
+      currentRouteId = null;  // 현재 노선 초기화
+      routeStops = [];        // 경로 정류소 초기화
+
+      // 서울시 전체 정류소 다시 보여줌
+      if (allStops.length > 0) {
+        filterStopsInView();
+      }
     });
   }
 
@@ -153,7 +173,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         clearStopMarkers();
         return;
       }
-      filterStopsInView();
+
+      if (!currentRouteId) {  // ✅ 경로 검색 안 한 상태일 때만
+        filterStopsInView();
+      }
     }, 300);
   });
 });
@@ -183,8 +206,8 @@ function clearStopMarkers() {
   stopMarkers = [];
 }
 
-function drawStopMarkers(stops) {
-  clearStopMarkers();
+function drawStopMarkers(stops, isRouteMarkers = false) {
+  if (!isRouteMarkers) clearStopMarkers();
 
   let index = 0;
   const batchSize = 200;
@@ -194,34 +217,49 @@ function drawStopMarkers(stops) {
     const nextBatch = stops.slice(index, index + batchSize);
 
     nextBatch.forEach(stop => {
+      const lat = parseFloat(stop.lat || stop.latitude);
+      const lng = parseFloat(stop.lng || stop.longitude);
+      const name = stop.name || stop.stationName;
+
+      // ✅ 확실한 통합 ID 사용
+      const stopId = stop.stopId || stop.nodeId || stop.id;
+      const arsId = stop.arsId || "01";
+
+      if (!stopId) {
+        console.warn("❗ 정류소 ID 누락됨", stop);
+        return;
+      }
+
       const marker = new naver.maps.Marker({
-        position: new naver.maps.LatLng(parseFloat(stop.lat), parseFloat(stop.lng)),
+        position: new naver.maps.LatLng(lat, lng),
         map: map,
-        title: stop.name,
+        title: name,
         icon: {
-          url: "/image/bus/bus-stop.png",
+          url: isRouteMarkers ? "/image/bus/bus-stop-route.png" : "/image/bus/bus-stop.png",
           size: new naver.maps.Size(16, 16),
-          origin: new naver.maps.Point(0, 0),
           anchor: new naver.maps.Point(8, 16)
         }
       });
 
       const info = new naver.maps.InfoWindow({
-        content: `<div style="padding:4px;">🚌 ${stop.name}</div>`
+        content: `<div style="padding:4px;">🚌 ${name}</div>`
       });
 
       naver.maps.Event.addListener(marker, 'click', () => {
+        console.log("🧭 정류소 클릭:", stopId, arsId);
         info.open(map, marker);
-        onBusStopClick(stop.id, stop.arsId || "01");
+        onBusStopClick(stopId, arsId);
       });
 
-      stopMarkers.push(marker);
+      if (isRouteMarkers) {
+        routeMarkers.push(marker);
+      } else {
+        stopMarkers.push(marker);
+      }
     });
 
     index += batchSize;
-    if (index < stops.length) {
-      setTimeout(drawBatch, delay);
-    }
+    if (index < stops.length) setTimeout(drawBatch, delay);
   }
 
   drawBatch();
@@ -237,7 +275,7 @@ function filterStopsInView() {
   if (lastBounds && bounds.equals(lastBounds)) return;
   lastBounds = bounds;
 
-  const visibleStops = allStops.filter(stop => {
+  visibleStops = allStops.filter(stop => {
     const lat = parseFloat(stop.lat);
     const lng = parseFloat(stop.lng);
     return bounds.hasLatLng(new naver.maps.LatLng(lat, lng));
@@ -262,16 +300,23 @@ async function loadBusStopsByRegion(region) {
   try {
     const res = await fetch(`/api/proxy/bus/stops?region=${encodeURIComponent(region)}`);
     allStops = await res.json();
-    filterStopsInView();
+    if (!currentRouteId) {
+      filterStopsInView();
+    }
   } catch (err) {
     console.error("정류소 불러오기 실패", err);
   }
 }
 
 function onBusStopClick(stopId, arsId = "01") {
+  console.log("🧭 정류소 클릭:", stopId, arsId);
+
   fetch(`/api/proxy/bus/arrivals?stopId=${stopId}&arsId=${arsId}`)
     .then(res => res.json())
-    .then(arrivals => showArrivalModal(arrivals));
+    .then(arrivals => {
+      console.log("도착 정보", arrivals); // ✅ 확인
+      showArrivalModal(arrivals);
+    });
 
   fetch(`/api/proxy/bus/routes?stopId=${stopId}`)
     .then(res => res.json())
@@ -282,35 +327,58 @@ function showArrivalModal(arrivals) {
   const container = document.getElementById("arrivalPanelBody");
   if (!container) return;
 
+  // 이전 타이머 제거
+  Object.values(arrivalTimers).forEach(clearInterval);
+  arrivalTimers = {};
+
   if (!arrivals || arrivals.length === 0) {
     container.innerHTML = "<p>도착 예정인 버스가 없습니다.</p>";
-  } else {
-    container.innerHTML = arrivals.map(item => {
-      const congestionText = item.congestion || "정보 없음";
-      let congestionClass = "text-muted";
+    return;
+  }
 
-      if (congestionText === "여유") congestionClass = "text-success";
-      else if (congestionText === "보통") congestionClass = "text-warning";
-      else if (congestionText === "혼잡") congestionClass = "text-danger";
+  // 초기 UI 렌더링
+  container.innerHTML = arrivals.map((item, idx) => {
+    const sec = parseArrivalSeconds(item.arrivalTime);
+    const congestionText = item.congestion || "정보 없음";
+    let congestionClass = "text-muted";
 
-      const arrivalText = item.arrivalTime || "출발대기";
-      const routeNumber = item.routeNumber;
+    if (congestionText === "여유") congestionClass = "text-success";
+    else if (congestionText === "보통") congestionClass = "text-warning";
+    else if (congestionText === "혼잡") congestionClass = "text-danger";
 
-      return `
-        <div class="arrival-card d-flex justify-content-between align-items-start border-bottom py-2">
-          <div class="d-flex flex-column">
-            <div class="bus-number-box mb-1" title="${routeNumber}">${routeNumber}</div>
-            <div class="arrival-status small ${congestionClass}">
-              🚥 ${congestionText} ⏱ ${arrivalText}
-            </div>
-          </div>
-          <div class="align-self-center">
-            <button class="btn btn-detail route-detail-btn" data-route="${routeNumber}">상세</button>
+    const routeNumber = item.routeNumber;
+    return `
+      <div class="arrival-card d-flex justify-content-between align-items-start border-bottom py-2" id="arrivalCard${idx}">
+        <div class="d-flex flex-column">
+          <div class="bus-number-box mb-1" title="${routeNumber}">${routeNumber}</div>
+          <div class="arrival-status small ${congestionClass}" id="arrivalTime${idx}">
+            ⏱ ${sec !== null ? formatArrivalSec(sec) : '도착 정보 없음'}
           </div>
         </div>
-      `;
-    }).join('');
-  }
+        <div class="align-self-center">
+          <button class="btn btn-detail route-detail-btn" data-route="${routeNumber}">상세</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // 초단위 countdown
+  arrivals.forEach((item, idx) => {
+    let sec = parseArrivalSeconds(item.arrivalTime);
+    if (sec === null) return;
+
+    arrivalTimers[idx] = setInterval(() => {
+      sec--;
+      const el = document.getElementById(`arrivalTime${idx}`);
+      if (!el) return;
+      if (sec <= 0) {
+        el.textContent = "도착";
+        clearInterval(arrivalTimers[idx]);
+        return;
+      }
+      el.textContent = `⏱ ${formatArrivalSec(sec)}`;
+    }, 1000);
+  });
 }
 
 function showRouteListModal(routes) {
@@ -361,6 +429,7 @@ window.searchBusRoute = async function () {
   stopBusTracking();
   clearStopMarkers();
   clearRouteDisplay();
+  currentRouteId = null;
 
   try {
     const res = await fetch(`/api/proxy/bus/routes?routeNumber=${encodeURIComponent(routeNumber)}`);
@@ -375,6 +444,7 @@ window.searchBusRoute = async function () {
       new naver.maps.LatLng(parseFloat(stop.lat), parseFloat(stop.lng))
     );
 
+    // ✅ 경로 라인 그리기
     routeLine = new naver.maps.Polyline({
       path: path,
       strokeColor: '#0078ff',
@@ -385,12 +455,22 @@ window.searchBusRoute = async function () {
     map.setCenter(path[0]);
     map.setZoom(13);
 
+    // ✅ 노선 경로 정류소 마커는 따로 표시
+    drawStopMarkers(stops, true); // <-- 핵심 수정
+    drawStopMarkers(visibleStops);
+
+    // ✅ 노선 기반 버스 위치 추적
     startBusTracking({ routeNumber });
+
+    // ✅ 상태 저장
+    routeStops = stops;
+    currentRouteId = routeNumber;
   } catch (err) {
     console.error("버스 경로 조회 실패", err);
     alert("버스 노선 정보를 불러오는 데 실패했습니다.");
   }
 };
+
 
 async function loadRouteDetail(routeNumber, triggerEl) {
   try {
@@ -486,6 +566,34 @@ document.addEventListener("click", function (e) {
     popup.classList.add("d-none");
   }
 });
+
+function formatArrivalSec(sec) {
+  if (sec < 60) return `${sec}초`;
+  const min = Math.floor(sec / 60);
+  const remain = sec % 60;
+  return `${min}분 ${remain}초`;
+}
+
+function parseArrivalSeconds(arrivalText) {
+  const match = arrivalText.match(/(\d+)\s*분\s*(\d+)?\s*초?/);
+  if (match) {
+    const minutes = parseInt(match[1], 10);
+    const seconds = match[2] ? parseInt(match[2], 10) : 0;
+    return minutes * 60 + seconds;
+  }
+
+  const minOnly = arrivalText.match(/(\d+)\s*분/);
+  if (minOnly) {
+    return parseInt(minOnly[1], 10) * 60;
+  }
+
+  const secOnly = arrivalText.match(/(\d+)\s*초/);
+  if (secOnly) {
+    return parseInt(secOnly[1], 10);
+  }
+
+  return null; // 도착 예정 없음
+}
 
 // 전역 등록
 window.loadRouteDetail = loadRouteDetail;

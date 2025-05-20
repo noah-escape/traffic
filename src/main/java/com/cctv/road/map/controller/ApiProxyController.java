@@ -32,11 +32,8 @@ import org.xml.sax.InputSource;
 
 import com.cctv.road.map.dto.BusArrivalDto;
 import com.cctv.road.map.dto.BusRouteDto;
-import com.cctv.road.map.dto.BusRouteStopDto;
-import com.cctv.road.map.dto.BusStopDto;
+import com.cctv.road.map.dto.UnifiedBusStopDto;
 import com.cctv.road.map.repository.BusStopRepository;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import reactor.core.publisher.Mono;
@@ -214,36 +211,43 @@ public class ApiProxyController {
 
     // 2. 노선 번호로 정류장 목록 조회 (노선 상세 패널에서 사용)
     if (routeNumber != null) {
-      List<BusRouteStopDto> stops = busStopRepository.findByRouteNameOrderByStationOrderAsc(routeNumber)
+      List<UnifiedBusStopDto> stops = busStopRepository.findByRouteNameOrderByStationOrderAsc(routeNumber)
           .stream()
-          .map(stop -> new BusRouteStopDto(
+          .map(stop -> new UnifiedBusStopDto(
               stop.getNodeId(),
               stop.getStationName(),
+              stop.getArsId(),
               stop.getLatitude(),
               stop.getLongitude(),
-              stop.getStationOrder(),
               stop.getRouteId(),
-              stop.getRouteName()))
+              stop.getRouteName(),
+              stop.getStationOrder()))
           .toList();
+
       return ResponseEntity.ok(stops);
     }
 
-    // 파라미터 둘 다 없을 때
     return ResponseEntity.badRequest().body("stopId 또는 routeNumber 중 하나는 필수입니다.");
   }
 
   @GetMapping("/bus/stops")
-  public ResponseEntity<List<BusStopDto>> getBusStopsByRegion(@RequestParam String region) {
+  public ResponseEntity<List<UnifiedBusStopDto>> getBusStopsByRegion(@RequestParam String region) {
     if (!"서울특별시".equals(region)) {
-      return ResponseEntity.ok(List.of()); // 다른 지역은 빈 목록 반환
+      return ResponseEntity.ok(List.of());
     }
 
-    List<BusStopDto> stops = busStopRepository.findAll().stream()
-        .map(stop -> new BusStopDto(
+    List<UnifiedBusStopDto> stops = busStopRepository.findAll().stream()
+        .limit(1000)
+        .map(stop -> new UnifiedBusStopDto(
             stop.getNodeId(),
             stop.getStationName(),
+            stop.getArsId(),
             stop.getLatitude(),
-            stop.getLongitude()))
+            stop.getLongitude(),
+            null, // 노선 ID 없음
+            null, // 노선 번호 없음
+            null // 정류소 순서 없음
+        ))
         .collect(Collectors.toList());
 
     return ResponseEntity.ok(stops);
@@ -337,6 +341,30 @@ public class ApiProxyController {
     result.put("lastTime", "23:40");
 
     return ResponseEntity.ok(result);
+  }
+
+  @GetMapping("/bus/stops/in-bounds")
+  public ResponseEntity<List<UnifiedBusStopDto>> getStopsInBounds(
+      @RequestParam double minLat,
+      @RequestParam double maxLat,
+      @RequestParam double minLng,
+      @RequestParam double maxLng) {
+
+    List<UnifiedBusStopDto> stops = busStopRepository
+        .findByLatitudeBetweenAndLongitudeBetween(minLat, maxLat, minLng, maxLng)
+        .stream()
+        .map(stop -> new UnifiedBusStopDto(
+            stop.getNodeId(),
+            stop.getStationName(),
+            stop.getArsId(),
+            stop.getLatitude(),
+            stop.getLongitude(),
+            null, null, null // 노선 정보 없음
+        ))
+        .limit(500)
+        .collect(Collectors.toList());
+
+    return ResponseEntity.ok(stops);
   }
 
   private static String getTagValue(String tag, Element element) {
@@ -435,48 +463,53 @@ public class ApiProxyController {
         .onErrorMap(e -> new RuntimeException("서울 주차장 정보 API 호출 실패", e));
   }
 
-/* 
-  // 도로 중심선 버스 경로 찍기 봉 인 !!
-  @GetMapping("/naver-driving-path")
-  public ResponseEntity<?> getSmoothedPath(
-      @RequestParam double startLat,
-      @RequestParam double startLng,
-      @RequestParam double goalLat,
-      @RequestParam double goalLng) {
-
-    try {
-      String response = naverClient.get()
-          .uri(uriBuilder -> uriBuilder
-              .path("/map-direction/v1/driving")
-              .queryParam("start", startLng + "," + startLat)
-              .queryParam("goal", goalLng + "," + goalLat)
-              .queryParam("option", "trafast")
-              .build())
-          .retrieve()
-          .bodyToMono(String.class)
-          .block(); // Mono -> String 동기 처리
-
-      ObjectMapper mapper = new ObjectMapper();
-      JsonNode root = mapper.readTree(response);
-      JsonNode pathArray = root.at("/route/trafast/0/path");
-
-      List<Map<String, Double>> coordinates = new ArrayList<>();
-      for (JsonNode coord : pathArray) {
-        double lng = coord.get(0).asDouble();
-        double lat = coord.get(1).asDouble();
-        Map<String, Double> point = new HashMap<>();
-        point.put("lat", lat);
-        point.put("lng", lng);
-        coordinates.add(point);
-      }
-
-      return ResponseEntity.ok(coordinates);
-
-    } catch (Exception e) {
-      e.printStackTrace();
-      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .body(Map.of("error", "경로 처리 실패: " + e.getMessage()));
-    }
-  }
- */
+  /*
+   * // 도로 중심선 버스 경로 찍기 봉 인 !!
+   * 
+   * @GetMapping("/naver-driving-path")
+   * public ResponseEntity<?> getSmoothedPath(
+   * 
+   * @RequestParam double startLat,
+   * 
+   * @RequestParam double startLng,
+   * 
+   * @RequestParam double goalLat,
+   * 
+   * @RequestParam double goalLng) {
+   * 
+   * try {
+   * String response = naverClient.get()
+   * .uri(uriBuilder -> uriBuilder
+   * .path("/map-direction/v1/driving")
+   * .queryParam("start", startLng + "," + startLat)
+   * .queryParam("goal", goalLng + "," + goalLat)
+   * .queryParam("option", "trafast")
+   * .build())
+   * .retrieve()
+   * .bodyToMono(String.class)
+   * .block(); // Mono -> String 동기 처리
+   * 
+   * ObjectMapper mapper = new ObjectMapper();
+   * JsonNode root = mapper.readTree(response);
+   * JsonNode pathArray = root.at("/route/trafast/0/path");
+   * 
+   * List<Map<String, Double>> coordinates = new ArrayList<>();
+   * for (JsonNode coord : pathArray) {
+   * double lng = coord.get(0).asDouble();
+   * double lat = coord.get(1).asDouble();
+   * Map<String, Double> point = new HashMap<>();
+   * point.put("lat", lat);
+   * point.put("lng", lng);
+   * coordinates.add(point);
+   * }
+   * 
+   * return ResponseEntity.ok(coordinates);
+   * 
+   * } catch (Exception e) {
+   * e.printStackTrace();
+   * return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+   * .body(Map.of("error", "경로 처리 실패: " + e.getMessage()));
+   * }
+   * }
+   */
 }

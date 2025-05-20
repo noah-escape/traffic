@@ -201,7 +201,7 @@
               <option value="" selected disabled hidden>시/도 선택</option>
             </select>
           </div>
-          
+
           <!-- 버스 번호 검색 -->
           <div class="input-group">
             <input type="text" id="routeInput" class="form-control" placeholder="버스 번호 입력 (예: 1002)">
@@ -226,6 +226,18 @@
       </div>
     </div>
 
+    <div id="busRouteFloatingPanel" class="card shadow-sm position-absolute"
+      style="top: 60px; right: 20px; width: 320px; z-index: 1000; display: none;">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <strong id="busRouteFloatingTitle">123번 버스</strong>
+        <button class="btn btn-sm btn-outline-secondary" onclick="closeRouteFloatingPanel()">✕</button>
+      </div>
+      <div class="card-body" id="busRouteFloatingBody">
+        <div>🚏 정류장 수: <span id="stopCount"></span></div>
+        <div>🕒 배차: <span id="intervalTime"></span></div>
+        <div>🚀 경로가 지도에 표시되었습니다.</div>
+      </div>
+    </div>
 
     <!-- 길찾기 패널 -->
     <div id="routeFilterPanel" class="sidebar-panel" style="display: none;">
@@ -420,12 +432,19 @@
       </div>
     </div>
 
-<!-- 버스 상세 팝업 -->
-<div id="routeDetailPopup" class="card shadow-sm border position-absolute d-none" style="z-index: 2000; width: 250px;">
-  <div class="card-body p-3 small">
-    <div id="routeDetailPopupContent">로딩 중...</div>
-  </div>
-</div>
+    <!-- 버스 상세 팝업 -->
+    <div id="routeDetailPopup" class="card shadow-sm border position-absolute d-none"
+      style="z-index: 2000; width: 250px;">
+      <div class="card-body p-3 small">
+        <div id="routeDetailPopupContent">로딩 중...</div>
+      </div>
+    </div>
+
+    <!-- 페이지 어딘가에 기본 틀만 마련 -->
+    <div id="routePanel" class="bus-route-panel" style="display: none;">
+      <div class="header" id="routePanelHeader"></div>
+      <div class="route-timeline" id="routeTimelineContainer"></div>
+    </div>
 
 </body>
 <script th:src="@{/js/cctv.js}" defer></script> <!-- 수정 -->

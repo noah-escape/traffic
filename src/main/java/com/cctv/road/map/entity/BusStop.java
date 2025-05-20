@@ -46,4 +46,3 @@ public class BusStop {
   @Column(name = "created_at")
   private LocalDateTime createdAt;
 }
-
