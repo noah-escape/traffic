@@ -798,3 +798,71 @@ body.dark-mode {
   background-color: #0d6efd;
   color: white;
 }
+
+#arrivalPanel {
+  transition: all 0.3s ease;
+  border-left: 1px solid #ddd;
+}
+
+#arrivalPanel .panel-body {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+#arrivalPanelBody > div {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* 🔹 도착 카드 스타일 */
+#arrivalPanelBody .card {
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  background-color: #fff;
+  transition: background 0.2s ease;
+}
+#arrivalPanelBody .card:hover {
+  background-color: #f8f9fa;
+}
+#arrivalPanelBody .card-body {
+  font-size: 0.9rem;
+}
+
+/* 🔹 혼잡도 색상 표시 */
+.text-success {
+  color: #28a745 !important; /* 여유 */
+}
+.text-warning {
+  color: #ffc107 !important; /* 보통 */
+}
+.text-danger {
+  color: #dc3545 !important; /* 혼잡 */
+}
+
+/* 🔹 상세 버튼 */
+.route-detail-btn {
+  font-size: 0.8rem;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+/* 🔹 버스 번호 강조 */
+.bus-number-box {
+  background-color: #007bff;
+  color: white;
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-weight: bold;
+  display: inline-block;
+  font-size: 0.9rem;
+}
+
+/* 🔹 상세 팝업 카드 */
+#routeDetailPopup {
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  padding: 10px;
+  font-size: 0.85rem;
+  z-index: 3000;
+}

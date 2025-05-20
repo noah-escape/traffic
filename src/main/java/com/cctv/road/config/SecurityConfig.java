@@ -63,16 +63,18 @@ public class SecurityConfig {
         .authorizeHttpRequests(auth -> auth
             .requestMatchers(
                 "/api/proxy/**", "/api/proxy/bus/**",
+                "/api/proxy/naver-driving-path",
                 "/", "/login", "/register/**",
                 "/css/**", "/js/**", "/image/**", "/favicon.ico",
                 "/json/**", "/pages/**", "/api/**",
                 "/member/find/**", "/find-id", "/find-password",
-                "/board/list/**", "/board/view/**"
-            ).permitAll()
+                "/board/list/**", "/board/view/**")
+            .permitAll()
             .anyRequest().authenticated()) // ✅ 나머지는 인증 필요
         .formLogin(form -> form
             .loginPage("/login")
-            .defaultSuccessUrl("/", true)
+            .defaultSuccessUrl("/",
+                true)
             .permitAll())
         .oauth2Login(oauth2 -> oauth2
             .loginPage("/login")

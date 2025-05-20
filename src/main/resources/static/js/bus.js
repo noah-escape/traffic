@@ -127,9 +127,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       selector.addEventListener("change", e => {
         const region = e.target.value;
+
         stopBusTracking();
         clearStopMarkers();
-        if (region) loadBusStopsByRegion(region);
+        clearRouteDisplay();
+
+        if (!region) return;
+
+        if (region === '서울특별시') {
+          loadBusStopsByRegion(region);
+        } else {
+          alert(`[${region}] 지역의 버스 정류소 정보는 준비 중입니다.\n추후 업데이트 예정입니다.`);
+        }
       });
     }
   } catch (e) {
@@ -362,18 +371,9 @@ window.searchBusRoute = async function () {
       return;
     }
 
-    const path = [];
-    stops.forEach(stop => {
-      const lat = parseFloat(stop.lat);
-      const lng = parseFloat(stop.lng);
-      const marker = new naver.maps.Marker({
-        position: new naver.maps.LatLng(lat, lng),
-        title: stop.name,
-        map: map
-      });
-      routeMarkers.push(marker);
-      path.push(new naver.maps.LatLng(lat, lng));
-    });
+    const path = stops.map(stop =>
+      new naver.maps.LatLng(parseFloat(stop.lat), parseFloat(stop.lng))
+    );
 
     routeLine = new naver.maps.Polyline({
       path: path,
