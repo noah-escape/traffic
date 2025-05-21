@@ -1,10 +1,22 @@
 package com.cctv.road.map.controller;
 
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.net.URI;
+import java.net.URLEncoder;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import com.cctv.road.weather.util.GeoUtil;
+
 import io.github.cdimascio.dotenv.Dotenv;
 import reactor.core.publisher.Mono;
 
@@ -221,6 +233,57 @@ public class ApiProxyController {
               return Mono.error(
                   new RuntimeException("주차장 정보 API 실패: " + body));
             }))
+        .bodyToMono(String.class);
+  }
+
+  @GetMapping("/kma-weather")
+  public Mono<String> getKmaWeather(@RequestParam double lat, @RequestParam double lon) {
+    String rawKey = dotenv.get("KMA_API_KEY");
+    String encodedKey = URLEncoder.encode(rawKey, StandardCharsets.UTF_8);
+
+    System.out.println("🌐 [기상청] 날씨 요청 수신");
+    System.out.println("📍 위도: " + lat + ", 경도: " + lon);
+    System.out.println("🔑 rawKey = " + rawKey);
+    System.out.println("✅ ApiProxyController.getKmaWeather 실행됨");
+
+    // 위도/경도 → 격자
+    GeoUtil.GridXY grid = GeoUtil.convertGRID(lat, lon);
+
+    // 날짜/시간 계산
+    LocalTime now = LocalTime.now().minusMinutes(10);
+    if (now.getMinute() < 40)
+      now = now.minusHours(1);
+
+    String baseDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+    String baseTime = now.truncatedTo(ChronoUnit.HOURS).format(DateTimeFormatter.ofPattern("HHmm"));
+
+    String url = UriComponentsBuilder
+        .fromHttpUrl("https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst")
+        .queryParam("serviceKey", encodedKey)
+        .queryParam("numOfRows", 100)
+        .queryParam("pageNo", 1)
+        .queryParam("dataType", "JSON")
+        .queryParam("base_date", baseDate)
+        .queryParam("base_time", baseTime)
+        .queryParam("nx", grid.nx)
+        .queryParam("ny", grid.ny)
+        .build(false)
+        .toUriString();
+
+    System.out.println("🌐 최종 호출 URL: " + url);
+
+    // ✅ 이 부분이 핵심: URI 객체로 직접 넣는다
+    URI uri = URI.create(url);
+
+    return defaultClient.get()
+        .uri(uri) // 여기가 중요!!
+        .accept(MediaType.APPLICATION_JSON)
+        .retrieve()
+        .onStatus(status -> !status.is2xxSuccessful(), response -> response.bodyToMono(String.class).flatMap(body -> {
+          System.err.println("❌ [기상청] 오류 상태코드: " + response.statusCode());
+          System.err.println("❌ [기상청] 오류 응답:\n" + body);
+          return Mono.error(new RuntimeException("기상청 API 호출 실패"));
+        }))
         .bodyToMono(String.class);
   }
 }
