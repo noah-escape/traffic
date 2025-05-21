@@ -10,6 +10,17 @@ let visibleStops = [];     // 현재 지도 내 표시되는 정류소
 let routeStops = [];       // 검색한 노선의 정류소
 let currentRouteId = null; // 현재 활성화된 노선 ID
 
+const typeColorMap = {
+  "간선": "bg-primary",
+  "지선": "bg-success",
+  "광역": "bg-danger",
+  "마을": "bg-warning",
+  "순환": "bg-info",
+  "공항": "bg-dark",
+  "경기": "bg-secondary",
+  "인천": "bg-secondary",
+  "기타": "bg-light text-dark"
+};
 
 // 🔹 기존 마커 제거
 function clearBusMarkers() {
@@ -248,7 +259,7 @@ function drawStopMarkers(stops, isRouteMarkers = false) {
       naver.maps.Event.addListener(marker, 'click', () => {
         console.log("🧭 정류소 클릭:", stopId, arsId);
         info.open(map, marker);
-        onBusStopClick(stopId, arsId);
+        onBusStopClick(stopId, arsId, name);
       });
 
       if (isRouteMarkers) {
@@ -308,14 +319,11 @@ async function loadBusStopsByRegion(region) {
   }
 }
 
-function onBusStopClick(stopId, arsId = "01") {
-  console.log("🧭 정류소 클릭:", stopId, arsId);
-
+function onBusStopClick(stopId, arsId = "01", stopName = "정류소") {
   fetch(`/api/proxy/bus/arrivals?stopId=${stopId}&arsId=${arsId}`)
     .then(res => res.json())
     .then(arrivals => {
-      console.log("도착 정보", arrivals); // ✅ 확인
-      showArrivalModal(arrivals);
+      showArrivalModal(arrivals, stopName); // ✅ 정류소명 전달
     });
 
   fetch(`/api/proxy/bus/routes?stopId=${stopId}`)
@@ -323,63 +331,164 @@ function onBusStopClick(stopId, arsId = "01") {
     .then(routes => showRouteListModal(routes));
 }
 
-function showArrivalModal(arrivals) {
+function showArrivalModal(arrivals, stopName = "정류소") {
   const container = document.getElementById("arrivalPanelBody");
   if (!container) return;
 
-  // 이전 타이머 제거
+  // 기존 타이머 제거
   Object.values(arrivalTimers).forEach(clearInterval);
   arrivalTimers = {};
 
-  if (!arrivals || arrivals.length === 0) {
-    container.innerHTML = "<p>도착 예정인 버스가 없습니다.</p>";
-    return;
-  }
+  const soon = [], running = [], waiting = [], turning = [], ended = [], unknown = [];
 
-  // 초기 UI 렌더링
-  container.innerHTML = arrivals.map((item, idx) => {
-    const sec = parseArrivalSeconds(item.arrivalTime);
-    const congestionText = item.congestion || "정보 없음";
-    let congestionClass = "text-muted";
+  const sorted = [...arrivals].sort((a, b) =>
+    a.routeNumber.localeCompare(b.routeNumber, 'ko', { numeric: true })
+  );
 
-    if (congestionText === "여유") congestionClass = "text-success";
-    else if (congestionText === "보통") congestionClass = "text-warning";
-    else if (congestionText === "혼잡") congestionClass = "text-danger";
-
+  sorted.forEach((item, idx) => {
     const routeNumber = item.routeNumber;
-    return `
-      <div class="arrival-card d-flex justify-content-between align-items-start border-bottom py-2" id="arrivalCard${idx}">
-        <div class="d-flex flex-column">
-          <div class="bus-number-box mb-1" title="${routeNumber}">${routeNumber}</div>
-          <div class="arrival-status small ${congestionClass}" id="arrivalTime${idx}">
-            ⏱ ${sec !== null ? formatArrivalSec(sec) : '도착 정보 없음'}
+    const routeType = item.routeType || "기타";
+    const typeClass = typeColorMap[routeType] || "bg-light text-dark";
+    const congestionClass = getCongestionClass(item.congestion);
+
+    let statusText = item.arrivalTime;
+    let category = 'unknown';
+    const sec = parseArrivalSeconds(item.arrivalTime);
+
+    // 상태 분류
+    if (statusText === "운행 종료") {
+      category = "ended";
+    } else if (statusText?.includes("회차")) {
+      statusText = "회차 대기";
+      category = "turning";
+    } else if (statusText?.includes("대기")) {
+      statusText = "운행 대기";
+      category = "waiting";
+    } else if (sec !== null && sec <= 60) {
+      statusText = "곧 도착";
+      category = "soon";
+    } else if (sec !== null) {
+      statusText = `⏱ ${formatArrivalSec(sec)}`;
+      category = "running";
+    }
+
+    const html = `
+      <div class="arrival-card border-bottom py-2 arrival-item" data-route="${routeNumber}" style="cursor: pointer;">
+        <div class="d-flex justify-content-between align-items-center">
+          <div class="d-flex align-items-center flex-grow-1">
+            <div class="bus-number-box ${typeClass} text-white fw-bold text-center me-2"
+                 style="min-width: 50px; height: 32px; line-height: 32px; border-radius: 4px;">
+              ${routeNumber}
+            </div>
+            <div class="flex-grow-1">
+              <div class="d-flex justify-content-between small">
+                <div id="arrivalTime${idx}" class="${congestionClass}">
+                  ${statusText}
+                </div>
+                <div class="${congestionClass}" style="min-width: 50px; text-align: right;">
+                  ${item.congestion || '정보 없음'}
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-        <div class="align-self-center">
-          <button class="btn btn-detail route-detail-btn" data-route="${routeNumber}">상세</button>
         </div>
       </div>
     `;
-  }).join('');
 
-  // 초단위 countdown
-  arrivals.forEach((item, idx) => {
-    let sec = parseArrivalSeconds(item.arrivalTime);
-    if (sec === null) return;
+    switch (category) {
+      case 'soon': soon.push({ html, idx, sec }); break;
+      case 'running': running.push({ html, idx, sec }); break;
+      case 'waiting': waiting.push({ html, idx }); break;
+      case 'turning': turning.push({ html, idx }); break;
+      case 'ended': ended.push({ html, idx }); break;
+      default: unknown.push({ html, idx }); break;
+    }
+  });
 
+  // 렌더링
+  container.innerHTML = `<h5 class="mb-3"><i class="bi bi-bus-front-fill me-1"></i>${stopName}</h5>`;
+
+  if (soon.length > 0) {
+    container.innerHTML += `<div class="text-danger fw-bold mb-2">🚨 곧 도착</div>`;
+    container.innerHTML += soon.map(e => e.html).join('');
+  }
+  if (running.length > 0) {
+    container.innerHTML += `<div class="text-success mt-3 mb-2">🟢 운행 중</div>`;
+    container.innerHTML += running.map(e => e.html).join('');
+  }
+  if (waiting.length > 0 || turning.length > 0) {
+    container.innerHTML += `<div class="text-warning mt-3 mb-2">⏳ 운행 대기</div>`;
+    container.innerHTML += [...waiting, ...turning].map(e => e.html).join('');
+  }
+  if (ended.length > 0) {
+    container.innerHTML += `<div class="text-danger mt-3 mb-2">⛔ 운행 종료</div>`;
+    container.innerHTML += ended.map(e => e.html).join('');
+  }
+
+  // 타이머 실행
+  [...soon, ...running].forEach(({ idx, sec }) => {
+    if (sec == null) return;
     arrivalTimers[idx] = setInterval(() => {
-      sec--;
       const el = document.getElementById(`arrivalTime${idx}`);
       if (!el) return;
+      sec--;
       if (sec <= 0) {
         el.textContent = "도착";
         clearInterval(arrivalTimers[idx]);
-        return;
+      } else {
+        el.textContent = `⏱ ${formatArrivalSec(sec)}`;
       }
-      el.textContent = `⏱ ${formatArrivalSec(sec)}`;
     }, 1000);
   });
 }
+
+function formatArrivalSec(sec) {
+  if (sec < 60) return `${sec}초`;
+  const min = Math.floor(sec / 60);
+  const remain = sec % 60;
+  return `${min}분 ${remain}초`;
+}
+
+function makeHtml(idx, routeNumber, typeClass, statusText, congestionClass, item) {
+  return `
+    <div class="arrival-card border-bottom py-2 arrival-item" data-route="${routeNumber}">
+      <div class="d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center flex-grow-1">
+          <div class="bus-number-box ${typeClass} text-white fw-bold text-center me-2"
+               style="min-width: 50px; height: 32px; line-height: 32px; border-radius: 4px;">
+            ${routeNumber}
+          </div>
+          <div class="flex-grow-1">
+            <div class="d-flex justify-content-between small">
+              <div id="arrivalTime${idx}" class="${congestionClass}">
+                ${statusText}
+              </div>
+              <div class="${congestionClass}" style="min-width: 50px; text-align: right;">
+                ${item.congestion || '정보 없음'}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function getCongestionClass(text) {
+  if (text === "여유") return "text-success";
+  if (text === "보통") return "text-warning";
+  if (text === "혼잡") return "text-danger";
+  return "text-muted";
+}
+
+// 🔧 이벤트 위임으로 상세 표시
+document.body.addEventListener('click', e => {
+  const target = e.target.closest('.arrival-item');
+  if (target && target.dataset.route) {
+    const route = target.dataset.route;
+    loadRouteDetail(route, target); // 💡 상세정보 패널 띄우기
+  }
+});
 
 function showRouteListModal(routes) {
   const container = document.getElementById("routeListModalBody");
@@ -482,16 +591,21 @@ async function loadRouteDetail(routeNumber, triggerEl) {
       <div>🕒 배차: ${data.interval || '정보 없음'}</div>
       <div>🚏 첫차: ${data.firstTime || '정보 없음'}</div>
       <div>🌙 막차: ${data.lastTime || '정보 없음'}</div>
+      <div class="mt-2 text-end">
+        <button class="btn btn-sm btn-outline-primary" onclick="openBusRoutePanel('${data.routeNumber}')">
+          노선 보기
+        </button>
+      </div>
     `;
 
     const popup = document.getElementById('routeDetailPopup');
     const content = document.getElementById('routeDetailPopupContent');
     content.innerHTML = html;
 
-    // 위치 조정
+    // 위치 조정 - 화면 오른쪽 상단에 고정
     const rect = triggerEl.getBoundingClientRect();
-    popup.style.top = `${rect.top + window.scrollY + 5}px`;
-    popup.style.left = `${rect.left + window.scrollX - 260}px`; // 버튼 왼쪽에 표시
+    popup.style.top = `${window.scrollY + 60}px`;  // 화면 상단 기준 위치
+    popup.style.right = `20px`;
 
     popup.classList.remove('d-none');
 
@@ -567,32 +681,22 @@ document.addEventListener("click", function (e) {
   }
 });
 
-function formatArrivalSec(sec) {
-  if (sec < 60) return `${sec}초`;
-  const min = Math.floor(sec / 60);
-  const remain = sec % 60;
-  return `${min}분 ${remain}초`;
-}
-
 function parseArrivalSeconds(arrivalText) {
-  const match = arrivalText.match(/(\d+)\s*분\s*(\d+)?\s*초?/);
-  if (match) {
-    const minutes = parseInt(match[1], 10);
-    const seconds = match[2] ? parseInt(match[2], 10) : 0;
-    return minutes * 60 + seconds;
+  if (!arrivalText) return null;
+  const secOnly = arrivalText.match(/^(\d+)\s*초$/);
+  if (secOnly) return parseInt(secOnly[1], 10);
+
+  const full = arrivalText.match(/^(\d+)\s*분\s*(\d+)?\s*초?/);
+  if (full) {
+    const min = parseInt(full[1], 10);
+    const sec = full[2] ? parseInt(full[2], 10) : 0;
+    return min * 60 + sec;
   }
 
-  const minOnly = arrivalText.match(/(\d+)\s*분/);
-  if (minOnly) {
-    return parseInt(minOnly[1], 10) * 60;
-  }
+  const minOnly = arrivalText.match(/^(\d+)\s*분$/);
+  if (minOnly) return parseInt(minOnly[1], 10) * 60;
 
-  const secOnly = arrivalText.match(/(\d+)\s*초/);
-  if (secOnly) {
-    return parseInt(secOnly[1], 10);
-  }
-
-  return null; // 도착 예정 없음
+  return null;
 }
 
 // 전역 등록
