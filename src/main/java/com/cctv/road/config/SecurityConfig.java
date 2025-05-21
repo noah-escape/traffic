@@ -100,7 +100,7 @@ public class SecurityConfig {
             .requestMatchers(
                 "/", "/login", "/register/**",
                 "/css/**", "/js/**", "/image/**", "/favicon.ico",
-                "/json/**", "/pages/**", "/api/**",
+                "/json/**", "/pages/**", "/api/**", "/api/weather/**",
                 "/member/find/**", "/find-id", "/find-password",
                 "/board/list/**", "/board/view/**")
             .permitAll()
