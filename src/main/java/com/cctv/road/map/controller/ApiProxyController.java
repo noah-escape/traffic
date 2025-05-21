@@ -5,6 +5,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -295,6 +296,10 @@ public class ApiProxyController {
         String routeNumber = getTagValue("rtNm", item);
         String arrivalMsg = getTagValue("arrmsg1", item);
         String congestionCode = getTagValue("reride_Num1", item);
+        String routeTypeCode = getTagValue("routeType", item);
+        String plainNo = getTagValue("plainNo1", item); // 차량번호
+
+        // 혼잡도 → 텍스트 변환
         String congestion = switch (congestionCode) {
           case "3" -> "여유";
           case "4" -> "보통";
@@ -302,8 +307,60 @@ public class ApiProxyController {
           default -> "정보 없음";
         };
 
-        // 여기서 stopId, arsId도 추가
-        results.add(new BusArrivalDto(routeNumber, arrivalMsg, congestion, stopId, arsId));
+        // 버스 타입 코드 → 명칭 변환
+        String routeType = switch (routeTypeCode) {
+          case "1" -> "공항";
+          case "2" -> "마을";
+          case "3" -> "간선";
+          case "4" -> "지선";
+          case "5" -> "순환";
+          case "6" -> "광역";
+          case "7" -> "인천";
+          case "8" -> "경기";
+          case "9" -> "폐지";
+          case "10" -> "공용";
+          case "11" -> "청주";
+          case "12" -> "세종";
+          case "13" -> "기타";
+          default -> "기타";
+        };
+
+        // 🔎 운행 상태 판단
+        String status = arrivalMsg;
+
+        if ("회차지".equalsIgnoreCase(arrivalMsg) || arrivalMsg.contains("회차지")) {
+          status = "회차 대기";
+        } else if ((arrivalMsg == null || arrivalMsg.isBlank()) &&
+            (congestionCode == null || congestionCode.isBlank()) &&
+            (plainNo == null || plainNo.isBlank())) {
+          status = "운행 대기";
+        }
+
+        // 🕒 운행시간 검사
+        boolean isOperational = true;
+        String routeId = busStopRepository.findRouteIdByRouteNumber(routeNumber);
+        if (routeId != null) {
+          Map<String, String> timeInfo = fetchRouteTimes(routeId);
+          if (timeInfo != null) {
+            String first = timeInfo.get("firstTime");
+            String last = timeInfo.get("lastTime");
+            if (!isNowInServiceTime(first, last)) {
+              status = "운행 종료";
+              congestion = "운행 종료";
+              isOperational = false;
+            }
+          }
+        }
+
+        // 상태 덮어쓰기
+        BusArrivalDto dto = new BusArrivalDto(
+            routeNumber,
+            status,
+            congestion,
+            stopId,
+            arsId,
+            routeType);
+        results.add(dto);
       }
 
       return ResponseEntity.ok(results);
@@ -313,6 +370,70 @@ public class ApiProxyController {
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body(List.of(new BusArrivalDto("오류", "도착 정보 파싱 실패", "정보 없음")));
     }
+  }
+
+  private Map<String, String> fetchRouteTimes(String routeId) {
+    try {
+      String key = dotenv.get("SEOUL_BUS_API_KEY").trim();
+      String url = String.format(
+          "http://ws.bus.go.kr/api/rest/busRouteInfo/getRouteInfo?serviceKey=%s&busRouteId=%s",
+          key, routeId);
+
+      HttpResponse<String> resp = HttpClient.newHttpClient()
+          .send(HttpRequest.newBuilder()
+              .uri(URI.create(url))
+              .header("Accept", "application/xml")
+              .GET()
+              .build(),
+              HttpResponse.BodyHandlers.ofString());
+
+      DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+      DocumentBuilder builder = factory.newDocumentBuilder();
+      Document doc = builder.parse(new InputSource(new StringReader(resp.body())));
+
+      NodeList nodeList = doc.getElementsByTagName("itemList");
+      if (nodeList.getLength() == 0)
+        return null;
+
+      Element item = (Element) nodeList.item(0);
+      String firstRaw = getTagValue("firstBusTm", item);
+      String lastRaw = getTagValue("lastBusTm", item);
+
+      String firstTime = formatTime(firstRaw);
+      String lastTime = formatTime(lastRaw);
+
+      return Map.of("firstTime", firstTime, "lastTime", lastTime);
+
+    } catch (Exception e) {
+      System.err.println("❌ 운행시간 조회 실패: " + e.getMessage());
+      return null;
+    }
+  }
+
+  private boolean isNowInServiceTime(String first, String last) {
+    try {
+      LocalTime now = LocalTime.now();
+      LocalTime start = LocalTime.parse(first);
+      LocalTime end = LocalTime.parse(last);
+
+      if (end.isBefore(start)) {
+        // 자정을 넘긴 경우 (예: 23:30 ~ 04:00)
+        return now.isAfter(start) || now.isBefore(end);
+      } else {
+        return !now.isBefore(start) && !now.isAfter(end);
+      }
+    } catch (Exception e) {
+      return true;
+    }
+  }
+
+  // XML 태그 값 추출 유틸
+  private String getTagValue(String tag, Element element) {
+    NodeList list = element.getElementsByTagName(tag);
+    if (list.getLength() > 0 && list.item(0).getFirstChild() != null) {
+      return list.item(0).getFirstChild().getNodeValue();
+    }
+    return "";
   }
 
   @GetMapping("/bus/routes/by-stop")
@@ -327,52 +448,86 @@ public class ApiProxyController {
   }
 
   @GetMapping("/bus/detail")
-  public ResponseEntity<Map<String, String>> getRouteDetail(@RequestParam String routeNumber) {
-    String routeId = busStopRepository.findRouteIdByRouteNumber(routeNumber);
-    if (routeId == null) {
-      return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "해당 노선 없음"));
+  public ResponseEntity<Map<String, String>> getRouteDetail(
+      @RequestParam(required = false) String routeId,
+      @RequestParam(required = false) String routeNumber) {
+
+    try {
+      // ✅ routeNumber만 있는 경우 → DB로 routeId 조회
+      if (routeId == null && routeNumber != null) {
+        routeId = busStopRepository.findRouteIdByRouteNumber(routeNumber);
+        if (routeId == null) {
+          return ResponseEntity.status(HttpStatus.NOT_FOUND)
+              .body(Map.of("error", "해당 노선 없음"));
+        }
+      }
+
+      // ✅ 둘 다 없는 경우 → 잘못된 요청
+      if (routeId == null) {
+        return ResponseEntity.badRequest()
+            .body(Map.of("error", "routeId 또는 routeNumber는 필수입니다"));
+      }
+
+      String encodedKey = dotenv.get("SEOUL_BUS_API_KEY").trim();
+
+      String url = String.format(
+          "http://ws.bus.go.kr/api/rest/busRouteInfo/getRouteInfo?serviceKey=%s&busRouteId=%s",
+          encodedKey, routeId);
+
+      HttpResponse<String> resp = HttpClient.newHttpClient()
+          .send(HttpRequest.newBuilder()
+              .uri(URI.create(url))
+              .header("Accept", "application/xml")
+              .GET()
+              .build(),
+              HttpResponse.BodyHandlers.ofString());
+
+      DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+      DocumentBuilder builder = factory.newDocumentBuilder();
+      Document doc = builder.parse(new InputSource(new StringReader(resp.body())));
+
+      NodeList nodeList = doc.getElementsByTagName("itemList");
+      if (nodeList.getLength() == 0) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(Map.of("error", "노선 정보 없음"));
+      }
+
+      Element item = (Element) nodeList.item(0);
+
+      String routeNm = getTagValue("busRouteNm", item);
+      String firstRaw = getTagValue("firstBusTm", item); // 예: 20230510043000
+      String lastRaw = getTagValue("lastBusTm", item);
+      String interval = getTagValue("term", item); // 배차 간격 (분)
+
+      String firstTime = formatTime(firstRaw);
+      String lastTime = formatTime(lastRaw);
+
+      Map<String, String> result = new HashMap<>();
+      result.put("routeNumber", routeNm);
+      result.put("interval", interval.isBlank() ? "정보 없음" : interval + "분");
+      result.put("firstTime", firstTime);
+      result.put("lastTime", lastTime);
+
+      return ResponseEntity.ok(result);
+
+    } catch (Exception e) {
+      System.err.println("❌ 버스 상세정보 조회 실패: " + e.getMessage());
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .body(Map.of("error", "API 요청 실패"));
     }
-
-    // 실제 API 연동 전 테스트용 하드코딩
-    Map<String, String> result = new HashMap<>();
-    result.put("routeNumber", routeNumber);
-    result.put("interval", "10분"); // TODO: 실제 배차간격 API 연동
-    result.put("firstTime", "05:30");
-    result.put("lastTime", "23:40");
-
-    return ResponseEntity.ok(result);
   }
 
-  @GetMapping("/bus/stops/in-bounds")
-  public ResponseEntity<List<UnifiedBusStopDto>> getStopsInBounds(
-      @RequestParam double minLat,
-      @RequestParam double maxLat,
-      @RequestParam double minLng,
-      @RequestParam double maxLng) {
-
-    List<UnifiedBusStopDto> stops = busStopRepository
-        .findByLatitudeBetweenAndLongitudeBetween(minLat, maxLat, minLng, maxLng)
-        .stream()
-        .map(stop -> new UnifiedBusStopDto(
-            stop.getNodeId(),
-            stop.getStationName(),
-            stop.getArsId(),
-            stop.getLatitude(),
-            stop.getLongitude(),
-            null, null, null // 노선 정보 없음
-        ))
-        .limit(500)
-        .collect(Collectors.toList());
-
-    return ResponseEntity.ok(stops);
-  }
-
-  private static String getTagValue(String tag, Element element) {
-    NodeList list = element.getElementsByTagName(tag);
-    if (list.getLength() > 0 && list.item(0).getFirstChild() != null) {
-      return list.item(0).getFirstChild().getNodeValue();
+  // 🕒 yyyyMMddHHmmss → HH:mm 형식 변환
+  private String formatTime(String raw) {
+    if (raw == null || raw.length() < 12)
+      return "정보 없음";
+    try {
+      String hour = raw.substring(8, 10);
+      String min = raw.substring(10, 12);
+      return hour + ":" + min;
+    } catch (Exception e) {
+      return "정보 없음";
     }
-    return "";
   }
 
   @GetMapping("/road-event-all")

@@ -886,3 +886,13 @@ body.dark-mode {
 .route-popup-panel .fw-bold {
   font-size: 16px;
 }
+
+.bus-number-box {
+  padding: 3px 8px;
+  border-radius: 4px;
+  color: white;
+  font-weight: bold;
+  text-align: center;
+  font-size: 14px;
+  display: inline-block;
+}
