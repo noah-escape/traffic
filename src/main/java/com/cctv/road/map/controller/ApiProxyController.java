@@ -238,12 +238,11 @@ public class ApiProxyController {
 
   @GetMapping("/kma-weather")
   public Mono<String> getKmaWeather(@RequestParam double lat, @RequestParam double lon) {
-    String rawKey = dotenv.get("KMA_API_KEY");
-    String encodedKey = URLEncoder.encode(rawKey, StandardCharsets.UTF_8);
+    String serviceKey = dotenv.get("KMA_API_KEY");
 
     System.out.println("🌐 [기상청] 날씨 요청 수신");
     System.out.println("📍 위도: " + lat + ", 경도: " + lon);
-    System.out.println("🔑 rawKey = " + rawKey);
+    System.out.println("🔑 serviceKey = " + serviceKey);
     System.out.println("✅ ApiProxyController.getKmaWeather 실행됨");
 
     // 위도/경도 → 격자
@@ -259,7 +258,7 @@ public class ApiProxyController {
 
     String url = UriComponentsBuilder
         .fromHttpUrl("https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst")
-        .queryParam("serviceKey", encodedKey)
+        .queryParam("serviceKey", serviceKey)
         .queryParam("numOfRows", 100)
         .queryParam("pageNo", 1)
         .queryParam("dataType", "JSON")

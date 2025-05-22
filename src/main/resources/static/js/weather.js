@@ -151,3 +151,46 @@ function showFallback(message = "날씨 정보 없음") {
   document.getElementById("weather-wind").textContent = "-- m/s";
   document.getElementById("weather-rain").textContent = "- mm";
 }
+
+document.addEventListener('DOMContentLoaded', function () {
+  const lat = 37.5665;
+  const lon = 126.9780;
+
+  fetch(`/api/weather/full?lat=${lat}&lon=${lon}`)
+    .then(response => response.json())
+    .then(data => {
+      renderHourlyForecast(data.forecast);
+      renderDailyForecast(data.daily);
+    })
+    .catch(error => console.error('Weather load error:', error));
+});
+
+function renderHourlyForecast(forecastData) {
+  const tbody = document.querySelector('#hourly-forecast-table tbody');
+  tbody.innerHTML = '';
+
+  forecastData.items?.forEach(item => {
+    const row = `<tr>
+      <td>${item.fcstTime}</td>
+      <td>${item.T1H ?? '-'}</td>
+      <td>${item.POP ?? '-'}</td>
+      <td>${item.WEATHER ?? '-'}</td>
+    </tr>`;
+    tbody.insertAdjacentHTML('beforeend', row);
+  });
+}
+
+function renderDailyForecast(dailyData) {
+  const tbody = document.querySelector('#daily-forecast-table tbody');
+  tbody.innerHTML = '';
+
+  dailyData.items?.forEach(day => {
+    const row = `<tr>
+      <td>${day.fcstDate}</td>
+      <td>${day.TMN ?? '-'}</td>
+      <td>${day.TMX ?? '-'}</td>
+      <td>${day.WEATHER ?? '-'}</td>
+    </tr>`;
+    tbody.insertAdjacentHTML('beforeend', row);
+  });
+}
