@@ -164,6 +164,51 @@
             </div>
           </div>
         </div>
+
+        <section class="content">
+          <div class="container-fluid">
+            <!-- 시간별 예보 -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">시간별 예보</h3>
+              </div>
+              <div class="card-body">
+                <table class="table table-bordered" id="hourly-forecast-table">
+                  <thead>
+                    <tr>
+                      <th>시간</th>
+                      <th>기온(°C)</th>
+                      <th>강수확률(%)</th>
+                      <th>날씨 상태</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 일별 예보 -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">일별 예보</h3>
+              </div>
+              <div class="card-body">
+                <table class="table table-bordered" id="daily-forecast-table">
+                  <thead>
+                    <tr>
+                      <th>날짜</th>
+                      <th>최저기온</th>
+                      <th>최고기온</th>
+                      <th>날씨</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
       </div>
     </div>
   </main>
