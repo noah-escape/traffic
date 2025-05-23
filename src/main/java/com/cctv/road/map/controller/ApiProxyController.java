@@ -253,6 +253,45 @@ public class ApiProxyController {
     return ResponseEntity.ok(stops);
   }
 
+  @GetMapping("/bus/stops/nearby")
+  public ResponseEntity<List<UnifiedBusStopDto>> getNearbyStops(
+      @RequestParam double lat,
+      @RequestParam double lng,
+      @RequestParam(defaultValue = "500") double radius // 단위: 미터
+  ) {
+    // 서울 정류소만 대상
+    List<UnifiedBusStopDto> nearbyStops = busStopRepository.findAll().stream()
+        .filter(stop -> stop.getLatitude() != null && stop.getLongitude() != null)
+        .filter(stop -> {
+          double distance = calculateDistance(lat, lng, stop.getLatitude(), stop.getLongitude());
+          return distance <= radius;
+        })
+        .limit(1000)
+        .map(stop -> new UnifiedBusStopDto(
+            stop.getNodeId(),
+            stop.getStationName(),
+            stop.getArsId(),
+            stop.getLatitude(),
+            stop.getLongitude(),
+            null, null, null))
+        .collect(Collectors.toList());
+
+    return ResponseEntity.ok(nearbyStops);
+  }
+
+  private double calculateDistance(double lat1, double lng1, double lat2, double lng2) {
+    final int R = 6371000; // 지구 반지름 (단위: 미터)
+    double dLat = Math.toRadians(lat2 - lat1);
+    double dLng = Math.toRadians(lng2 - lng1);
+
+    double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+        + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+            * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+
+    double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
   @GetMapping("/bus/regions")
   public ResponseEntity<List<String>> getAvailableBusRegions() {
     List<String> regions = List.of(

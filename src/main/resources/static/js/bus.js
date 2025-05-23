@@ -10,6 +10,8 @@ let arrivalTimers = {};
 let visibleStops = [];     // 현재 지도 내 표시되는 정류소
 let routeStops = [];       // 검색한 노선의 정류소
 let currentRouteId = null; // 현재 활성화된 노선 ID
+let nearbyStopMarkers = []; // ✅ 주변 정류소 마커 저장용
+window.nearbyStopMarkers = nearbyStopMarkers;
 
 const typeColorMap = {
   "간선": "bg-primary",
@@ -269,6 +271,10 @@ const cityCenters = {
 function clearStopMarkers() {
   stopMarkers.forEach(m => m.setMap(null));
   stopMarkers = [];
+
+  // 🔧 주변 정류소 마커도 함께 제거
+  nearbyStopMarkers.forEach(m => m.setMap(null));
+  nearbyStopMarkers = [];
 }
 
 const normalIcon = {
@@ -285,8 +291,9 @@ const selectedIcon = {
 
 let lastSelectedStopMarker = null;
 
-function drawStopMarkers(stops, isRouteMarkers = false) {
-  if (!isRouteMarkers) clearStopMarkers();
+function drawStopMarkers(stops, isRouteMarkers = false, isNearby = false) {
+  // 일반/주변 정류소만 초기화 (노선 마커는 유지)
+  if (!isRouteMarkers && !isNearby) clearStopMarkers();
 
   let index = 0;
   const batchSize = 200;
@@ -299,7 +306,6 @@ function drawStopMarkers(stops, isRouteMarkers = false) {
       const lat = parseFloat(stop.lat || stop.latitude);
       const lng = parseFloat(stop.lng || stop.longitude);
       const name = stop.name || stop.stationName;
-
       const stopId = stop.stopId || stop.nodeId || stop.id;
       const arsId = stop.arsId || "01";
 
@@ -310,10 +316,10 @@ function drawStopMarkers(stops, isRouteMarkers = false) {
 
       const icon = isRouteMarkers
         ? {
-          url: "/image/bus/bus-stop-route.png",
-          size: new naver.maps.Size(16, 16),
-          anchor: new naver.maps.Point(8, 16)
-        }
+            url: "/image/bus/bus-stop-route.png",
+            size: new naver.maps.Size(16, 16),
+            anchor: new naver.maps.Point(8, 16)
+          }
         : normalIcon;
 
       const marker = new naver.maps.Marker({
@@ -323,15 +329,14 @@ function drawStopMarkers(stops, isRouteMarkers = false) {
         icon: icon
       });
 
+      // 클릭 이벤트 등록
       naver.maps.Event.addListener(marker, 'click', () => {
         console.log("🧭 정류소 클릭:", stopId, arsId);
 
-        // 🔁 이전 마커 원상복구
         if (lastSelectedStopMarker && !isRouteMarkers) {
           lastSelectedStopMarker.setIcon(normalIcon);
         }
 
-        // 🎯 현재 마커 강조
         if (!isRouteMarkers) {
           marker.setIcon(selectedIcon);
           lastSelectedStopMarker = marker;
@@ -340,15 +345,20 @@ function drawStopMarkers(stops, isRouteMarkers = false) {
         onBusStopClick(stopId, arsId, name);
       });
 
+      // 마커 저장
       if (isRouteMarkers) {
         window.routeMarkers.push(marker);
+      } else if (isNearby) {
+        nearbyStopMarkers.push(marker);
       } else {
         stopMarkers.push(marker);
       }
     });
 
     index += batchSize;
-    if (index < stops.length) setTimeout(drawBatch, delay);
+    if (index < stops.length) {
+      setTimeout(drawBatch, delay);
+    }
   }
 
   drawBatch();
@@ -407,7 +417,7 @@ async function loadBusStopsByRegion(region) {
   if (cityCenters[region]) {
     const [lat, lng] = cityCenters[region];
     map.setCenter(new naver.maps.LatLng(lat, lng));
-    map.setZoom(16);
+    map.setZoom(17);
   }
 
   try {
@@ -639,7 +649,7 @@ function clearRouteDisplay() {
     window.routeMarkers.forEach(marker => marker.setMap(null));
     window.routeMarkers = [];
   }
-
+    
   // 🆕 내부 상태 초기화
   window.currentRouteId = null;
   window.routeStops = [];
@@ -859,7 +869,94 @@ async function openBusRoutePanel(routeNumber) {
   }
 }
 
+window.findNearbyStops = async function () {
+  if (!navigator.geolocation) {
+    alert("이 브라우저에서는 위치 정보가 지원되지 않습니다.");
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(async position => {
+    const lat = position.coords.latitude;
+    const lng = position.coords.longitude;
+
+    // 지도 이동
+    map.setCenter(new naver.maps.LatLng(lat, lng));
+    map.setZoom(17);
+
+    // 사용자 위치 마커
+    if (window.userPositionMarker) {
+      window.userPositionMarker.setMap(null);
+    }
+    window.userPositionMarker = new naver.maps.Marker({
+      position: new naver.maps.LatLng(lat, lng),
+      map: map,
+      icon: {
+        url: '/image/my-marker.png',
+        size: new naver.maps.Size(44, 66),
+        anchor: new naver.maps.Point(22, 22)
+      },
+      title: '내 위치'
+    });
+
+    // 주변 정류소 호출
+    const res = await fetch(`/api/proxy/bus/stops/nearby?lat=${lat}&lng=${lng}&radius=500`);
+
+    const contentType = res.headers.get("content-type");
+    if (contentType && contentType.includes("text/html")) {
+      alert("세션이 만료되었거나 로그인이 필요합니다. 다시 로그인해주세요.");
+      location.href = "/login";
+      return;
+    }
+
+    if (!res.ok) {
+      alert("정류소를 불러오는 데 실패했습니다.");
+      return;
+    }
+
+    const stops = await res.json();
+    if (!Array.isArray(stops) || stops.length === 0) {
+      alert("주변에 정류소가 없습니다.");
+      return;
+    }
+
+    clearStopMarkers();          // 기존 정류소 마커 제거
+    clearRouteDisplay();         // 노선 제거
+    clearNearbyStopMarkers();    // 기존 주변 정류소 마커 제거
+
+    // 마커 표시
+    drawStopMarkers(stops, false, true); // isNearby = true
+
+    allStops = stops;
+
+  }, error => {
+    console.error("위치 정보 오류:", error);
+    alert("위치 정보를 가져오는 데 실패했습니다.");
+  });
+};
+
+window.clearNearbyStopMarkers = function () {
+  if (Array.isArray(window.nearbyStopMarkers)) {
+    window.nearbyStopMarkers.forEach(m => m.setMap(null));
+    window.nearbyStopMarkers = [];
+  }
+}
+
+function clearRouteMarkers() {
+  if (Array.isArray(window.routeMarkers)) {
+    window.routeMarkers.forEach(m => m.setMap(null));
+    window.routeMarkers = [];
+  }
+}
+
+window.clearNearbyStopMarkers = function () {
+  if (Array.isArray(window.nearbyStopMarkers)) {
+    window.nearbyStopMarkers.forEach(m => m.setMap(null));
+    window.nearbyStopMarkers = [];
+  }
+};
+
 // 전역 등록
+window.clearRouteMarkers = clearRouteMarkers;
 window.loadRouteDetail = loadRouteDetail;
 window.openBusRoutePanel = openBusRoutePanel;
 window.loadArrivalAtStop = loadArrivalAtStop;
