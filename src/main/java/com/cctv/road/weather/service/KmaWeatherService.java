@@ -150,7 +150,7 @@ public class KmaWeatherService {
       ResponseEntity<String> response = new RestTemplate().getForEntity(uri, String.class);
 
       log.info("✅ HTTP 상태코드: {}", response.getStatusCode());
-      log.info("📩 응답 데이터: {}", response.getBody());
+      // log.info("📩 응답 데이터: {}", response.getBody());
 
       return response.getBody();
 

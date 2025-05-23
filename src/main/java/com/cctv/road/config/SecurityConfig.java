@@ -58,25 +58,6 @@ public class SecurityConfig {
     return authConfig.getAuthenticationManager();
   }
 
-  @Bean
-  public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-    http
-        .csrf(csrf -> csrf
-            .ignoringRequestMatchers("/api/proxy/**") // 이 경로만 CSRF 무시
-        )
-        .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/api/proxy/**").permitAll()
-            .anyRequest().authenticated())
-        .formLogin(form -> form
-            .loginPage("/login")
-            .defaultSuccessUrl("/", true)
-            .permitAll())
-        .logout(logout -> logout
-            .logoutSuccessUrl("/"));
-
-    return http.build();
-  }
-
   // ✅ 1번 체인: /api/proxy/** 는 인증 없이 허용 + CSRF 비활성화
   @Bean
   @Order(1)
