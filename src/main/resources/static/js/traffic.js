@@ -35,6 +35,7 @@ function resetPanelsAndCloseVideo() {
   window.clearRouteMarkers?.();
   window.removeRouteEvents?.();
   window.clearParkingMarkers?.();
+  window.hideParkingLegend?.();
   window.clearBikeStations?.();
   window.clearSubwayLayer?.();
   window.clearStationMarkers?.();

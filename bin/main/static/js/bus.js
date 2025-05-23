@@ -5,6 +5,7 @@ let allStops = [];
 let clusterer;
 let routeLine = null;
 let routeMarkers = [];
+window.routeMarkers = routeMarkers;
 let arrivalTimers = {};
 let visibleStops = [];     // 현재 지도 내 표시되는 정류소
 let routeStops = [];       // 검색한 노선의 정류소
@@ -340,7 +341,7 @@ function drawStopMarkers(stops, isRouteMarkers = false) {
       });
 
       if (isRouteMarkers) {
-        routeMarkers.push(marker);
+        window.routeMarkers.push(marker);
       } else {
         stopMarkers.push(marker);
       }
@@ -629,12 +630,26 @@ function onRouteSelected(routeId) {
 }
 
 function clearRouteDisplay() {
-  if (routeLine) {
-    routeLine.setMap(null);
-    routeLine = null;
+  if (window.routeLine) {
+    window.routeLine.setMap(null);
+    window.routeLine = null;
   }
-  routeMarkers.forEach(m => m.setMap(null));
-  routeMarkers = [];
+
+  if (Array.isArray(window.routeMarkers)) {
+    window.routeMarkers.forEach(marker => marker.setMap(null));
+    window.routeMarkers = [];
+  }
+
+  // 🆕 내부 상태 초기화
+  window.currentRouteId = null;
+  window.routeStops = [];
+
+  const arrivalPanel = document.getElementById("arrivalPanelBody");
+  if (arrivalPanel) {
+    arrivalPanel.innerHTML = `<div class="text-muted small py-3 px-2 text-center">
+      ※ 시/도를 선택하거나 버스 번호로 검색하세요.
+    </div>`;
+  }
 }
 
 window.searchBusRoute = async function () {
@@ -665,7 +680,10 @@ window.searchBusRoute = async function () {
       new naver.maps.LatLng(parseFloat(stop.lat), parseFloat(stop.lng))
     );
 
-    routeLine = new naver.maps.Polyline({
+    if (window.routeLine) {
+      window.routeLine.setMap(null);
+    }
+    window.routeLine = new naver.maps.Polyline({
       path: path,
       strokeColor: '#0078ff',
       strokeWeight: 4,
@@ -811,7 +829,7 @@ async function openBusRoutePanel(routeNumber) {
     // 1️⃣ 노선 경로 폴리라인
     const path = stops.map(stop => new naver.maps.LatLng(parseFloat(stop.lat), parseFloat(stop.lng)));
 
-    routeLine = new naver.maps.Polyline({
+    window.routeLine = new naver.maps.Polyline({
       path: path,
       strokeColor: '#0078ff',
       strokeWeight: 4,
@@ -849,3 +867,4 @@ window.startBusTracking = startBusTracking;
 window.stopBusTracking = stopBusTracking;
 window.clearBusMarkers = clearBusMarkers;
 window.showBusPositions = showBusPositions;
+window.clearRouteDisplay = clearRouteDisplay;
