@@ -42,7 +42,7 @@ function onLocationError(error) {
 function updateMapAndWeather(lat, lon) {
   const position = new naver.maps.LatLng(lat, lon);
   if (map) {
-    
+
     if (currentMarker) {
       currentMarker.setMap(null);
     }
@@ -57,10 +57,11 @@ function updateMapAndWeather(lat, lon) {
   fetch(`/api/weather/full?lat=${lat}&lon=${lon}`)
     .then(response => response.json())
     .then(data => {
-      renderHourlyForecast(data.forecast);
+      renderHourlyForecast(data.daily);
       renderDailyForecast(data.daily);
 
       const items = data.current?.response?.body?.items?.item ?? [];
+      // console.log("🌤️ 현재 날씨 items", items);
 
       updateWeatherCard({
         temp: safeFindValue(items, "T1H"),
@@ -143,31 +144,6 @@ function showFallback(message = "날씨 정보 없음") {
   document.getElementById("weather-rain").textContent = "- mm";
 }
 
-function renderHourlyForecast(forecastData) {
-  const tbody = document.querySelector('#hourly-forecast-table tbody');
-  if (!tbody) return;
-  tbody.innerHTML = '';
-
-  const items = forecastData?.response?.body?.items?.item ?? [];
-  const grouped = {};
-
-  items.forEach(item => {
-    const time = item.fcstTime;
-    if (!grouped[time]) grouped[time] = {};
-    grouped[time][item.category] = item.fcstValue;
-  });
-
-  Object.entries(grouped).forEach(([fcstTime, values]) => {
-    const row = `<tr>
-      <td>${fcstTime}</td>
-      <td>${values.T1H ?? '-'}</td>
-      <td>${values.POP ?? '-'}</td>
-      <td>${getWeatherDesc(values)}</td>
-    </tr>`;
-    tbody.insertAdjacentHTML('beforeend', row);
-  });
-}
-
 function renderDailyForecast(dailyData) {
   const tbody = document.querySelector('#daily-forecast-table tbody');
   if (!tbody) return;
@@ -182,15 +158,17 @@ function renderDailyForecast(dailyData) {
     grouped[date][item.category] = item.fcstValue;
   });
 
-  Object.entries(grouped).forEach(([fcstDate, values]) => {
-    const row = `<tr>
-      <td>${fcstDate}</td>
-      <td>${values.TMN ?? '-'}</td>
-      <td>${values.TMX ?? '-'}</td>
-      <td>${getWeatherDesc(values)}</td>
-    </tr>`;
-    tbody.insertAdjacentHTML('beforeend', row);
-  });
+  Object.entries(grouped)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .forEach(([fcstDate, values]) => {
+      const row = `<tr>
+        <td>${fcstDate}</td>
+        <td>${values.TMN ?? '-'}</td>
+        <td>${values.TMX ?? '-'}</td>
+        <td>${getWeatherDesc(values)}</td>
+      </tr>`;
+      tbody.insertAdjacentHTML('beforeend', row);
+    });
 }
 
 function getWeatherDesc(values) {
@@ -201,4 +179,50 @@ function getWeatherDesc(values) {
   if (sky === "3") return "구름 많음";
   if (sky === "4") return "흐림";
   return "-";
+}
+
+function renderHourlyForecast(forecastData) {
+  const container = document.querySelector('.weather-scroll');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const items = forecastData?.response?.body?.items?.item ?? [];
+  const grouped = {};
+
+  items.forEach(item => {
+    const key = `${item.fcstDate} ${item.fcstTime}`;
+    if (!grouped[key]) grouped[key] = {};
+    grouped[key][item.category] = item.fcstValue;
+  });
+
+  Object.entries(grouped)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .forEach(([time, values]) => {
+      const hour = time.slice(-4, -2); // ex: "0800" -> "08"
+      const icon = getWeatherIcon(values);
+      const windDir = degToDir(values.VEC);
+      const windDesc = values.WSD ? `${windDir} 약` : "-";
+
+      const html = `
+        <div class="weather-hour">
+          <div class="time">${hour}시</div>
+          <div class="icon">${icon}</div>
+          <div class="temp">${values.TMP ?? "--"}℃</div>
+          <div class="rain">${values.POP ?? "--"}%</div>
+          <div class="wind">${windDesc}</div>
+        </div>`;
+      container.insertAdjacentHTML('beforeend', html);
+    });
+}
+
+
+function getWeatherIcon(values) {
+  const pty = values.PTY;
+  const sky = values.SKY;
+
+  if (pty && pty !== "0") return "🌧️";
+  if (sky === "1") return "☀️";
+  if (sky === "3") return "⛅";
+  if (sky === "4") return "☁️";
+  return "❓";
 }

@@ -123,9 +123,9 @@ public class KmaWeatherService {
 
       String baseDateStr = baseDate.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
 
-      log.info("🛰️ 요청 타입: {}", type);
-      log.info("📍 위도: {}, 경도: {}", lat, lon);
-      log.info("🧭 변환된 Grid 좌표: nx = {}, ny = {}", grid.nx, grid.ny);
+      // log.info("🛰️ 요청 타입: {}", type);
+      // log.info("📍 위도: {}, 경도: {}", lat, lon);
+      // log.info("🧭 변환된 Grid 좌표: nx = {}, ny = {}", grid.nx, grid.ny);
       log.info("📅 기준 날짜: {}, 기준 시간: {}", baseDateStr, baseTimeStr);
       log.info("🔑 사용 중인 서비스 키(raw): {}", kmaApiKey);
 
@@ -134,7 +134,7 @@ public class KmaWeatherService {
       String rawUrl = UriComponentsBuilder
           .fromHttpUrl("https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/" + type)
           .queryParam("serviceKey", encodedKey) // ✅ 인코딩된 키 사용
-          .queryParam("numOfRows", 100)
+          .queryParam("numOfRows", 500)
           .queryParam("pageNo", 1)
           .queryParam("dataType", "JSON")
           .queryParam("base_date", baseDateStr)
