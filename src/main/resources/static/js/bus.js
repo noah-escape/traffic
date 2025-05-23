@@ -87,10 +87,6 @@ async function showBusPositions({ routeId, routeNumber }) {
           }
         });
 
-        const info = new naver.maps.InfoWindow({
-          content: `<div style="padding:6px;">🚌 차량번호: ${carNo}</div>`
-        });
-
         naver.maps.Event.addListener(marker, 'click', () => {
           info.open(map, marker);
         });
@@ -126,56 +122,112 @@ function stopBusTracking() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   const btn = document.getElementById('sidebarBusBtn');
-  if (btn) {
-    btn.addEventListener('click', () => {
-      stopBusTracking();      // 실시간 추적 중지
-      clearStopMarkers();     // 기존 정류소 마커 제거
-      clearRouteDisplay();    // 노선 경로 라인, 마커 제거
-      currentRouteId = null;  // 현재 노선 초기화
-      routeStops = [];        // 경로 정류소 초기화
+  const resetBtn = document.getElementById("resetMapBtn");
+  const selector = document.getElementById("regionSelector");
 
-      // 서울시 전체 정류소 다시 보여줌
-      if (allStops.length > 0) {
-        filterStopsInView();
-      }
-    });
-  }
+  // ▶ 사이드바 버튼 초기화
+  btn?.addEventListener('click', () => {
+    stopBusTracking();
+    clearStopMarkers();
+    clearRouteDisplay();
+    currentRouteId = null;
+    routeStops = [];
 
-  if (typeof initClusterer === "function") initClusterer();
+    // ✅ 선택 전에는 allStops 초기화 (정류소 미표시)
+    allStops = [];
+  });
 
+  // ▶ 초기화 버튼
+  resetBtn?.addEventListener("click", () => {
+    stopBusTracking();         // 실시간 추적 중지
+    clearStopMarkers();        // 정류소 마커 제거
+    clearRouteDisplay();       // 노선 경로 및 마커 제거
+    clearBusMarkers();         // 버스 마커 제거
+
+    currentRouteId = null;
+    routeStops = [];
+    allStops = [];
+
+    // 1. 시/도 선택 초기화
+    const selector = document.getElementById("regionSelector");
+    if (selector) {
+      selector.value = "";
+    }
+
+    // 2. 버스 번호 입력 초기화
+    const input = document.getElementById("routeInput");
+    if (input) {
+      input.value = "";
+    }
+
+    // 3. 도착 정보 패널 초기화
+    const arrivalPanel = document.getElementById("arrivalPanelBody");
+    if (arrivalPanel) {
+      arrivalPanel.innerHTML = `
+      <div class="text-muted small py-3 px-2 text-center">
+        ※ 시/도를 선택하거나 버스 번호로 검색하세요.
+      </div>
+    `;
+    }
+
+    // 4. 상세정보 팝업 닫기
+    const popup = document.getElementById("routeDetailPopup");
+    if (popup) {
+      popup.classList.add("d-none");
+    }
+
+    // 5. 모달 닫기 (노선 목록 모달)
+    const routeModal = bootstrap.Modal.getInstance(document.getElementById('routeListModal'));
+    if (routeModal) {
+      routeModal.hide();
+    }
+
+    // 6. 지도 중심을 기본 위치로 이동 (서울 기준)
+    const center = cityCenters["서울특별시"];
+    if (center && map) {
+      map.setCenter(new naver.maps.LatLng(center[0], center[1]));
+      map.setZoom(13); // 기본 줌 레벨
+    }
+  });
+
+  // ▶ 시/도 선택 박스 로딩 및 이벤트
   try {
     const res = await fetch("/api/proxy/bus/regions");
     const cities = await res.json();
-    const selector = document.getElementById("regionSelector");
 
-    if (selector) {
-      cities.forEach(city => {
-        const opt = document.createElement("option");
-        opt.value = city;
-        opt.textContent = city;
-        selector.appendChild(opt);
-      });
+    cities.forEach(city => {
+      const opt = document.createElement("option");
+      opt.value = city;
+      opt.textContent = city;
+      selector?.appendChild(opt);
+    });
 
-      selector.addEventListener("change", e => {
-        const region = e.target.value;
+    selector?.addEventListener("change", async e => {
+      const region = e.target.value;
 
-        stopBusTracking();
-        clearStopMarkers();
-        clearRouteDisplay();
+      stopBusTracking();
+      clearStopMarkers();
+      clearRouteDisplay();
+      currentRouteId = null;
+      routeStops = [];
 
-        if (!region) return;
+      // ✅ 정류소 표시 전 전체 제거
+      allStops = [];
 
-        if (region === '서울특별시') {
-          loadBusStopsByRegion(region);
-        } else {
-          alert(`[${region}] 지역의 버스 정류소 정보는 준비 중입니다.\n추후 업데이트 예정입니다.`);
-        }
-      });
-    }
+      if (!region) return;
+
+      if (region === '서울특별시') {
+        await loadBusStopsByRegion(region); // 정류소 로딩 + 마커 표시 포함
+      } else {
+        alert(`[${region}] 지역의 정류소 정보는 준비 중입니다.`);
+      }
+    });
+
   } catch (e) {
     console.error("도시 목록 로딩 실패", e);
   }
 
+  // ▶ 지도 이동 시 바운드 내 정류소 마커 갱신
   let idleTimer = null;
   naver.maps.Event.addListener(map, 'idle', () => {
     clearTimeout(idleTimer);
@@ -185,7 +237,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         return;
       }
 
-      if (!currentRouteId) {  // ✅ 경로 검색 안 한 상태일 때만
+      // ✅ 경로 탐색 중이 아닐 때, 시/도 선택 후 정류소만 표시
+      if (!currentRouteId && allStops.length > 0) {
         filterStopsInView();
       }
     }, 300);
@@ -217,6 +270,20 @@ function clearStopMarkers() {
   stopMarkers = [];
 }
 
+const normalIcon = {
+  url: "/image/bus/bus-stop.png",
+  size: new naver.maps.Size(16, 16),
+  anchor: new naver.maps.Point(8, 16)
+};
+
+const selectedIcon = {
+  url: "/image/bus/bus-stop-click.png",
+  size: new naver.maps.Size(32, 32),
+  anchor: new naver.maps.Point(16, 32)
+};
+
+let lastSelectedStopMarker = null;
+
 function drawStopMarkers(stops, isRouteMarkers = false) {
   if (!isRouteMarkers) clearStopMarkers();
 
@@ -232,7 +299,6 @@ function drawStopMarkers(stops, isRouteMarkers = false) {
       const lng = parseFloat(stop.lng || stop.longitude);
       const name = stop.name || stop.stationName;
 
-      // ✅ 확실한 통합 ID 사용
       const stopId = stop.stopId || stop.nodeId || stop.id;
       const arsId = stop.arsId || "01";
 
@@ -241,24 +307,35 @@ function drawStopMarkers(stops, isRouteMarkers = false) {
         return;
       }
 
+      const icon = isRouteMarkers
+        ? {
+          url: "/image/bus/bus-stop-route.png",
+          size: new naver.maps.Size(16, 16),
+          anchor: new naver.maps.Point(8, 16)
+        }
+        : normalIcon;
+
       const marker = new naver.maps.Marker({
         position: new naver.maps.LatLng(lat, lng),
         map: map,
         title: name,
-        icon: {
-          url: isRouteMarkers ? "/image/bus/bus-stop-route.png" : "/image/bus/bus-stop.png",
-          size: new naver.maps.Size(16, 16),
-          anchor: new naver.maps.Point(8, 16)
-        }
-      });
-
-      const info = new naver.maps.InfoWindow({
-        content: `<div style="padding:4px;">🚌 ${name}</div>`
+        icon: icon
       });
 
       naver.maps.Event.addListener(marker, 'click', () => {
         console.log("🧭 정류소 클릭:", stopId, arsId);
-        info.open(map, marker);
+
+        // 🔁 이전 마커 원상복구
+        if (lastSelectedStopMarker && !isRouteMarkers) {
+          lastSelectedStopMarker.setIcon(normalIcon);
+        }
+
+        // 🎯 현재 마커 강조
+        if (!isRouteMarkers) {
+          marker.setIcon(selectedIcon);
+          lastSelectedStopMarker = marker;
+        }
+
         onBusStopClick(stopId, arsId, name);
       });
 
@@ -279,43 +356,76 @@ function drawStopMarkers(stops, isRouteMarkers = false) {
 let lastBounds = null;
 const MAX_MARKERS = 500;
 
-function filterStopsInView() {
-  if (!map || allStops.length === 0) return;
+async function filterStopsInView() {
+  if (!map) return;
 
   const bounds = map.getBounds();
-  if (lastBounds && bounds.equals(lastBounds)) return;
-  lastBounds = bounds;
+  const sw = bounds.getSW();
+  const ne = bounds.getNE();
 
-  visibleStops = allStops.filter(stop => {
-    const lat = parseFloat(stop.lat);
-    const lng = parseFloat(stop.lng);
-    return bounds.hasLatLng(new naver.maps.LatLng(lat, lng));
-  });
+  try {
+    const res = await fetch(`/api/proxy/bus/stops/in-bounds?minLat=${sw.lat()}&maxLat=${ne.lat()}&minLng=${sw.lng()}&maxLng=${ne.lng()}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json'
+      },
+      redirect: 'follow' // 또는 'manual'로 리디렉션 방지
+    });
 
-  if (visibleStops.length > MAX_MARKERS) {
-    console.warn(`정류장 ${visibleStops.length}개 → ${MAX_MARKERS}개 제한`);
+    // 🚨 로그인 페이지로 리다이렉션 되었다면, fetch는 응답 본문이 HTML임
+    const contentType = res.headers.get("content-type");
+    if (contentType && contentType.includes("text/html")) {
+      alert("세션이 만료되었거나 로그인이 필요합니다. 다시 로그인해주세요.");
+      location.href = "/login";
+      return;
+    }
+
+    if (!res.ok) {
+      throw new Error("서버 응답 오류: " + res.status);
+    }
+
+    const stops = await res.json();
+    allStops = stops;
+    drawStopMarkers(stops.slice(0, 1000));
+  } catch (e) {
+    console.error("정류소 로딩 실패", e);
+    alert("정류소 정보를 불러오는 데 실패했습니다.");
   }
-
-  drawStopMarkers(visibleStops.slice(0, MAX_MARKERS));
 }
 
 async function loadBusStopsByRegion(region) {
   if (!region) return;
 
+  // ✅ 버스 패널이 꺼져있으면 실행 안 함
+  if (!panelStates.bus) {
+    console.warn("버스 패널이 비활성화 상태입니다. 정류소 로딩 중단.");
+    return;
+  }
+
+  // ✅ 지도 중심 이동
   if (cityCenters[region]) {
     const [lat, lng] = cityCenters[region];
     map.setCenter(new naver.maps.LatLng(lat, lng));
-    map.setZoom(13);
+    map.setZoom(16);
   }
 
   try {
     const res = await fetch(`/api/proxy/bus/stops?region=${encodeURIComponent(region)}`);
-    allStops = await res.json();
-    if (!currentRouteId) {
-      filterStopsInView();
+
+    if (!res.ok) {
+      throw new Error(`정류소 불러오기 실패: ${res.status}`);
     }
+
+    allStops = await res.json();
+
+    // ✅ 버스 경로가 없는 상태에서만 마커 표시
+    if (!currentRouteId && allStops.length > 0 && panelStates.bus) {
+      drawStopMarkers(allStops.slice(0, MAX_MARKERS)); // 예: 1000
+    }
+
   } catch (err) {
     console.error("정류소 불러오기 실패", err);
+    alert("정류소 정보를 불러오는 중 문제가 발생했습니다.");
   }
 }
 
@@ -515,6 +625,7 @@ function showRouteListModal(routes) {
 function onRouteSelected(routeId) {
   stopBusTracking();
   startBusTracking({ routeId });
+  loadRouteDetail(null, routeId);  // ✅ routeId 직접 전달
 }
 
 function clearRouteDisplay() {
@@ -535,9 +646,9 @@ window.searchBusRoute = async function () {
     return;
   }
 
-  stopBusTracking();
-  clearStopMarkers();
-  clearRouteDisplay();
+  stopBusTracking();      // 실시간 추적 중지
+  clearStopMarkers();     // 정류소 마커 제거
+  clearRouteDisplay();    // 이전 경로 제거
   currentRouteId = null;
 
   try {
@@ -549,11 +660,11 @@ window.searchBusRoute = async function () {
       return;
     }
 
+    // ✅ 1. 지도에 표시
     const path = stops.map(stop =>
       new naver.maps.LatLng(parseFloat(stop.lat), parseFloat(stop.lng))
     );
 
-    // ✅ 경로 라인 그리기
     routeLine = new naver.maps.Polyline({
       path: path,
       strokeColor: '#0078ff',
@@ -561,38 +672,48 @@ window.searchBusRoute = async function () {
       map: map
     });
 
-    map.setCenter(path[0]);
-    map.setZoom(13);
+    // ✅ 2. 지도 위치를 경로 중앙으로 이동
+    const bounds = new naver.maps.LatLngBounds();
+    path.forEach(p => bounds.extend(p));
+    map.fitBounds(bounds); // 👈 경로가 전부 보이도록 줌 조정
 
-    // ✅ 노선 경로 정류소 마커는 따로 표시
-    drawStopMarkers(stops, true); // <-- 핵심 수정
-    drawStopMarkers(visibleStops);
+    // ✅ 3. 정류소 마커 표시 (노선용, 지도용)
+    drawStopMarkers(stops, true);       // 노선 마커
+    // drawStopMarkers(visibleStops);   // ❌ 이거 호출하면 방금 표시한 마커 덮임!!
 
-    // ✅ 노선 기반 버스 위치 추적
+    // ✅ 4. 실시간 버스 위치 추적
     startBusTracking({ routeNumber });
 
-    // ✅ 상태 저장
-    routeStops = stops;
     currentRouteId = routeNumber;
+    routeStops = stops;
+
   } catch (err) {
     console.error("버스 경로 조회 실패", err);
     alert("버스 노선 정보를 불러오는 데 실패했습니다.");
   }
 };
 
-
 async function loadRouteDetail(routeNumber, triggerEl) {
   try {
     const res = await fetch(`/api/proxy/bus/detail?routeNumber=${routeNumber}`);
+
+    // ✅ 404 등 비정상 응답 처리
+    if (!res.ok) {
+      const error = await res.json();
+      alert(`버스 상세 정보 요청 실패: ${error?.error || res.statusText}`);
+      return;
+    }
+
     const data = await res.json();
+    console.log("📦 상세정보 응답:", data);
 
     const html = `
-      <div class="fw-bold mb-1">${data.routeNumber}번 버스</div>
-      <div>🕒 배차: ${data.interval || '정보 없음'}</div>
-      <div>🚏 첫차: ${data.firstTime || '정보 없음'}</div>
-      <div>🌙 막차: ${data.lastTime || '정보 없음'}</div>
+      <div class="fw-bold mb-1">${data?.routeNumber || '알 수 없음'}번 버스</div>
+      <div>🕒 배차: ${data?.interval || '정보 없음'}</div>
+      <div>🚏 첫차: ${data?.firstTime || '정보 없음'}</div>
+      <div>🌙 막차: ${data?.lastTime || '정보 없음'}</div>
       <div class="mt-2 text-end">
-        <button class="btn btn-sm btn-outline-primary" onclick="openBusRoutePanel('${data.routeNumber}')">
+        <button class="btn btn-sm btn-outline-primary" onclick="openBusRoutePanel('${data?.routeNumber || ''}')">
           노선 보기
         </button>
       </div>
@@ -602,45 +723,15 @@ async function loadRouteDetail(routeNumber, triggerEl) {
     const content = document.getElementById('routeDetailPopupContent');
     content.innerHTML = html;
 
-    // 위치 조정 - 화면 오른쪽 상단에 고정
+    // 위치 고정
     const rect = triggerEl.getBoundingClientRect();
-    popup.style.top = `${window.scrollY + 60}px`;  // 화면 상단 기준 위치
+    popup.style.top = `${window.scrollY + 60}px`;
     popup.style.right = `20px`;
 
     popup.classList.remove('d-none');
-
   } catch (err) {
     console.error("상세 정보 불러오기 실패", err);
-  }
-}
-
-async function openBusRoutePanel(routeNumber) {
-  try {
-    const [routeDetail, stops] = await Promise.all([
-      fetch(`/api/proxy/bus/detail?routeNumber=${routeNumber}`).then(r => r.json()),
-      fetch(`/api/proxy/bus/routes?routeNumber=${routeNumber}`).then(r => r.json())
-    ]);
-
-    document.getElementById("routeHeader").textContent = `${routeNumber}번`;
-    document.getElementById("routeSubInfo").textContent =
-      `배차 ${routeDetail.interval}, 첫차 ${routeDetail.firstTime}, 막차 ${routeDetail.lastTime}`;
-
-    const container = document.getElementById("busStopListContainer");
-    container.innerHTML = stops.map(stop => `
-      <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
-        <div>
-          <div class="fw-bold">${stop.stationName}</div>
-          <div class="text-muted small">(${stop.nodeId})</div>
-        </div>
-        <button class="btn btn-sm btn-outline-secondary"
-                onclick="loadArrivalAtStop('${stop.nodeId}', '${stop.arsId || '01'}')">도착</button>
-      </div>
-    `).join("");
-
-    new bootstrap.Offcanvas(document.getElementById("busRoutePanel")).show();
-  } catch (err) {
-    console.error("노선 정보 로딩 실패", err);
-    alert("버스 노선 상세 정보를 가져오는 데 실패했습니다.");
+    alert("버스 상세 정보를 불러오는 중 오류 발생: " + err.message);
   }
 }
 
@@ -666,13 +757,14 @@ async function loadArrivalAtStop(stopId, arsId) {
   }
 }
 
-// 이벤트 위임 방식으로 상세 버튼 작동
-document.body.addEventListener("click", e => {
-  if (e.target.classList.contains("route-detail-btn")) {
-    const route = e.target.dataset.route;
-    loadRouteDetail(route, e.target);
+document.body.addEventListener('click', e => {
+  const target = e.target.closest('.arrival-item');
+  if (target && target.dataset.route) {
+    const route = target.dataset.route;
+    stopBusTracking();
+    startBusTracking({ routeNumber: route });  // ✅ 실시간 위치만 표시
   }
-});
+})
 
 document.addEventListener("click", function (e) {
   const popup = document.getElementById("routeDetailPopup");
@@ -697,6 +789,56 @@ function parseArrivalSeconds(arrivalText) {
   if (minOnly) return parseInt(minOnly[1], 10) * 60;
 
   return null;
+}
+
+async function openBusRoutePanel(routeNumber) {
+  if (!routeNumber) return;
+
+  stopBusTracking();
+  clearStopMarkers();
+  clearRouteDisplay();
+  currentRouteId = null;
+
+  try {
+    const res = await fetch(`/api/proxy/bus/routes?routeNumber=${encodeURIComponent(routeNumber)}`);
+    const stops = await res.json();
+
+    if (!Array.isArray(stops) || stops.length === 0) {
+      alert("해당 노선의 정류소 정보를 찾을 수 없습니다.");
+      return;
+    }
+
+    // 1️⃣ 노선 경로 폴리라인
+    const path = stops.map(stop => new naver.maps.LatLng(parseFloat(stop.lat), parseFloat(stop.lng)));
+
+    routeLine = new naver.maps.Polyline({
+      path: path,
+      strokeColor: '#0078ff',
+      strokeWeight: 4,
+      map: map
+    });
+
+    // 2️⃣ 경로 기준 지도 확대
+    const bounds = new naver.maps.LatLngBounds();
+    path.forEach(p => bounds.extend(p));
+    map.fitBounds(bounds);
+
+    // 3️⃣ 노선 정류소 마커
+    drawStopMarkers(stops, true);
+
+    // 4️⃣ 실시간 버스 위치 추적 시작
+    startBusTracking({ routeNumber });
+
+    currentRouteId = routeNumber;
+    routeStops = stops;
+
+    // 5️⃣ 상세 정보 패널 닫기 (선택사항)
+    document.getElementById("routeDetailPopup")?.classList.add("d-none");
+
+  } catch (err) {
+    console.error("노선 보기 실패", err);
+    alert("노선 정보를 불러오는 중 오류가 발생했습니다.");
+  }
 }
 
 // 전역 등록
