@@ -205,6 +205,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const waitForMap = setInterval(() => {
     if (window.map) {
       clearInterval(waitForMap);
+
+      // 서울시청 기준 초기 중심 좌표
+      const seoulCityHall = new naver.maps.LatLng(37.5665, 126.9780);
+
+      // 맵이 완전히 로드된 후에 줌 및 중심 설정
+      naver.maps.Event.once(map, 'tilesloaded', () => {
+        map.setCenter(seoulCityHall);
+        map.setZoom(11);
+      });
+
+      // idle 이벤트 등록
       naver.maps.Event.addListener(map, 'idle', () => {
         if (skipNextIdle) return (skipNextIdle = false);
         if (panelStates.event) {
@@ -212,6 +223,10 @@ document.addEventListener('DOMContentLoaded', () => {
           window.loadRoadEventsInView();
         }
       });
+    }
+    if (panelStates.event) {
+      window.clearEventMarkers();
+      window.loadRoadEventsInView();
     }
   }, 100);
 });

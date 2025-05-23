@@ -14,7 +14,38 @@ let panelStates = {
   parking: false
 };
 
+function clearAllMapMarkers() {
+  window.clearBusMarkers?.();
+  window.stopBusTracking?.();
+  window.clearStopMarkers?.();
+  window.clearRouteMarkers?.();
+  window.clearRoute?.();
+  window.clearRouteDisplay?.();
+  window.removeRouteEvents?.();
+  window.clearEventMarkers?.();
+  window.clearCctvMarkers?.();
+  window.hideVideo?.();
+  window.clearParkingMarkers?.();
+  window.hideParkingLegend?.();
+  window.clearBikeStations?.();
+  window.clearSubwayLayer?.();
+  window.clearStationMarkers?.();
+
+  if (window.userPositionMarker) {
+    window.userPositionMarker.setMap(null);
+    window.userPositionMarker = null;
+  }
+
+  if (window.customMarkers && Array.isArray(window.customMarkers)) {
+    window.customMarkers.forEach(marker => marker.setMap(null));
+    window.customMarkers = [];
+  }
+
+  console.log('🧹 모든 마커 제거 완료');
+}
+
 function resetPanelsAndCloseVideo() {
+  // 🔄 모든 패널 상태 비활성화 및 UI 숨김
   for (const k in panelStates) {
     panelStates[k] = false;
     document.getElementById(`sidebar${capitalize(k)}Btn`)?.classList.remove('active');
@@ -24,41 +55,37 @@ function resetPanelsAndCloseVideo() {
   document.getElementById('eventListPanel')?.style.setProperty('display', 'none');
   hideVideoContainer();
 
-  // ✅ 모든 리소스 제거
-  window.stopBusTracking?.();
-  window.clearBusMarkers?.();
-  window.clearStopMarkers?.();
-  window.clearRouteDisplay?.();
-  window.clearEventMarkers?.();
-  window.clearCctvMarkers?.();
-  window.clearRoute?.();
-  window.clearRouteMarkers?.();
-  window.removeRouteEvents?.();
-  window.clearParkingMarkers?.();
-  window.hideParkingLegend?.();
-  window.clearBikeStations?.();
-  window.clearSubwayLayer?.();
-  window.clearStationMarkers?.();
-  window.clearNearbyStopMarkers?.();
-  window.clearStopMarkers?.();
+  // ✅ [2단계] 마커 및 레이어 초기화 통합 호출
+  clearAllMapMarkers();
 
-  if (window.userPositionMarker) {
-    window.userPositionMarker.setMap(null);
-    window.userPositionMarker = null;
-  }
+  // 🗺️ 지도 중심 및 줌 초기화
+  resetMapView();
 
+  // 🚇 지하철 갱신 타이머 제거
   if (window.subwayRefreshInterval) {
     clearInterval(window.subwayRefreshInterval);
     window.subwayRefreshInterval = null;
   }
 
+  // 🧾 노선 상세 팝업 숨김
   const popup = document.getElementById('routeDetailPopup');
   if (popup) popup.classList.add('d-none');
 
+  // 🚌 버스 노선 상세 오프캔버스 닫기
   const routePanel = document.getElementById("busRoutePanel");
   if (routePanel && bootstrap?.Offcanvas?.getInstance(routePanel)) {
     bootstrap.Offcanvas.getInstance(routePanel).hide();
   }
+}
+
+function resetMapView() {
+  if (!window.map) return;
+
+  setTimeout(() => {
+    const seoul = new naver.maps.LatLng(37.5665, 126.9780);
+    map.panTo(seoul); // 부드러운 이동
+    map.setZoom(11);
+  }, 300);
 }
 
 function hideVideoContainer() {
@@ -160,18 +187,21 @@ document.addEventListener('DOMContentLoaded', () => {
       key: 'bus',
       panelId: 'busFilterPanel',
       onActivate: () => {
+        resetPanelsAndCloseVideo();
         panelStates.bus = true;
-        window.resetBusPanel?.(); // ✅ 활성화 시 초기화
+        document.getElementById('busFilterPanel')?.style.setProperty('display', 'flex');
+        window.resetBusPanel?.();
       },
       onDeactivate: () => {
         panelStates.bus = false;
-        window.resetBusPanel?.(); // ✅ 비활성화 시도에도 동일 처리
+        window.resetBusPanel?.();
       }
     },
     {
       id: 'sidebarBikeBtn',
       key: 'bike',
       onActivate: () => {
+        resetPanelsAndCloseVideo();
         panelStates.bike = true;
         window.moveToMyLocation?.();
       },
@@ -189,6 +219,9 @@ document.addEventListener('DOMContentLoaded', () => {
       key: 'route',
       panelId: 'routeFilterPanel',
       onActivate: () => {
+        resetPanelsAndCloseVideo();
+        panelStates.route = true;
+        document.getElementById('routeFilterPanel')?.style.setProperty('display', 'flex');
         window.setStartToCurrentLocation?.();
         window.initRouteEvents?.();
       },
@@ -202,6 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
       id: 'sidebarTrafficBtn',
       key: 'traffic',
       onActivate: () => {
+        resetPanelsAndCloseVideo();
         if (!window.trafficLayer) {
           window.trafficLayer = new naver.maps.TrafficLayer({ interval: 300000 });
         }
@@ -217,6 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
       id: 'sidebarEventBtn',
       key: 'event',
       onActivate: () => {
+        resetPanelsAndCloseVideo();
         panelStates.event = true;
         window.loadRoadEventsInView?.();
         document.getElementById('eventListPanel')?.style.setProperty('display', 'block');
@@ -231,9 +266,13 @@ document.addEventListener('DOMContentLoaded', () => {
       key: 'cctv',
       panelId: 'cctvFilterPanel',
       onActivate: () => {
+        resetPanelsAndCloseVideo();
+        panelStates.cctv = true;
+        document.getElementById('cctvFilterPanel')?.style.setProperty('display', 'flex');
         window.applyCctvFilter?.();
       },
       onDeactivate: () => {
+        panelStates.cctv = false;
         window.clearCctvMarkers?.();
         const roadList = document.getElementById('roadList');
         if (roadList) roadList.innerHTML = '';
@@ -244,6 +283,9 @@ document.addEventListener('DOMContentLoaded', () => {
       key: 'subway',
       panelId: 'subwayFilterPanel',
       onActivate: () => {
+        resetPanelsAndCloseVideo();
+        panelStates.subway = true;
+        document.getElementById('subwayFilterPanel')?.style.setProperty('display', 'flex');
         window.subwayLayerVisible = true;
         Promise.all([
           window.generateSubwayGraph?.(),
@@ -255,6 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       },
       onDeactivate: () => {
+        panelStates.subway = false;
         window.subwayLayerVisible = false;
         window.clearSubwayLayer?.();
         window.clearStationMarkers?.();
@@ -267,22 +310,16 @@ document.addEventListener('DOMContentLoaded', () => {
       key: 'parking',
       panelId: 'parkingFilterPanel',
       onActivate: () => {
-        // 💡 먼저 데이터를 불러오기 시작
-        const promise = window.loadSeoulCityParking();
-
-        // 이후에 패널 열기
+        resetPanelsAndCloseVideo();
         panelStates.parking = true;
-        const panel = document.getElementById('parkingFilterPanel');
-        if (panel) {
-          panel.style.display = 'flex';
-        }
+        document.getElementById('parkingFilterPanel')?.style.setProperty('display', 'flex');
 
-        // 📍 내 위치 표시
+        const promise = window.loadSeoulCityParking?.();
+
         if (typeof window.showCurrentLocationOnMap === 'function') {
           window.showCurrentLocationOnMap();
         }
 
-        // 지도 크기 조정
         adjustMapSizeToSidebar();
         setTimeout(() => {
           naver.maps.Event.trigger(map, 'resize');
@@ -292,46 +329,29 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       onDeactivate: () => {
         panelStates.parking = false;
-        window.clearParkingMarkers();
+        window.clearParkingMarkers?.();
         hideParkingLegend();
       }
     }
   ];
 
   // ✅ 버튼 클릭 등록
-  buttonConfigs.forEach(({ id, key, panelId, onActivate, onDeactivate }) => {
+  buttonConfigs.forEach(({ id, key, panelId, onActivate }) => {
     const button = document.getElementById(id);
     if (!button) return;
 
     button.addEventListener('click', () => {
-      const isActivating = !panelStates[key];
+      const isAlreadyActive = panelStates[key];
 
-      // ✅ 기존 리소스 모두 정리
-      resetPanelsAndCloseVideo(); // 🥇 먼저 호출하여 모든 타이머, 마커 제거
+      // 모든 상태 false 및 초기화
+      resetPanelsAndCloseVideo();
 
-      // ✅ 모든 패널 상태 false로 초기화
-      for (const conf of buttonConfigs) {
-        panelStates[conf.key] = false;
-        document.getElementById(`sidebar${capitalize(conf.key)}Btn`)?.classList.remove('active');
-        document.getElementById(`${conf.key}FilterPanel`)?.style.setProperty('display', 'none');
-      }
-
-      if (window.routeClickInfoWindow) {
-        window.routeClickInfoWindow.setMap(null);
-        window.routeClickInfoWindow = null;
-      }
-
-      // ✅ 현재 클릭된 버튼 활성화
-      if (isActivating) {
+      if (!isAlreadyActive) {
+        // 이 버튼만 활성화
         panelStates[key] = true;
         button.classList.add('active');
-        const panel = document.getElementById(panelId);
-        if (panel) panel.style.display = 'flex';
         onActivate?.();
       }
-
-      adjustMapSizeToSidebar();
-      setTimeout(() => naver.maps.Event.trigger(map, 'resize'), 300);
     });
   });
 

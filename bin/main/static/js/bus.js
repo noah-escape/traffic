@@ -934,21 +934,14 @@ window.findNearbyStops = async function () {
   });
 };
 
-window.clearNearbyStopMarkers = function () {
-  if (Array.isArray(window.nearbyStopMarkers)) {
-    window.nearbyStopMarkers.forEach(m => m.setMap(null));
-    window.nearbyStopMarkers = [];
-  }
-}
-
 function clearRouteMarkers() {
   if (Array.isArray(window.routeMarkers)) {
     window.routeMarkers.forEach(m => m.setMap(null));
     window.routeMarkers = [];
   }
-}
+};
 
-window.clearNearbyStopMarkers = function () {
+function clearNearbyStopMarkers() {
   if (Array.isArray(window.nearbyStopMarkers)) {
     window.nearbyStopMarkers.forEach(m => m.setMap(null));
     window.nearbyStopMarkers = [];

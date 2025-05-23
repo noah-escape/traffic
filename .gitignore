@@ -43,3 +43,10 @@ test-output/
 *.swp
 *.bak
 *.tmp
+
+# DB dump
+/init/*.sql
+
+# Docker 관련 파일
+docker-compose.yml
+Dockerfile
