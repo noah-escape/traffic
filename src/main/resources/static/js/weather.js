@@ -8,6 +8,27 @@ document.addEventListener("DOMContentLoaded", () => {
     alert("이 브라우저는 위치 정보를 지원하지 않습니다.");
     showFallback("위치 정보 없음");
   }
+
+  // ✅ 날짜 라벨 스크롤 이벤트 등록
+  const dateLabel = document.getElementById("current-date-label");
+  if (dateLabel) {
+    const wrapper = document.querySelector('.weather-scroll-wrapper');
+    wrapper.addEventListener('scroll', () => {
+      const cards = document.querySelectorAll('.weather-hour');
+      const containerRect = wrapper.getBoundingClientRect();
+
+      for (let card of cards) {
+        const cardRect = card.getBoundingClientRect();
+        if (cardRect.right > containerRect.left) {
+          const date = card.getAttribute('data-date');
+          if (date) {
+            dateLabel.textContent = formatDateToKorean(date);
+          }
+          break;
+        }
+      }
+    });
+  }
 });
 
 function onLocationSuccess(position) {
@@ -42,7 +63,6 @@ function onLocationError(error) {
 function updateMapAndWeather(lat, lon) {
   const position = new naver.maps.LatLng(lat, lon);
   if (map) {
-
     if (currentMarker) {
       currentMarker.setMap(null);
     }
@@ -61,8 +81,6 @@ function updateMapAndWeather(lat, lon) {
       renderDailyForecast(data.daily);
 
       const items = data.current?.response?.body?.items?.item ?? [];
-      // console.log("🌤️ 현재 날씨 items", items);
-
       updateWeatherCard({
         temp: safeFindValue(items, "T1H"),
         humidity: safeFindValue(items, "REH"),
@@ -190,36 +208,61 @@ function renderHourlyForecast(forecastData) {
   const grouped = {};
 
   items.forEach(item => {
-    const key = `${item.fcstDate} ${item.fcstTime}`;
-    if (!grouped[key]) grouped[key] = {};
-    grouped[key][item.category] = item.fcstValue;
+    const date = item.fcstDate;
+    const time = item.fcstTime;
+    if (!grouped[date]) grouped[date] = {};
+    if (!grouped[date][time]) grouped[date][time] = {};
+    grouped[date][time][item.category] = item.fcstValue;
   });
 
   Object.entries(grouped)
     .sort(([a], [b]) => a.localeCompare(b))
-    .forEach(([time, values]) => {
-      const hour = time.slice(-4, -2); // ex: "0800" -> "08"
-      const icon = getWeatherIcon(values);
-      const windDir = degToDir(values.VEC);
-      const windDesc = values.WSD ? `${windDir} 약` : "-";
+    .forEach(([fcstDate, timeGroup]) => {
+      Object.entries(timeGroup)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .forEach(([fcstTime, values]) => {
+          const hour = fcstTime.slice(0, 2);
+          const icon = getWeatherIcon(values);
+          const windDir = degToDir(values.VEC);
+          const windDesc = values.WSD ? `${windDir} 약` : "-";
 
-      const html = `
-        <div class="weather-hour">
-          <div class="time">${hour}시</div>
-          <div class="icon">${icon}</div>
-          <div class="temp">${values.TMP ?? "--"}℃</div>
-          <div class="rain">${values.POP ?? "--"}%</div>
-          <div class="wind">${windDesc}</div>
-        </div>`;
-      container.insertAdjacentHTML('beforeend', html);
+          const hourEl = document.createElement('div');
+          hourEl.className = 'weather-hour';
+          hourEl.setAttribute('data-date', fcstDate);
+          hourEl.innerHTML = `
+            <div class="time">${hour}시</div>
+            <div class="icon">${icon}</div>
+            <div class="temp">${values.TMP ?? "--"}℃</div>
+            <div class="rain">${values.POP ?? "--"}%</div>
+            <div class="wind">${windDesc}</div>
+          `;
+          container.appendChild(hourEl);
+        });
     });
+  // ✅ 날짜 라벨 초기값 설정
+  const firstCard = document.querySelector('.weather-hour');
+  const dateLabel = document.getElementById('current-date-label');
+  if (firstCard && dateLabel) {
+    const firstDate = firstCard.getAttribute('data-date');
+    if (firstDate) {
+      dateLabel.textContent = formatDateToKorean(firstDate);
+    }
+  }
+
 }
 
+function formatDateToKorean(dateStr) {
+  const y = dateStr.slice(0, 4);
+  const m = dateStr.slice(4, 6);
+  const d = dateStr.slice(6, 8);
+  const date = new Date(`${y}-${m}-${d}`);
+  const day = date.toLocaleDateString('ko-KR', { weekday: 'short' });
+  return `${parseInt(m)}월 ${parseInt(d)}일 (${day})`;
+}
 
 function getWeatherIcon(values) {
   const pty = values.PTY;
   const sky = values.SKY;
-
   if (pty && pty !== "0") return "🌧️";
   if (sky === "1") return "☀️";
   if (sky === "3") return "⛅";

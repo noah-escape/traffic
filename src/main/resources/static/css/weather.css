@@ -32,62 +32,119 @@
   font-size: 1.25rem;
 }
 
-.weather-scroll-wrapper {
-  overflow-x: auto;
-  padding: 0.5rem 0;
+/* 📌 전체 박스 꾸미기 */
+.card.hourly-forecast-wrapper {
+  border: none;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #f8f9fa, #ffffff);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.07);
+  overflow: hidden;
+  margin-bottom: 2rem;
 }
 
+/* 📌 상단 헤더 */
+.card.hourly-forecast-wrapper .card-header {
+  background-color: #ffffff;
+  border-bottom: 1px solid #dee2e6;
+  padding: 1rem 1.5rem;
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: #343a40;
+}
+
+/* 📌 스크롤 영역 */
+.weather-scroll-wrapper {
+  background-color: #f1f3f5;
+  border-top: 1px solid #dee2e6;
+  padding: 1rem 0.5rem;
+  border-radius: 0 0 16px 16px;
+  overflow-x: auto;
+}
+
+/* 📌 스크롤바 (웹킷 기반 브라우저용) */
+.weather-scroll-wrapper::-webkit-scrollbar {
+  height: 8px;
+}
+.weather-scroll-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+.weather-scroll-wrapper::-webkit-scrollbar-thumb {
+  background: #ced4da;
+  border-radius: 4px;
+}
+
+/* 📌 스크롤 안 카드 정렬 */
 .weather-scroll {
   display: flex;
-  gap: 12px;
+  gap: 16px;
+  padding: 0 1rem;
   min-width: max-content;
 }
 
+/* 📌 개별 시간 카드 */
 .weather-hour {
   background: #ffffff;
-  border-radius: 12px;
+  border-radius: 14px;
+  border: 1px solid #dee2e6;
   padding: 12px 10px;
   text-align: center;
-  min-width: 90px;
+  min-width: 100px;
   flex-shrink: 0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  border: 1px solid #dee2e6;
   font-size: 0.9rem;
-  transition: transform 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .weather-hour:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-4px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
 }
 
 .weather-hour .time {
-  font-weight: 600;
-  font-size: 0.95rem;
-  color: #495057;
-  margin-bottom: 6px;
+  font-weight: 700;
+  font-size: 1rem;
+  color: #343a40;
+  margin-bottom: 8px;
 }
 
 .weather-hour .icon {
-  font-size: 1.8rem;
-  margin-bottom: 4px;
+  font-size: 2rem;
+  margin-bottom: 8px;
 }
 
 .weather-hour .temp {
-  font-size: 1.1rem;
-  font-weight: bold;
-  margin-bottom: 2px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 4px;
   color: #212529;
 }
 
 .weather-hour .rain {
   font-size: 0.85rem;
   color: #0d6efd;
+  font-weight: 500;
 }
 
 .weather-hour .wind {
   font-size: 0.8rem;
-  color: #6c757d;
-  margin-top: 2px;
+  color: #868e96;
+  margin-top: 4px;
 }
 
+.weather-date-separator {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background-color: #f1f3f5;
+  padding: 0.5rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #495057;
+  border-bottom: 1px solid #dee2e6;
+}
+
+#current-date-label {
+  position: sticky;
+  top: 65px; /* header 아래에 맞게 조정 */
+  z-index: 10;
+}
