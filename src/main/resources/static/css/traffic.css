@@ -2,7 +2,10 @@
   --navbar-height: 56px;
   --sidebar-width: 70px;
   --panal-width: 320px;
-  --medium-blue: #0d6efd;
+  --medium-blue: #3B82F6;
+  --medium-blue-dark: #2563EB;
+  --medium-blue-light: #60A5FA;
+  --medium-blue-bg: #E0F2FE;
   --dark-green: #198754;
   --navy: #001f3f;
   --golden-yellow: #ffc107;
@@ -941,4 +944,45 @@ body.dark-mode {
   text-align: center;
   font-size: 14px;
   display: inline-block;
+}
+
+/* 🔹 헤더 */
+#busFilterPanel .bus-header {
+  background-color: var(--medium-blue) !important;
+}
+
+/* 🔹 입력 버튼 */
+#busFilterPanel .input-group .btn {
+  background-color: var(--medium-blue);
+  border-color: var(--medium-blue);
+  color: white;
+}
+
+#busFilterPanel .input-group .btn:hover {
+  background-color: #2563EB; /* 조금 진한 파란색 */
+  border-color: #2563EB;
+}
+
+/* 🔹 정류장 박스 hover 시 */
+#arrivalPanelBody .arrival-card:hover {
+  background-color: #F0F9FF;
+}
+
+/* 🔹 상세 정보 텍스트 컬러 */
+#arrivalPanelBody .text-primary {
+  color: var(--medium-blue) !important;
+}
+
+/* 🔹 주변정류소 버튼 통일 스타일 */
+#busFilterPanel .btn-primary {
+  background-color: var(--medium-blue);
+  border-color: var(--medium-blue);
+  color: white;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+#busFilterPanel .btn-primary:hover {
+  background-color: var(--medium-blue-dark);
+  border-color: var(--medium-blue-dark);
 }

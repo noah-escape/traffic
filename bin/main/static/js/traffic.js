@@ -39,6 +39,8 @@ function resetPanelsAndCloseVideo() {
   window.clearBikeStations?.();
   window.clearSubwayLayer?.();
   window.clearStationMarkers?.();
+  window.clearNearbyStopMarkers?.();
+  window.clearStopMarkers?.();
 
   if (window.userPositionMarker) {
     window.userPositionMarker.setMap(null);
