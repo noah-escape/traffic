@@ -332,20 +332,7 @@ public class ApiProxyController {
         Element item = (Element) itemList.item(i);
 
         String routeNumber = getTagValue("rtNm", item);
-        String arrivalMsg = getTagValue("arrmsg1", item);
-        String congestionCode = getTagValue("reride_Num1", item);
         String routeTypeCode = getTagValue("routeType", item);
-        String plainNo = getTagValue("plainNo1", item); // 차량번호
-
-        // 혼잡도 → 텍스트 변환
-        String congestion = switch (congestionCode) {
-          case "3" -> "여유";
-          case "4" -> "보통";
-          case "5" -> "혼잡";
-          default -> "정보 없음";
-        };
-
-        // 버스 타입 코드 → 명칭 변환
         String routeType = switch (routeTypeCode) {
           case "1" -> "공항";
           case "2" -> "마을";
@@ -363,19 +350,12 @@ public class ApiProxyController {
           default -> "기타";
         };
 
-        // 🔎 운행 상태 판단
-        String status = arrivalMsg;
+        // 🕒 운행 시간 확인
+        boolean addedAsEnded = false;
+        boolean isNBus = routeNumber != null && routeNumber.startsWith("N");
+        boolean isLateNight = LocalTime.now().isAfter(LocalTime.of(23, 0))
+            || LocalTime.now().isBefore(LocalTime.of(4, 0));
 
-        if ("회차지".equalsIgnoreCase(arrivalMsg) || arrivalMsg.contains("회차지")) {
-          status = "회차 대기";
-        } else if ((arrivalMsg == null || arrivalMsg.isBlank()) &&
-            (congestionCode == null || congestionCode.isBlank()) &&
-            (plainNo == null || plainNo.isBlank())) {
-          status = "운행 대기";
-        }
-
-        // 🕒 운행시간 검사
-        boolean isOperational = true;
         String routeId = busStopRepository.findRouteIdByRouteNumber(routeNumber);
         if (routeId != null) {
           Map<String, String> timeInfo = fetchRouteTimes(routeId);
@@ -383,22 +363,53 @@ public class ApiProxyController {
             String first = timeInfo.get("firstTime");
             String last = timeInfo.get("lastTime");
             if (!isNowInServiceTime(first, last)) {
-              status = "운행 종료";
-              congestion = "운행 종료";
-              isOperational = false;
+              results.add(new BusArrivalDto(routeNumber, "운행 종료", "운행 종료", stopId, arsId, routeType));
+              addedAsEnded = true;
             }
+          }
+        } else {
+          // 🔸 routeId가 없으면 N버스 + 새벽 시간 외에는 운행 종료로 처리
+          if (!isNBus || !isLateNight) {
+            results.add(new BusArrivalDto(routeNumber, "운행 종료", "운행 종료", stopId, arsId, routeType));
+            addedAsEnded = true;
           }
         }
 
-        // 상태 덮어쓰기
-        BusArrivalDto dto = new BusArrivalDto(
-            routeNumber,
-            status,
-            congestion,
-            stopId,
-            arsId,
-            routeType);
-        results.add(dto);
+        if (addedAsEnded)
+          continue;
+
+        // 🚍 차량 1, 2 도착 정보
+        for (int j = 1; j <= 2; j++) {
+          String arrivalMsg = getTagValue("arrmsg" + j, item);
+          String congestionCode = getTagValue("reride_Num" + j, item);
+          String plainNo = getTagValue("plainNo" + j, item);
+
+          if ((arrivalMsg == null || arrivalMsg.isBlank()) &&
+              (congestionCode == null || congestionCode.isBlank()) &&
+              (plainNo == null || plainNo.isBlank())) {
+            continue;
+          }
+
+          String status;
+          if (arrivalMsg.contains("회차지")) {
+            status = "회차 대기";
+          } else if (arrivalMsg.equalsIgnoreCase("운행대기") ||
+              arrivalMsg.equalsIgnoreCase("도착정보 없음") ||
+              arrivalMsg.isBlank()) {
+            status = "운행 대기";
+          } else {
+            status = arrivalMsg;
+          }
+
+          String congestion = switch (congestionCode) {
+            case "3" -> "여유";
+            case "4" -> "보통";
+            case "5" -> "혼잡";
+            default -> "정보 없음";
+          };
+
+          results.add(new BusArrivalDto(routeNumber, status, congestion, stopId, arsId, routeType));
+        }
       }
 
       return ResponseEntity.ok(results);
@@ -408,6 +419,29 @@ public class ApiProxyController {
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body(List.of(new BusArrivalDto("오류", "도착 정보 파싱 실패", "정보 없음")));
     }
+  }
+
+  private int parseArrivalSeconds(String msg) {
+    if (msg == null)
+      return -1;
+    msg = msg.replaceAll("\\s+", "");
+
+    try {
+      if (msg.contains("분") && msg.contains("초")) {
+        String[] parts = msg.split("분|초");
+        return Integer.parseInt(parts[0]) * 60 + Integer.parseInt(parts[1]);
+      } else if (msg.contains("분")) {
+        return Integer.parseInt(msg.split("분")[0]) * 60;
+      } else if (msg.contains("초")) {
+        return Integer.parseInt(msg.split("초")[0]);
+      } else if (msg.contains("곧도착")) {
+        return 30;
+      }
+    } catch (Exception e) {
+      return -1;
+    }
+
+    return -1;
   }
 
   private Map<String, String> fetchRouteTimes(String routeId) {
