@@ -110,7 +110,6 @@
   <main class="flex-grow-1 py-5">
     <div class="container">
       <div class="row">
-
         <!-- 지도 영역 (왼쪽) -->
         <div class="col-md-7 mb-4">
           <div id="map" class="shadow-sm rounded"></div>
@@ -119,7 +118,6 @@
         <!-- 날씨 카드 (오른쪽) -->
         <div class="col-md-5">
           <div id="weather-box" class="card p-4 shadow-lg rounded-4 h-100 d-flex flex-column justify-content-between">
-
             <!-- 날짜/시간 -->
             <div class="text-end small text-muted mb-2">
               <span id="weather-date">--</span>
@@ -164,47 +162,67 @@
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- 예보 테이블 -->
-        <section class="content mt-5">
-          <div class="container-fluid">
-            <!-- 시간별 예보 -->
-            <div class="card mt-5">
-              <div class="card-header">
-                <h5 class="card-title">시간별 예보</h5>
-              </div>
-              <div class="card-body">
-                <div class="weather-scroll-wrapper">
-                  <div class="weather-scroll">
-                    <!-- JS가 시간별 카드 여기에 넣습니다 -->
+      <!-- 예보 테이블 -->
+      <section class="content mt-5">
+        <div class="container-fluid">
+          <!-- 시간별 예보 -->
+          <div class="card hourly-forecast-wrapper mt-5">
+            <div class="card-header">
+              <h5 class="card-title mb-0">시간별 예보</h5>
+            </div>
+            <!-- ✅ 고정 날짜 표시 라벨 -->
+  <div id="current-date-label" class="px-3 py-2 fw-semibold text-secondary sticky-top bg-light border-bottom">
+    날짜: -
+  </div>
+            <div class="card-body">
+              <div class="weather-scroll-wrapper">
+                <div class="weather-scroll">
+                  <!-- 시간별 예보 내부 반복 -->
+                  <div th:each="forecast, iterStat : ${hourlyForecasts}">
+                    <!-- 날짜가 바뀔 때만 날짜 구분자를 표시 -->
+                    <div
+                      th:if="${iterStat.index == 0 or #temporals.format(forecast.dateTime, 'yyyyMMdd') != #temporals.format(hourlyForecasts[iterStat.index - 1].dateTime, 'yyyyMMdd')}"
+                      class="weather-date-separator"
+                      th:attr="data-date=${#temporals.format(forecast.dateTime, 'yyyyMMdd')}"
+                      th:text="${#temporals.format(forecast.dateTime, 'M월 d일 (E)')}">
+                    </div>
+
+                    <!-- 예보 카드 내용 -->
+                    <div class="forecast-card">
+                      <div class="forecast-time" th:text="${#temporals.format(forecast.dateTime, 'HH:mm')}">--:--
+                      </div>
+                      <div class="forecast-temp" th:text="${forecast.temperature + '°C'}">--°C</div>
+                      <div class="forecast-desc" th:text="${forecast.description}">--</div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-
-          <!-- 일별 예보 -->
-          <div class="card">
-            <div class="card-header">
-              <h3 class="card-title">일별 예보</h3>
-            </div>
-            <div class="card-body">
-              <table class="table table-bordered" id="daily-forecast-table">
-                <thead>
-                  <tr>
-                    <th>날짜</th>
-                    <th>최저기온</th>
-                    <th>최고기온</th>
-                    <th>날씨</th>
-                  </tr>
-                </thead>
-                <tbody></tbody>
-              </table>
-            </div>
-          </div>
-      </div>
+        </div>
       </section>
 
+      <!-- 일별 예보 -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">일별 예보</h3>
+        </div>
+        <div class="card-body">
+          <table class="table table-bordered" id="daily-forecast-table">
+            <thead>
+              <tr>
+                <th>날짜</th>
+                <th>최저기온</th>
+                <th>최고기온</th>
+                <th>날씨</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
     </div>
     </div>
   </main>
