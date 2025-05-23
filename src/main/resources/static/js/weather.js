@@ -1,8 +1,12 @@
+let map;
+let currentMarker = null;
+
 document.addEventListener("DOMContentLoaded", () => {
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(onLocationSuccess, onLocationError);
   } else {
     alert("이 브라우저는 위치 정보를 지원하지 않습니다.");
+    showFallback("위치 정보 없음");
   }
 });
 
@@ -10,58 +14,70 @@ function onLocationSuccess(position) {
   const lat = position.coords.latitude;
   const lon = position.coords.longitude;
 
-  // ✅ 지도 표시
-  const map = new naver.maps.Map('map', {
+  map = new naver.maps.Map('map', {
     center: new naver.maps.LatLng(lat, lon),
     zoom: 5
   });
 
-  new naver.maps.Marker({
+  currentMarker = new naver.maps.Marker({
     position: new naver.maps.LatLng(lat, lon),
     map: map,
     title: "현재 위치"
   });
 
-  // ✅ 날씨 API 호출
-  fetch(`/api/proxy/kma-weather?lat=${lat}&lon=${lon}`)
-    .then(res => res.text())
-    .then(raw => {
-      try {
-        const data = JSON.parse(raw);
-        const items = data.response?.body?.items?.item ?? [];
+  naver.maps.Event.addListener(map, 'click', function (e) {
+    const lat = e.coord.lat();
+    const lon = e.coord.lng();
+    updateMapAndWeather(lat, lon);
+  });
 
-        const temp = safeFindValue(items, "T1H");        // 기온
-        const humidity = safeFindValue(items, "REH");    // 습도
-        const wind = safeFindValue(items, "WSD");        // 풍속
-        const windDeg = safeFindValue(items, "VEC");     // 풍향
-        const pty = safeFindValue(items, "PTY");         // 강수형태
-        const sky = safeFindValue(items, "SKY");         // 하늘상태
-        const rain = safeFindValue(items, "RN1");        // 1시간 강수량
-
-        updateWeatherCard({
-          temp,
-          humidity,
-          wind,
-          windDeg,
-          pty,
-          sky,
-          rain
-        });
-
-        const baseDate = items[0]?.baseDate;
-        const baseTime = items[0]?.baseTime;
-        updateWeatherTime(baseDate, baseTime);
-
-      } catch (err) {
-        console.error("❌ JSON 파싱 실패:", raw);
-        showFallback("날씨 응답 오류");
-      }
-    });
+  updateMapAndWeather(lat, lon);
 }
 
 function onLocationError(error) {
-  console.error("❌ 위치 정보를 가져올 수 없습니다.", error);
+  console.error("❌ 위치 정보 에러:", error);
   showFallback("위치 정보 없음");
+}
+
+function updateMapAndWeather(lat, lon) {
+  const position = new naver.maps.LatLng(lat, lon);
+  if (map) {
+    
+    if (currentMarker) {
+      currentMarker.setMap(null);
+    }
+
+    currentMarker = new naver.maps.Marker({
+      position,
+      map,
+      title: "선택 위치"
+    });
+  }
+
+  fetch(`/api/weather/full?lat=${lat}&lon=${lon}`)
+    .then(response => response.json())
+    .then(data => {
+      renderHourlyForecast(data.forecast);
+      renderDailyForecast(data.daily);
+
+      const items = data.current?.response?.body?.items?.item ?? [];
+
+      updateWeatherCard({
+        temp: safeFindValue(items, "T1H"),
+        humidity: safeFindValue(items, "REH"),
+        wind: safeFindValue(items, "WSD"),
+        windDeg: safeFindValue(items, "VEC"),
+        pty: safeFindValue(items, "PTY"),
+        sky: safeFindValue(items, "SKY"),
+        rain: safeFindValue(items, "RN1")
+      });
+
+      updateWeatherTime(items[0]?.baseDate, items[0]?.baseTime);
+    })
+    .catch(error => {
+      console.error('🌩️ 날씨 불러오기 실패:', error);
+      showFallback("날씨 정보 없음");
+    });
 }
 
 function safeFindValue(items, category) {
@@ -70,16 +86,16 @@ function safeFindValue(items, category) {
 }
 
 function updateWeatherTime(baseDate, baseTime) {
-  // 날짜 포맷: 20250520 → 05.20. (화)
+  if (!baseDate || !baseTime) return;
+
   const dateStr = baseDate.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
   const date = new Date(dateStr);
   const formattedDate = date.toLocaleDateString('ko-KR', {
     month: '2-digit',
     day: '2-digit',
     weekday: 'short'
-  }).replace(/\./g, '').replace(' ', '. '); // → 05.20. (화)
+  }).replace(/\./g, '').replace(' ', '. ');
 
-  // 시간 포맷: 1800 → 오후 6:00 기준
   const hour = parseInt(baseTime.substring(0, 2));
   const minute = parseInt(baseTime.substring(2));
   const dateObj = new Date();
@@ -90,51 +106,25 @@ function updateWeatherTime(baseDate, baseTime) {
     hour12: true
   }) + " 기준 데이터";
 
-  // 화면에 출력
   document.getElementById("weather-date").textContent = formattedDate;
   document.getElementById("weather-time").textContent = formattedTime;
 }
 
 function updateWeatherCard(data) {
   const { temp, humidity, wind, windDeg, pty, sky, rain } = data;
-
   const feelsLike = estimateFeelsLike(temp, humidity, wind);
 
   document.getElementById("weather-temp").textContent = temp !== null ? `${temp}°C` : "--°C";
   document.getElementById("feels-like").textContent = feelsLike !== null ? `${feelsLike}°C` : "--°C";
   document.getElementById("weather-humidity").textContent = humidity !== null ? `${humidity}%` : "--%";
-
-  const windText = wind !== null ? `${wind} m/s` : "-- m/s";
-  const windDir = windDeg !== null ? ` ${degToDir(windDeg)}` : "";
   document.getElementById("weather-wind").textContent = wind !== null ? `${wind} m/s` : "--";
   document.getElementById("weather-wind-dir").textContent = windDeg !== null ? degToDir(windDeg) : "--";
-
-
-  document.getElementById("weather-rain").textContent =
-    rain !== null && rain !== "0" ? `${rain} mm` : "- mm";
+  document.getElementById("weather-rain").textContent = rain !== null && rain !== "0" ? `${rain} mm` : "- mm";
 }
 
 function estimateFeelsLike(temp, humidity, wind) {
   if (!temp || !humidity || !wind) return null;
   return (parseFloat(temp) + parseFloat(humidity) * 0.05 - parseFloat(wind) * 0.3).toFixed(1);
-}
-
-function getWeatherDescription(pty, sky) {
-  if (pty === "0") {
-    switch (sky) {
-      case "1": return "맑음";
-      case "3": return "구름 많음";
-      case "4": return "흐림";
-      default: return "알 수 없음";
-    }
-  }
-  switch (pty) {
-    case "1": return "비";
-    case "2": return "비/눈";
-    case "3": return "눈";
-    case "4": return "소나기";
-    default: return "강수정보 없음";
-  }
 }
 
 function degToDir(deg) {
@@ -148,33 +138,31 @@ function showFallback(message = "날씨 정보 없음") {
   document.getElementById("weather-temp").textContent = "--°C";
   document.getElementById("feels-like").textContent = "--°C";
   document.getElementById("weather-humidity").textContent = "--%";
-  document.getElementById("weather-wind").textContent = "-- m/s";
+  document.getElementById("weather-wind").textContent = "--";
+  document.getElementById("weather-wind-dir").textContent = "--";
   document.getElementById("weather-rain").textContent = "- mm";
 }
 
-document.addEventListener('DOMContentLoaded', function () {
-  const lat = 37.5665;
-  const lon = 126.9780;
-
-  fetch(`/api/weather/full?lat=${lat}&lon=${lon}`)
-    .then(response => response.json())
-    .then(data => {
-      renderHourlyForecast(data.forecast);
-      renderDailyForecast(data.daily);
-    })
-    .catch(error => console.error('Weather load error:', error));
-});
-
 function renderHourlyForecast(forecastData) {
   const tbody = document.querySelector('#hourly-forecast-table tbody');
+  if (!tbody) return;
   tbody.innerHTML = '';
 
-  forecastData.items?.forEach(item => {
+  const items = forecastData?.response?.body?.items?.item ?? [];
+  const grouped = {};
+
+  items.forEach(item => {
+    const time = item.fcstTime;
+    if (!grouped[time]) grouped[time] = {};
+    grouped[time][item.category] = item.fcstValue;
+  });
+
+  Object.entries(grouped).forEach(([fcstTime, values]) => {
     const row = `<tr>
-      <td>${item.fcstTime}</td>
-      <td>${item.T1H ?? '-'}</td>
-      <td>${item.POP ?? '-'}</td>
-      <td>${item.WEATHER ?? '-'}</td>
+      <td>${fcstTime}</td>
+      <td>${values.T1H ?? '-'}</td>
+      <td>${values.POP ?? '-'}</td>
+      <td>${getWeatherDesc(values)}</td>
     </tr>`;
     tbody.insertAdjacentHTML('beforeend', row);
   });
@@ -182,15 +170,35 @@ function renderHourlyForecast(forecastData) {
 
 function renderDailyForecast(dailyData) {
   const tbody = document.querySelector('#daily-forecast-table tbody');
+  if (!tbody) return;
   tbody.innerHTML = '';
 
-  dailyData.items?.forEach(day => {
+  const items = dailyData?.response?.body?.items?.item ?? [];
+  const grouped = {};
+
+  items.forEach(item => {
+    const date = item.fcstDate;
+    if (!grouped[date]) grouped[date] = {};
+    grouped[date][item.category] = item.fcstValue;
+  });
+
+  Object.entries(grouped).forEach(([fcstDate, values]) => {
     const row = `<tr>
-      <td>${day.fcstDate}</td>
-      <td>${day.TMN ?? '-'}</td>
-      <td>${day.TMX ?? '-'}</td>
-      <td>${day.WEATHER ?? '-'}</td>
+      <td>${fcstDate}</td>
+      <td>${values.TMN ?? '-'}</td>
+      <td>${values.TMX ?? '-'}</td>
+      <td>${getWeatherDesc(values)}</td>
     </tr>`;
     tbody.insertAdjacentHTML('beforeend', row);
   });
+}
+
+function getWeatherDesc(values) {
+  const sky = values.SKY;
+  const pty = values.PTY;
+  if (pty && pty !== "0") return "비";
+  if (sky === "1") return "맑음";
+  if (sky === "3") return "구름 많음";
+  if (sky === "4") return "흐림";
+  return "-";
 }

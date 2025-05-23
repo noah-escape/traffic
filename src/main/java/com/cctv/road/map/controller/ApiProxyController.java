@@ -81,6 +81,11 @@ public class ApiProxyController {
 
   @GetMapping("/naver-place")
   public Mono<String> searchPlace(@RequestParam String query) {
+    // 2글자 이상 필터링 (너무 짧거나 초성만 들어오면 403 가능)
+    if (query == null || query.trim().length() < 2) {
+      return Mono.just("{\"error\":\"검색어는 2글자 이상이어야 합니다.\"}");
+    }
+
     return naverClient.get()
         .uri(uriBuilder -> uriBuilder
             .path("/map-place/v1/search")
