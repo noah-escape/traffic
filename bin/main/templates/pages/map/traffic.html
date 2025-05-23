@@ -119,7 +119,6 @@
     <!-- 사이드바 버튼 -->
     <aside class="sidebar">
       <button id="sidebarCctvBtn" title="CCTV"><i class="fas fa-video"></i></button>
-      <button id="sidebarTrafficBtn" title="실시간 정체현황"><i class="fas fa-solid fa-gauge-high"></i></button>
       <button id="sidebarEventBtn" title="도로 이벤트"><i
           class="fas fa-triangle-exclamation popup-box event-popup"></i></button>
       <button id="sidebarBusBtn" title="버스 위치"><i class="fas fa-bus"></i></button>
@@ -132,11 +131,13 @@
     <!-- 지도 -->
     <div id="map" style="width: 100%; height: 100vh;"></div>
 
-    <!-- 지도 타입 버튼 -->
+    <!-- 지도 타입 + 교통정보 토글 그룹 -->
     <div id="mapTypeControl" class="btn-group btn-group-sm position-absolute top-0 end-0 m-3 shadow" role="group">
       <button class="btn btn-outline-light active" data-type="NORMAL"><i class="fas fa-map"></i> 일반</button>
       <button class="btn btn-outline-light" data-type="SATELLITE"><i class="fas fa-satellite"></i> 위성</button>
       <button class="btn btn-outline-light" data-type="HYBRID"><i class="fas fa-layer-group"></i> 지형</button>
+      <button id="toggleTrafficLayer" class="btn btn-outline-light" data-type="TRAFFIC"><i class="fas fa-road"></i>
+        교통정보</button>
     </div>
 
     <!-- 커스텀 줌 컨트롤 -->
@@ -189,7 +190,7 @@
       <div class="flex-shrink-0">
         <div class="bg-primary text-white py-2 px-3 d-flex justify-content-between align-items-center">
           <h5 class="mb-0"><i class="bi bi-signpost-2-fill me-1"></i> 버스 정보</h5>
-          <button class="btn btn-sm btn-light" onclick="resetParkingPanel()" title="목록 초기화">
+          <button id="resetMapBtn" class="btn btn-sm btn-light" onclick="resetBusStopPanel()" title="목록 초기화">
             <i class="bi bi-arrow-clockwise"></i>
           </button>
         </div>
@@ -204,7 +205,7 @@
 
           <!-- 버스 번호 검색 -->
           <div class="input-group">
-            <input type="text" id="routeInput" class="form-control" placeholder="버스 번호 입력 (예: 1002)">
+            <input type="text" id="routeInput" class="form-control" placeholder="버스 번호 입력 (예: 100)">
             <button class="btn btn-primary" onclick="searchBusRoute()">검색</button>
           </div>
 
@@ -261,11 +262,10 @@
     </div>
 
     <!-- ✅ 교통속도 범례 박스 (기본은 숨김) -->
-    <div id="trafficLegendBox" class="bottom-0 end-0 m-3 p-2 bg-white shadow-sm rounded" style="display: none;">
-      <strong>🚦 교통속도 범례</strong><br />
-      <span style="color:#00C851;">●</span> 빠름 (60km/h 이상)<br />
-      <span style="color:#ffbb33;">●</span> 보통 (30~60km/h)<br />
-      <span style="color:#ff4444;">●</span> 느림 (30km/h 이하)
+    <div id="trafficLegendBox" class="traffic-legend-box">
+      <div><span class="legend-box" style="background-color: #28a745;"></span> 원활 (41km/h 이상)</div>
+      <div><span class="legend-box" style="background-color: #ffc107;"></span> 보통 (21~40km/h)</div>
+      <div><span class="legend-box" style="background-color: #dc3545;"></span> 정체 (0~20km/h)</div>
     </div>
 
     <!-- ✅ 오른쪽 전국 이벤트 리스트 패널 -->
@@ -444,6 +444,21 @@
     <div id="routePanel" class="bus-route-panel" style="display: none;">
       <div class="header" id="routePanelHeader"></div>
       <div class="route-timeline" id="routeTimelineContainer"></div>
+    </div>
+
+    <!-- 🟢 노선 정보 패널 상단 -->
+    <div id="busRoutePanel" class="offcanvas offcanvas-end">
+      <div class="offcanvas-header">
+        <h5 id="routeHeader">노선 제목</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+      </div>
+      <div class="offcanvas-body">
+        <div id="routeSubInfo" class="text-muted mb-2">부제목 정보</div>
+
+        <div id="busStopListContainer">
+          <!-- 정류장 목록이 여기 채워짐 -->
+        </div>
+      </div>
     </div>
 
 </body>
