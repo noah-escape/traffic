@@ -316,10 +316,10 @@ function drawStopMarkers(stops, isRouteMarkers = false, isNearby = false) {
 
       const icon = isRouteMarkers
         ? {
-            url: "/image/bus/bus-stop-route.png",
-            size: new naver.maps.Size(16, 16),
-            anchor: new naver.maps.Point(8, 16)
-          }
+          url: "/image/bus/bus-stop-route.png",
+          size: new naver.maps.Size(16, 16),
+          anchor: new naver.maps.Point(8, 16)
+        }
         : normalIcon;
 
       const marker = new naver.maps.Marker({
@@ -456,110 +456,120 @@ function showArrivalModal(arrivals, stopName = "정류소") {
   const container = document.getElementById("arrivalPanelBody");
   if (!container) return;
 
-  // 기존 타이머 제거
   Object.values(arrivalTimers).forEach(clearInterval);
   arrivalTimers = {};
 
-  const soon = [], running = [], waiting = [], turning = [], ended = [], unknown = [];
+  // 그룹별 데이터
+  const groups = {
+    soon: [],
+    running: [],
+    waiting: [],
+    ended: [],
+    unknown: []
+  };
 
-  const sorted = [...arrivals].sort((a, b) =>
-    a.routeNumber.localeCompare(b.routeNumber, 'ko', { numeric: true })
+  // 버스번호로 그룹화 후 2대씩 병합
+  const grouped = {};
+  arrivals.forEach((item, idx) => {
+    const routeNumber = item.routeNumber;
+    if (!grouped[routeNumber]) grouped[routeNumber] = [];
+    grouped[routeNumber].push({ ...item, idx });
+  });
+
+  const sortedKeys = Object.keys(grouped).sort((a, b) =>
+    parseInt(a.replace(/\D/g, ""), 10) - parseInt(b.replace(/\D/g, ""), 10)
   );
 
-  sorted.forEach((item, idx) => {
-    const routeNumber = item.routeNumber;
-    const routeType = item.routeType || "기타";
-    const typeClass = typeColorMap[routeType] || "bg-light text-dark";
-    const congestionClass = getCongestionClass(item.congestion);
+  sortedKeys.forEach(routeNumber => {
+    const list = grouped[routeNumber];
+    const first = list[0];
+    const second = list[1];
 
-    let statusText = item.arrivalTime;
-    let category = 'unknown';
-    const sec = parseArrivalSeconds(item.arrivalTime);
+    const typeClass = typeColorMap[first.routeType || "기타"] || "bg-light text-dark";
+    const sec1 = parseArrivalSeconds(first.arrivalTime);
+    const sec2 = second ? parseArrivalSeconds(second.arrivalTime) : null;
 
-    // 상태 분류
-    if (statusText === "운행 종료") {
-      category = "ended";
-    } else if (statusText?.includes("회차")) {
-      statusText = "회차 대기";
-      category = "turning";
-    } else if (statusText?.includes("대기")) {
-      statusText = "운행 대기";
-      category = "waiting";
-    } else if (sec !== null && sec <= 60) {
-      statusText = "곧 도착";
-      category = "soon";
-    } else if (sec !== null) {
-      statusText = `⏱ ${formatArrivalSec(sec)}`;
-      category = "running";
-    }
+    const groupKey = (() => {
+      if (first.arrivalTime === "운행 종료") return "ended";
+      if (first.arrivalTime?.includes("대기") || first.arrivalTime?.includes("없음")) return "waiting";
+      if (sec1 != null && sec1 <= 60) return "soon";
+      if (sec1 != null) return "running";
+      return "unknown";
+    })();
+
+    const formatTime = sec => {
+      if (sec == null) return "-";
+      if (sec <= 60) return "곧 도착";
+      return `⏱ ${formatArrivalSec(sec)}`;
+    };
 
     const html = `
       <div class="arrival-card border-bottom py-2 arrival-item" data-route="${routeNumber}" style="cursor: pointer;">
-        <div class="d-flex justify-content-between align-items-center">
-          <div class="d-flex align-items-center flex-grow-1">
-            <div class="bus-number-box ${typeClass} text-white fw-bold text-center me-2"
-                 style="min-width: 50px; height: 32px; line-height: 32px; border-radius: 4px;">
-              ${routeNumber}
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="bus-number-box ${typeClass} text-white fw-bold text-center me-3"
+               style="min-width: 50px; height: 32px; line-height: 32px; border-radius: 4px;">
+            ${routeNumber}
+          </div>
+          <div class="flex-grow-1 d-flex justify-content-between align-items-center small w-100">
+            <div style="min-width: 80px;">
+              <span id="arrivalTime${first.idx}">${formatTime(sec1)}</span>
+              ${first.congestion ? `<span class="badge ${getCongestionBadgeClass(first.congestion)} ms-1">${first.congestion}</span>` : ""}
             </div>
-            <div class="flex-grow-1">
-              <div class="d-flex justify-content-between small">
-                <div id="arrivalTime${idx}" class="${congestionClass}">
-                  ${statusText}
-                </div>
-                <div class="${congestionClass}" style="min-width: 50px; text-align: right;">
-                  ${item.congestion || '정보 없음'}
-                </div>
-              </div>
+            <div style="min-width: 80px;">
+              <span>${formatTime(sec2)}</span>
+              ${second?.congestion ? `<span class="badge ${getCongestionBadgeClass(second.congestion)} ms-1">${second.congestion}</span>` : ""}
             </div>
           </div>
         </div>
       </div>
     `;
 
-    switch (category) {
-      case 'soon': soon.push({ html, idx, sec }); break;
-      case 'running': running.push({ html, idx, sec }); break;
-      case 'waiting': waiting.push({ html, idx }); break;
-      case 'turning': turning.push({ html, idx }); break;
-      case 'ended': ended.push({ html, idx }); break;
-      default: unknown.push({ html, idx }); break;
-    }
+    groups[groupKey].push({ html, idx: first.idx, sec: sec1, routeNumber });
   });
 
-  // 렌더링
+  // 렌더링 시작
   container.innerHTML = `<h5 class="mb-3"><i class="bi bi-bus-front-fill me-1"></i>${stopName}</h5>`;
 
-  if (soon.length > 0) {
-    container.innerHTML += `<div class="text-danger fw-bold mb-2">🚨 곧 도착</div>`;
-    container.innerHTML += soon.map(e => e.html).join('');
-  }
-  if (running.length > 0) {
-    container.innerHTML += `<div class="text-success mt-3 mb-2">🟢 운행 중</div>`;
-    container.innerHTML += running.map(e => e.html).join('');
-  }
-  if (waiting.length > 0 || turning.length > 0) {
-    container.innerHTML += `<div class="text-warning mt-3 mb-2">⏳ 운행 대기</div>`;
-    container.innerHTML += [...waiting, ...turning].map(e => e.html).join('');
-  }
-  if (ended.length > 0) {
-    container.innerHTML += `<div class="text-danger mt-3 mb-2">⛔ 운행 종료</div>`;
-    container.innerHTML += ended.map(e => e.html).join('');
-  }
+  const renderGroup = (title, className, list) => {
+    if (list.length === 0) return;
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = `<div class="${className} fw-bold mb-2 mt-3">${title}</div>` +
+      list.map(e => e.html).join('');
+    container.appendChild(wrapper);
+  };
 
-  // 타이머 실행
-  [...soon, ...running].forEach(({ idx, sec }) => {
+  renderGroup("🚨 곧 도착", "text-danger", groups.soon);
+  renderGroup("🟢 운행 중", "text-success", groups.running);
+  renderGroup("⏳ 운행 대기", "text-warning", groups.waiting);
+  renderGroup("⛔ 운행 종료", "text-muted", groups.ended);
+
+  // 타이머 적용 (곧 도착 + 운행 중)
+  [...groups.soon, ...groups.running].forEach(({ idx, sec, routeNumber }) => {
     if (sec == null) return;
-    arrivalTimers[idx] = setInterval(() => {
-      const el = document.getElementById(`arrivalTime${idx}`);
-      if (!el) return;
-      sec--;
-      if (sec <= 0) {
-        el.textContent = "도착";
-        clearInterval(arrivalTimers[idx]);
+
+    let currentSec = sec;
+    const timeEl = document.getElementById(`arrivalTime${idx}`);
+    const cardEl = document.querySelector(`.arrival-item[data-route="${routeNumber}"]`);
+
+    const intervalId = setInterval(() => {
+      currentSec--;
+      if (!timeEl || !cardEl) {
+        clearInterval(intervalId);
+        return;
+      }
+
+      if (currentSec <= 0) {
+        timeEl.textContent = "도착";
+        clearInterval(intervalId);
+        setTimeout(() => cardEl?.remove(), 5000);
+      } else if (currentSec <= 60) {
+        timeEl.textContent = "곧 도착";
       } else {
-        el.textContent = `⏱ ${formatArrivalSec(sec)}`;
+        timeEl.textContent = `⏱ ${formatArrivalSec(currentSec)}`;
       }
     }, 1000);
+
+    arrivalTimers[idx] = intervalId;
   });
 }
 
@@ -595,11 +605,11 @@ function makeHtml(idx, routeNumber, typeClass, statusText, congestionClass, item
   `;
 }
 
-function getCongestionClass(text) {
-  if (text === "여유") return "text-success";
-  if (text === "보통") return "text-warning";
-  if (text === "혼잡") return "text-danger";
-  return "text-muted";
+function getCongestionBadgeClass(text) {
+  if (text === "여유") return "bg-success text-white";
+  if (text === "보통") return "bg-warning text-dark";
+  if (text === "혼잡") return "bg-danger text-white";
+  return "bg-secondary text-white";
 }
 
 // 🔧 이벤트 위임으로 상세 표시
@@ -649,7 +659,7 @@ function clearRouteDisplay() {
     window.routeMarkers.forEach(marker => marker.setMap(null));
     window.routeMarkers = [];
   }
-    
+
   // 🆕 내부 상태 초기화
   window.currentRouteId = null;
   window.routeStops = [];
@@ -881,7 +891,7 @@ window.findNearbyStops = async function () {
 
     // 지도 이동
     map.setCenter(new naver.maps.LatLng(lat, lng));
-    map.setZoom(17);
+    map.setZoom(18);
 
     // 사용자 위치 마커
     if (window.userPositionMarker) {

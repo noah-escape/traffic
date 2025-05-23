@@ -986,3 +986,8 @@ body.dark-mode {
   background-color: var(--medium-blue-dark);
   border-color: var(--medium-blue-dark);
 }
+
+#arrivalPanelBody {
+  max-height: calc(100vh - 300px); /* 또는 적절한 값으로 조정 */
+  overflow-y: auto;
+}
