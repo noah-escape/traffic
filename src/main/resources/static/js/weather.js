@@ -9,26 +9,57 @@ document.addEventListener("DOMContentLoaded", () => {
     showFallback("위치 정보 없음");
   }
 
-  // ✅ 날짜 라벨 스크롤 이벤트 등록
-  const dateLabel = document.getElementById("current-date-label");
-  if (dateLabel) {
-    const wrapper = document.querySelector('.weather-scroll-wrapper');
-    wrapper.addEventListener('scroll', () => {
-      const cards = document.querySelectorAll('.weather-hour');
-      const containerRect = wrapper.getBoundingClientRect();
+  let locationData = [];
 
-      for (let card of cards) {
-        const cardRect = card.getBoundingClientRect();
-        if (cardRect.right > containerRect.left) {
-          const date = card.getAttribute('data-date');
-          if (date) {
-            dateLabel.textContent = formatDateToKorean(date);
-          }
-          break;
-        }
-      }
+  fetch('/json/weather.json') // 경로 확인!
+    .then(res => res.json())
+    .then(data => locationData = data);
+
+  const input = document.getElementById("locationSearch");
+  const list = document.getElementById("autocompleteList");
+
+  input.addEventListener("input", () => {
+    const keyword = input.value.trim();
+    list.innerHTML = "";
+    if (keyword.length < 1) {
+      list.style.display = "none";
+      return;
+    }
+
+    const matches = locationData.filter(loc => loc.name.includes(keyword)).slice(0, 10);
+    if (matches.length === 0) {
+      list.style.display = "none";
+      return;
+    }
+
+    matches.forEach(loc => {
+      const li = document.createElement("li");
+      li.className = "list-group-item autocomplete-item";
+      li.textContent = loc.name;
+      li.addEventListener("click", () => {
+        input.value = loc.name;
+        list.innerHTML = "";
+        list.style.display = "none";
+        updateMapAndWeather(loc.lat, loc.lon);
+      });
+      list.appendChild(li);
     });
-  }
+
+    list.style.display = "block";
+  });
+
+  document.getElementById("searchBtn").addEventListener("click", () => {
+    const keyword = input.value.trim();
+    const found = locationData.find(loc => loc.name === keyword);
+    if (found) {
+      updateMapAndWeather(found.lat, found.lon);
+    } else {
+      alert("해당 지역을 찾을 수 없습니다.");
+    }
+  });
+
+
+
 });
 
 function onLocationSuccess(position) {
@@ -60,7 +91,18 @@ function onLocationError(error) {
   showFallback("위치 정보 없음");
 }
 
+function showLoading() {
+  const loading = document.getElementById("weather-loading");
+  loading.classList.add("show");
+}
+
+function hideLoading() {
+  const loading = document.getElementById("weather-loading");
+  loading.classList.remove("show");
+}
+
 function updateMapAndWeather(lat, lon) {
+  showLoading();
   const position = new naver.maps.LatLng(lat, lon);
   if (map) {
     if (currentMarker) {
@@ -77,6 +119,7 @@ function updateMapAndWeather(lat, lon) {
   fetch(`/api/weather/full?lat=${lat}&lon=${lon}`)
     .then(response => response.json())
     .then(data => {
+      console.log("✅ 날씨 응답", data);
       renderHourlyForecast(data.daily);
       renderDailyForecast(data.daily);
 
@@ -96,6 +139,9 @@ function updateMapAndWeather(lat, lon) {
     .catch(error => {
       console.error('🌩️ 날씨 불러오기 실패:', error);
       showFallback("날씨 정보 없음");
+    })
+    .finally(() => {
+      hideLoading(); // ✅ 마지막에 숨기기
     });
 }
 
@@ -138,7 +184,7 @@ function updateWeatherCard(data) {
   document.getElementById("weather-humidity").textContent = humidity !== null ? `${humidity}%` : "--%";
   document.getElementById("weather-wind").textContent = wind !== null ? `${wind} m/s` : "--";
   document.getElementById("weather-wind-dir").textContent = windDeg !== null ? degToDir(windDeg) : "--";
-  document.getElementById("weather-rain").textContent = rain !== null && rain !== "0" ? `${rain} mm` : "- mm";
+  document.getElementById("weather-rain").textContent = rain !== null && rain !== "0" ? `${rain} mm` : "0 mm";
 }
 
 function estimateFeelsLike(temp, humidity, wind) {
@@ -151,6 +197,20 @@ function degToDir(deg) {
     '남', '남남서', '남서', '서남서', '서', '서북서', '북서', '북북서'];
   const index = Math.round(deg / 22.5) % 16;
   return dirs[index];
+}
+
+function getWindArrow8Dir(deg) {
+  const arrows = ['↑', '↗', '→', '↘', '↓', '↙', '←', '↖'];
+  const index = Math.round(deg / 45) % 8;
+  return arrows[index]; // ✅ 화살표만 반환
+}
+
+function getWindStrengthDesc(speed) {
+  const w = parseFloat(speed);
+  if (isNaN(w)) return "-";
+  if (w < 3.4) return "약";
+  if (w < 6.7) return "보통";
+  return "강";
 }
 
 function showFallback(message = "날씨 정보 없음") {
@@ -215,40 +275,49 @@ function renderHourlyForecast(forecastData) {
     grouped[date][time][item.category] = item.fcstValue;
   });
 
-  Object.entries(grouped)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .forEach(([fcstDate, timeGroup]) => {
-      Object.entries(timeGroup)
-        .sort(([a], [b]) => a.localeCompare(b))
-        .forEach(([fcstTime, values]) => {
-          const hour = fcstTime.slice(0, 2);
-          const icon = getWeatherIcon(values);
-          const windDir = degToDir(values.VEC);
-          const windDesc = values.WSD ? `${windDir} 약` : "-";
+  Object.entries(grouped).sort().forEach(([date, timeGroup]) => {
+    const block = document.createElement('div');
+    block.className = 'weather-date-block';
 
-          const hourEl = document.createElement('div');
-          hourEl.className = 'weather-hour';
-          hourEl.setAttribute('data-date', fcstDate);
-          hourEl.innerHTML = `
-            <div class="time">${hour}시</div>
-            <div class="icon">${icon}</div>
-            <div class="temp">${values.TMP ?? "--"}℃</div>
-            <div class="rain">${values.POP ?? "--"}%</div>
-            <div class="wind">${windDesc}</div>
-          `;
-          container.appendChild(hourEl);
-        });
+    const label = document.createElement('div');
+    label.className = 'weather-date-label';
+    label.textContent = formatDateToKorean(date);
+
+    const row = document.createElement('div');
+    row.className = 'weather-hour-row';
+
+    Object.entries(timeGroup).sort().forEach(([time, values]) => {
+      const hour = time.slice(0, 2);
+      const icon = getWeatherIcon(values);
+
+      let windHTML = "-";
+      if (values.VEC && values.WSD) {
+        const arrow = getWindArrow8Dir(parseFloat(values.VEC));
+        const strength = getWindStrengthDesc(values.WSD);
+        windHTML = `
+          <div class="text-center">
+            <div style="font-size: 1.25rem;">${arrow}</div>
+            <div class="small text-muted">${strength} (${parseFloat(values.WSD).toFixed(1)} m/s)</div>
+          </div>
+        `;
+      }
+
+      const card = document.createElement('div');
+      card.className = 'weather-hour';
+      card.innerHTML = `
+        <div class="time">${hour}시</div>
+        <div class="icon">${icon}</div>
+        <div class="temp">${values.TMP ?? "--"}℃</div>
+        <div class="rain">${values.POP ?? "--"}%</div>
+        <div class="wind">${windHTML}</div>
+      `;
+      row.appendChild(card);
     });
-  // ✅ 날짜 라벨 초기값 설정
-  const firstCard = document.querySelector('.weather-hour');
-  const dateLabel = document.getElementById('current-date-label');
-  if (firstCard && dateLabel) {
-    const firstDate = firstCard.getAttribute('data-date');
-    if (firstDate) {
-      dateLabel.textContent = formatDateToKorean(firstDate);
-    }
-  }
 
+    block.appendChild(label);
+    block.appendChild(row);
+    container.appendChild(block);
+  });
 }
 
 function formatDateToKorean(dateStr) {
