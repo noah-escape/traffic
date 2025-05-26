@@ -64,7 +64,7 @@ public class SecurityConfig {
             .requestMatchers(
                 "/api/proxy/**", "/api/proxy/bus/**",
                 "/api/proxy/naver-driving-path",
-                "/", "/login", "/register/**",
+                "/", "/login", "/register/**", "/login/oauth2/**",
                 "/css/**", "/js/**", "/image/**", "/favicon.ico",
                 "/json/**", "/pages/**", "/api/**",
                 "/member/find/**", "/find-id", "/find-password",
