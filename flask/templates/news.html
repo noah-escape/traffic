@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>📢 최신 교통 뉴스</title>
+  <meta http-equiv="refresh" content="3600">
+</head>
+<body>
+  <h1>📢 최신 교통 뉴스</h1>
+
+  <!-- ✅ 카테고리 필터 버튼 -->
+  <div>
+    {% for cat in ['전체', '지하철', '택시', '교통정책'] %}
+      {% if selected == cat %}
+        <a href="{{ url_for('news.news_page') }}?category={{ cat }}"
+           style="margin-right: 10px; font-weight: bold;">
+          {{ cat }}
+        </a>
+      {% else %}
+        <a href="{{ url_for('news.news_page') }}?category={{ cat }}"
+           style="margin-right: 10px;">
+          {{ cat }}
+        </a>
+      {% endif %}
+    {% endfor %}
+  </div>
+
+  <hr>
+
+  <!-- 뉴스 리스트 -->
+<ul>
+  {% for article in articles %}
+    <li style="margin-bottom: 30px;">
+      {% if article.thumbnail %}
+        <img src="{{ article.thumbnail }}" alt="썸네일" width="150"><br>
+      {% endif %}
+      <a href="{{ article.link }}" target="_blank">{{ article.title }}</a><br>
+      <small>{{ article.date }} - {{ article.source }}</small><br>
+      {% if article.summary %}
+        <p>{{ article.summary }}</p>
+      {% endif %}
+    </li>
+  {% endfor %}
+</ul>
+
+</body>
+</html>
