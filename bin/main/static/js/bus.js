@@ -12,6 +12,7 @@ let routeStops = [];       // 검색한 노선의 정류소
 let currentRouteId = null; // 현재 활성화된 노선 ID
 let nearbyStopMarkers = []; // ✅ 주변 정류소 마커 저장용
 window.nearbyStopMarkers = nearbyStopMarkers;
+let arrivalAutoRefreshTimer = null;
 
 const typeColorMap = {
   "간선": "bg-primary",
@@ -441,12 +442,20 @@ async function loadBusStopsByRegion(region) {
 }
 
 function onBusStopClick(stopId, arsId = "01", stopName = "정류소") {
+  // 전역 변수에 저장 (자동 새로고침을 위한 정보)
+  window.lastStopId = stopId;
+  window.lastArsId = arsId;
+  window.lastStopName = stopName;
+
+  // 도착 정보 불러오기
   fetch(`/api/proxy/bus/arrivals?stopId=${stopId}&arsId=${arsId}`)
     .then(res => res.json())
     .then(arrivals => {
       showArrivalModal(arrivals, stopName); // ✅ 정류소명 전달
+      startArrivalAutoRefresh();            // ✅ 30초 주기 자동 새로고침 시작
     });
 
+  // 정류소를 지나는 노선 목록도 함께 표시
   fetch(`/api/proxy/bus/routes?stopId=${stopId}`)
     .then(res => res.json())
     .then(routes => showRouteListModal(routes));
@@ -459,16 +468,6 @@ function showArrivalModal(arrivals, stopName = "정류소") {
   Object.values(arrivalTimers).forEach(clearInterval);
   arrivalTimers = {};
 
-  // 그룹별 데이터
-  const groups = {
-    soon: [],
-    running: [],
-    waiting: [],
-    ended: [],
-    unknown: []
-  };
-
-  // 버스번호로 그룹화 후 2대씩 병합
   const grouped = {};
   arrivals.forEach((item, idx) => {
     const routeNumber = item.routeNumber;
@@ -477,8 +476,18 @@ function showArrivalModal(arrivals, stopName = "정류소") {
   });
 
   const sortedKeys = Object.keys(grouped).sort((a, b) =>
-    parseInt(a.replace(/\D/g, ""), 10) - parseInt(b.replace(/\D/g, ""), 10)
+    a.localeCompare(b, 'ko', { numeric: true })
   );
+
+  const groups = {
+    soon: [],
+    running: [],
+    waiting: [],
+    ended: [],
+    unknown: []
+  };
+
+  container.innerHTML = `<h5 class="mb-3"><i class="bi bi-bus-front-fill me-1"></i>${stopName}</h5>`;
 
   sortedKeys.forEach(routeNumber => {
     const list = grouped[routeNumber];
@@ -491,6 +500,7 @@ function showArrivalModal(arrivals, stopName = "정류소") {
 
     const groupKey = (() => {
       if (first.arrivalTime === "운행 종료") return "ended";
+      if (first.arrivalTime === "곧 도착") return "soon";
       if (first.arrivalTime?.includes("대기") || first.arrivalTime?.includes("없음")) return "waiting";
       if (sec1 != null && sec1 <= 60) return "soon";
       if (sec1 != null) return "running";
@@ -516,7 +526,7 @@ function showArrivalModal(arrivals, stopName = "정류소") {
               ${first.congestion ? `<span class="badge ${getCongestionBadgeClass(first.congestion)} ms-1">${first.congestion}</span>` : ""}
             </div>
             <div style="min-width: 80px;">
-              <span>${formatTime(sec2)}</span>
+              <span id="arrivalTime${second?.idx ?? 'second'}">${formatTime(sec2)}</span>
               ${second?.congestion ? `<span class="badge ${getCongestionBadgeClass(second.congestion)} ms-1">${second.congestion}</span>` : ""}
             </div>
           </div>
@@ -524,11 +534,15 @@ function showArrivalModal(arrivals, stopName = "정류소") {
       </div>
     `;
 
-    groups[groupKey].push({ html, idx: first.idx, sec: sec1, routeNumber });
+    groups[groupKey].push({
+      html,
+      idx: first.idx,
+      sec1,
+      sec2,
+      routeNumber,
+      secondIdx: second?.idx
+    });
   });
-
-  // 렌더링 시작
-  container.innerHTML = `<h5 class="mb-3"><i class="bi bi-bus-front-fill me-1"></i>${stopName}</h5>`;
 
   const renderGroup = (title, className, list) => {
     if (list.length === 0) return;
@@ -543,34 +557,111 @@ function showArrivalModal(arrivals, stopName = "정류소") {
   renderGroup("⏳ 운행 대기", "text-warning", groups.waiting);
   renderGroup("⛔ 운행 종료", "text-muted", groups.ended);
 
-  // 타이머 적용 (곧 도착 + 운행 중)
-  [...groups.soon, ...groups.running].forEach(({ idx, sec, routeNumber }) => {
-    if (sec == null) return;
+  let activeTimers = 0;
+  let finishedTimers = 0;
 
-    let currentSec = sec;
-    const timeEl = document.getElementById(`arrivalTime${idx}`);
-    const cardEl = document.querySelector(`.arrival-item[data-route="${routeNumber}"]`);
+  const timingList = [...groups.soon, ...groups.running];
+  if (timingList.length === 0) return;
 
-    const intervalId = setInterval(() => {
-      currentSec--;
-      if (!timeEl || !cardEl) {
-        clearInterval(intervalId);
-        return;
-      }
+  timingList.forEach(({ idx, sec1, sec2, routeNumber, secondIdx }) => {
+    // 첫 번째 도착시간
+    if (sec1 != null) {
+      activeTimers++;
+      let currentSec1 = sec1;
+      const timeEl1 = document.getElementById(`arrivalTime${idx}`);
 
-      if (currentSec <= 0) {
-        timeEl.textContent = "도착";
-        clearInterval(intervalId);
-        setTimeout(() => cardEl?.remove(), 5000);
-      } else if (currentSec <= 60) {
-        timeEl.textContent = "곧 도착";
-      } else {
-        timeEl.textContent = `⏱ ${formatArrivalSec(currentSec)}`;
-      }
-    }, 1000);
+      const intervalId1 = setInterval(() => {
+        if (!timeEl1) {
+          clearInterval(intervalId1);
+          return;
+        }
 
-    arrivalTimers[idx] = intervalId;
+        currentSec1--;
+
+        if (currentSec1 <= 60) {
+          timeEl1.textContent = "곧 도착";  // ✅ 항상 곧 도착으로
+        } else {
+          timeEl1.textContent = `⏱ ${formatArrivalSec(currentSec1)}`;
+        }
+
+        if (currentSec1 <= 0) {
+          clearInterval(intervalId1);
+          finishedTimers++;
+          if (finishedTimers >= activeTimers) {
+            setTimeout(() => reloadArrivals({ delay: true }), 5000);
+          }
+        }
+      }, 1000);
+      arrivalTimers[idx] = intervalId1;
+    }
+
+    // 두 번째 도착시간
+    if (secondIdx && sec2 != null) {
+      let currentSec2 = sec2;
+      const timeEl2 = document.getElementById(`arrivalTime${secondIdx}`);
+
+      const intervalId2 = setInterval(() => {
+        if (!timeEl2) {
+          clearInterval(intervalId2);
+          return;
+        }
+
+        currentSec2--;
+
+        if (currentSec2 <= 60) {
+          timeEl2.textContent = "곧 도착"; // ✅ 무조건 곧 도착
+        } else {
+          timeEl2.textContent = `⏱ ${formatArrivalSec(currentSec2)}`;
+        }
+
+        if (currentSec2 <= 0) {
+          clearInterval(intervalId2); // ✅ 도착 표시 없음
+        }
+      }, 1000);
+      arrivalTimers[secondIdx] = intervalId2;
+    }
   });
+}
+
+function startArrivalAutoRefresh() {
+  if (arrivalAutoRefreshTimer) clearInterval(arrivalAutoRefreshTimer);
+
+  arrivalAutoRefreshTimer = setInterval(() => {
+    if (window.lastStopId && window.lastArsId) {
+      console.log("🔁 자동 도착 정보 새로고침 실행");
+      fetch(`/api/proxy/bus/arrivals?stopId=${window.lastStopId}&arsId=${window.lastArsId}`)
+        .then(res => res.json())
+        .then(arrivals => {
+          showArrivalModal(arrivals, window.lastStopName || "정류소");
+        });
+    }
+  }, 10000); // ⏱ 10초 간격
+}
+
+function reloadArrivals({ delay = true } = {}) {
+  const stopId = window.lastStopId;
+  const arsId = window.lastArsId;
+  const stopName = window.lastStopName || "정류소";
+
+  if (!stopId || !arsId) return;
+
+  // 도착 정보 먼저 갱신
+  fetch(`/api/proxy/bus/arrivals?stopId=${stopId}&arsId=${arsId}`)
+    .then(res => res.json())
+    .then(arrivals => showArrivalModal(arrivals, stopName));
+
+  // 정류소 경유 노선도 갱신
+  const refreshRoutes = () => {
+    fetch(`/api/proxy/bus/routes?stopId=${stopId}`)
+      .then(res => res.json())
+      .then(routes => showRouteListModal(routes));
+  };
+
+  if (delay) {
+    setTimeout(refreshRoutes, 5000); // 5초 지연 후
+  } else {
+    refreshRoutes(); // 즉시
+  }
 }
 
 function formatArrivalSec(sec) {
@@ -813,8 +904,8 @@ document.addEventListener("click", function (e) {
 
 function parseArrivalSeconds(arrivalText) {
   if (!arrivalText) return null;
-  const secOnly = arrivalText.match(/^(\d+)\s*초$/);
-  if (secOnly) return parseInt(secOnly[1], 10);
+  if (arrivalText.includes("도착")) return 0;
+  if (arrivalText.includes("곧 도착")) return 30;
 
   const full = arrivalText.match(/^(\d+)\s*분\s*(\d+)?\s*초?/);
   if (full) {
@@ -822,6 +913,9 @@ function parseArrivalSeconds(arrivalText) {
     const sec = full[2] ? parseInt(full[2], 10) : 0;
     return min * 60 + sec;
   }
+
+  const secOnly = arrivalText.match(/^(\d+)\s*초$/);
+  if (secOnly) return parseInt(secOnly[1], 10);
 
   const minOnly = arrivalText.match(/^(\d+)\s*분$/);
   if (minOnly) return parseInt(minOnly[1], 10) * 60;
