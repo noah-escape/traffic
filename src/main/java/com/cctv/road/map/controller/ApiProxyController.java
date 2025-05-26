@@ -9,6 +9,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -43,6 +44,8 @@ import reactor.core.publisher.Mono;
 public class ApiProxyController {
 
   private final BusStopRepository busStopRepository;
+
+  private final Map<String, Map<String, String>> routeTimeCache = new ConcurrentHashMap<>();
 
   private final WebClient naverClient;
   private final WebClient seoulBusClient;
@@ -415,7 +418,7 @@ public class ApiProxyController {
       return ResponseEntity.ok(results);
 
     } catch (Exception e) {
-      System.err.println("❌ 버스 도착 정보 호출 실패: " + e.getMessage());
+      // System.err.println("❌ 버스 도착 정보 호출 실패: " + e.getMessage());
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body(List.of(new BusArrivalDto("오류", "도착 정보 파싱 실패", "정보 없음")));
     }
@@ -445,10 +448,15 @@ public class ApiProxyController {
   }
 
   private Map<String, String> fetchRouteTimes(String routeId) {
+    // ✅ 캐시에 있으면 바로 반환
+    if (routeTimeCache.containsKey(routeId)) {
+      return routeTimeCache.get(routeId);
+    }
+
     try {
       String key = dotenv.get("SEOUL_BUS_API_KEY").trim();
       String url = String.format(
-          "http://ws.bus.go.kr/api/rest/busRouteInfo/getRouteInfo?serviceKey=%s&busRouteId=%s",
+          "http://ws.bus.go.kr/api/rest/busRouteInfo/getBusRouteInfo?serviceKey=%s&busRouteId=%s",
           key, routeId);
 
       HttpResponse<String> resp = HttpClient.newHttpClient()
@@ -464,8 +472,10 @@ public class ApiProxyController {
       Document doc = builder.parse(new InputSource(new StringReader(resp.body())));
 
       NodeList nodeList = doc.getElementsByTagName("itemList");
-      if (nodeList.getLength() == 0)
+      if (nodeList.getLength() == 0) {
+        // System.err.println("❗ 운행시간 정보 없음 (노선ID: " + routeId + ")");
         return null;
+      }
 
       Element item = (Element) nodeList.item(0);
       String firstRaw = getTagValue("firstBusTm", item);
@@ -474,10 +484,14 @@ public class ApiProxyController {
       String firstTime = formatTime(firstRaw);
       String lastTime = formatTime(lastRaw);
 
-      return Map.of("firstTime", firstTime, "lastTime", lastTime);
+      // ✅ 결과 캐시에 저장 후 반환
+      Map<String, String> result = Map.of("firstTime", firstTime, "lastTime", lastTime);
+      routeTimeCache.put(routeId, result);
+
+      return result;
 
     } catch (Exception e) {
-      System.err.println("❌ 운행시간 조회 실패: " + e.getMessage());
+      // System.err.println("❌ 운행시간 조회 실패 (" + routeId + "): " + e.getMessage());
       return null;
     }
   }
@@ -554,11 +568,10 @@ public class ApiProxyController {
           Element el = (Element) routeItems.item(i);
           String busRouteNm = getTagValue("busRouteNm", el);
 
-          System.out.printf("? 찾고자 하는 routeNumber: [%s]%n", routeNumber);
-          System.out.printf("? 응답 받은 busRouteNm: [%s]%n", busRouteNm);
+          // System.out.printf("? 찾고자 하는 routeNumber: [%s]%n", routeNumber);
+          // System.out.printf("? 응답 받은 busRouteNm: [%s]%n", busRouteNm);
 
-          if (busRouteNm != null && routeNumber != null &&
-              busRouteNm.trim().equalsIgnoreCase(routeNumber.trim())) {
+          if (routeNumber.equals(busRouteNm)) {
             matchedRouteId = getTagValue("busRouteId", el);
             break;
           }
@@ -602,6 +615,7 @@ public class ApiProxyController {
 
       NodeList nodeList = detailDoc.getElementsByTagName("itemList");
 
+      // ✅ itemList가 없어도 정보 없음으로 응답 (404 아님)
       if (nodeList.getLength() == 0) {
         return ResponseEntity.ok(Map.of(
             "routeNumber", routeNumber != null ? routeNumber : "알 수 없음",
@@ -624,7 +638,7 @@ public class ApiProxyController {
           "lastTime", lastTime));
 
     } catch (Exception e) {
-      System.err.println("❌ 버스 상세정보 조회 실패: " + e.getMessage());
+      // System.err.println("❌ 버스 상세정보 조회 실패: " + e.getMessage());
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body(Map.of("error", "API 호출 실패: " + e.getMessage()));
     }
@@ -699,8 +713,8 @@ public class ApiProxyController {
         .retrieve()
         .onStatus(status -> !status.is2xxSuccessful(),
             response -> response.bodyToMono(String.class).flatMap(body -> {
-              System.err.println("❌ [지하철] 오류 상태코드: " + response.statusCode());
-              System.err.println("❌ [지하철] 오류 응답:\n" + body);
+              // System.err.println("❌ [지하철] 오류 상태코드: " + response.statusCode());
+              // System.err.println("❌ [지하철] 오류 응답:\n" + body);
               return Mono.error(new RuntimeException(
                   "지하철 도착 정보 API 실패: " + body));
             }))
@@ -729,8 +743,8 @@ public class ApiProxyController {
         .retrieve()
         .onStatus(status -> !status.is2xxSuccessful(),
             response -> response.bodyToMono(String.class).flatMap(body -> {
-              System.err.println("❌ [주차장] 오류 상태코드: " + response.statusCode());
-              System.err.println("❌ [주차장] 오류 응답:\n" + body);
+              // System.err.println("❌ [주차장] 오류 상태코드: " + response.statusCode());
+              // System.err.println("❌ [주차장] 오류 응답:\n" + body);
               return Mono.error(
                   new RuntimeException("주차장 정보 API 실패: " + body));
             }))
