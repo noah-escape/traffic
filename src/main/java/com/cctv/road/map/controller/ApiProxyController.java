@@ -557,7 +557,8 @@ public class ApiProxyController {
           System.out.printf("? 찾고자 하는 routeNumber: [%s]%n", routeNumber);
           System.out.printf("? 응답 받은 busRouteNm: [%s]%n", busRouteNm);
 
-          if (routeNumber.equals(busRouteNm)) {
+          if (busRouteNm != null && routeNumber != null &&
+              busRouteNm.trim().equalsIgnoreCase(routeNumber.trim())) {
             matchedRouteId = getTagValue("busRouteId", el);
             break;
           }
@@ -601,7 +602,6 @@ public class ApiProxyController {
 
       NodeList nodeList = detailDoc.getElementsByTagName("itemList");
 
-      // ✅ itemList가 없어도 정보 없음으로 응답 (404 아님)
       if (nodeList.getLength() == 0) {
         return ResponseEntity.ok(Map.of(
             "routeNumber", routeNumber != null ? routeNumber : "알 수 없음",
