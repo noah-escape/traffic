@@ -26,7 +26,7 @@
   <link rel="stylesheet" th:href="@{/css/weather.css}">
   <script th:src="@{/js/home.js}"></script>
   <script th:src="@{/js/weather.js}"></script>
-  <script src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=zlh7cem9or&"></script>
+  <script src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=zlh7cem9or"></script>
 
 </head>
 
@@ -112,11 +112,33 @@
       <div class="row">
         <!-- 지도 영역 (왼쪽) -->
         <div class="col-md-7 mb-4">
+          <div class="position-relative" style="z-index: 1000;">
+            <div class="input-group mb-2">
+              <input type="text" id="locationSearch" class="form-control" placeholder="지역명을 입력하세요" autocomplete="off">
+              <button class="btn btn-primary" id="searchBtn">검색</button>
+            </div>
+            <ul id="autocompleteList" class="list-group shadow-sm"
+              style="position: absolute; top: 100%; left: 0; right: 0; display: none;"></ul>
+          </div>
+
+
           <div id="map" class="shadow-sm rounded"></div>
         </div>
 
         <!-- 날씨 카드 (오른쪽) -->
         <div class="col-md-5">
+          <!-- 🔄 날씨 로딩 표시 -->
+          <div id="weather-loading" class="weather-loading-overlay d-flex align-items-center justify-content-center">
+            <div class="text-center bg-white p-4 rounded shadow-sm animate">
+              <div class="spinner-border text-primary mb-3" role="status" style="width: 2.5rem; height: 2.5rem;">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <div class="fw-semibold text-secondary">날씨 정보를 불러오는 중입니다...</div>
+            </div>
+          </div>
+
+
+
           <div id="weather-box" class="card p-4 shadow-lg rounded-4 h-100 d-flex flex-column justify-content-between">
             <!-- 날짜/시간 -->
             <div class="text-end small text-muted mb-2">
@@ -172,23 +194,11 @@
             <div class="card-header">
               <h5 class="card-title mb-0">시간별 예보</h5>
             </div>
-            <!-- ✅ 고정 날짜 표시 라벨 -->
-  <div id="current-date-label" class="px-3 py-2 fw-semibold text-secondary sticky-top bg-light border-bottom">
-    날짜: -
-  </div>
             <div class="card-body">
               <div class="weather-scroll-wrapper">
                 <div class="weather-scroll">
                   <!-- 시간별 예보 내부 반복 -->
                   <div th:each="forecast, iterStat : ${hourlyForecasts}">
-                    <!-- 날짜가 바뀔 때만 날짜 구분자를 표시 -->
-                    <div
-                      th:if="${iterStat.index == 0 or #temporals.format(forecast.dateTime, 'yyyyMMdd') != #temporals.format(hourlyForecasts[iterStat.index - 1].dateTime, 'yyyyMMdd')}"
-                      class="weather-date-separator"
-                      th:attr="data-date=${#temporals.format(forecast.dateTime, 'yyyyMMdd')}"
-                      th:text="${#temporals.format(forecast.dateTime, 'M월 d일 (E)')}">
-                    </div>
-
                     <!-- 예보 카드 내용 -->
                     <div class="forecast-card">
                       <div class="forecast-time" th:text="${#temporals.format(forecast.dateTime, 'HH:mm')}">--:--
