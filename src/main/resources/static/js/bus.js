@@ -517,7 +517,7 @@ function showArrivalModal(arrivals, stopName = "정류소") {
       <div class="arrival-card border-bottom py-2 arrival-item" data-route="${routeNumber}" style="cursor: pointer;">
         <div class="d-flex align-items-center justify-content-between">
           <div class="bus-number-box ${typeClass} text-white fw-bold text-center me-3"
-               style="min-width: 50px; height: 32px; line-height: 32px; border-radius: 4px;">
+              style="min-width: 50px; height: 32px; line-height: 32px; border-radius: 4px;">
             ${routeNumber}
           </div>
           <div class="flex-grow-1 d-flex justify-content-between align-items-center small w-100">
@@ -677,7 +677,7 @@ function makeHtml(idx, routeNumber, typeClass, statusText, congestionClass, item
       <div class="d-flex justify-content-between align-items-center">
         <div class="d-flex align-items-center flex-grow-1">
           <div class="bus-number-box ${typeClass} text-white fw-bold text-center me-2"
-               style="min-width: 50px; height: 32px; line-height: 32px; border-radius: 4px;">
+              style="min-width: 50px; height: 32px; line-height: 32px; border-radius: 4px;">
             ${routeNumber}
           </div>
           <div class="flex-grow-1">
