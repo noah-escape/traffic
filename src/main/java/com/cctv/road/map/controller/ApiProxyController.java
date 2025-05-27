@@ -324,9 +324,13 @@ public class ApiProxyController {
               .build(),
               HttpResponse.BodyHandlers.ofString());
 
-      DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-      DocumentBuilder builder = factory.newDocumentBuilder();
-      Document doc = builder.parse(new InputSource(new StringReader(resp.body())));
+      String body = resp.body();
+      if (!body.trim().startsWith("<?xml")) {
+        throw new RuntimeException("응답이 XML이 아닙니다:\n" + body);
+      }
+
+      DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+      Document doc = builder.parse(new InputSource(new StringReader(body)));
 
       NodeList itemList = doc.getElementsByTagName("itemList");
       List<BusArrivalDto> results = new ArrayList<>();
@@ -467,9 +471,13 @@ public class ApiProxyController {
               .build(),
               HttpResponse.BodyHandlers.ofString());
 
-      DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-      DocumentBuilder builder = factory.newDocumentBuilder();
-      Document doc = builder.parse(new InputSource(new StringReader(resp.body())));
+      String body = resp.body();
+      if (!body.trim().startsWith("<?xml")) {
+        throw new RuntimeException("운행시간 응답이 XML이 아닙니다:\n" + body);
+      }
+
+      DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+      Document doc = builder.parse(new InputSource(new StringReader(body)));
 
       NodeList nodeList = doc.getElementsByTagName("itemList");
       if (nodeList.getLength() == 0) {
