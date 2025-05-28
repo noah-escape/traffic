@@ -1,20 +1,15 @@
 package com.cctv.road.map.controller;
 
 
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.net.URI;
-import java.net.URLEncoder;
-
 import java.io.StringReader;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -34,12 +29,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
-
-import org.springframework.web.util.UriComponentsBuilder;
-
-import com.cctv.road.weather.util.GeoUtil;
-
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.util.UriComponentsBuilder;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -49,7 +40,7 @@ import com.cctv.road.map.dto.BusArrivalDto;
 import com.cctv.road.map.dto.BusRouteDto;
 import com.cctv.road.map.dto.UnifiedBusStopDto;
 import com.cctv.road.map.repository.BusStopRepository;
-
+import com.cctv.road.weather.util.GeoUtil;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import reactor.core.publisher.Mono;
