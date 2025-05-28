@@ -3,7 +3,10 @@ let currentMarker = null;
 let locationData = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // 1. 위치 가져오기
+  // 1. 지역 데이터 먼저 로드
+  await initLocationData();
+
+  // 2. 위치 가져오기 → 지역 데이터 로드 이후에 실행돼야 함
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(onLocationSuccess, onLocationError);
   } else {
@@ -11,10 +14,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     showFallback("위치 정보 없음");
   }
 
-  // 2. 지역 데이터 로드
-  await initLocationData();
-
-  // 3. 검색 관련 이벤트 등록
+  // 3. 검색 이벤트 등록
   initLocationSearchEvents();
 });
 
@@ -118,6 +118,11 @@ function hideLoading() {
 
 function updateMapAndWeather(lat, lon) {
   showLoading();
+  
+  const regionName = getNearestRegionName(lat, lon); // 🔹 먼저 구하고
+  console.log("📍 지역명:", regionName);
+  loadAirQuality(regionName); // 🔹 미루지 말고 바로 호출
+
   const position = new naver.maps.LatLng(lat, lon);
   if (map) {
     if (currentMarker) {
@@ -156,7 +161,7 @@ function updateMapAndWeather(lat, lon) {
       showFallback("날씨 정보 없음");
     })
     .finally(() => {
-      hideLoading(); // ✅ 마지막에 숨기기
+      hideLoading();
     });
 }
 
@@ -416,3 +421,77 @@ function getWeatherImageSrcByText(text) {
   return "/image/weather/unknown.png";
 }
 
+function loadAirQuality(regionName) {
+  if (!regionName) return;
+
+  fetch(`/api/weather/quality?region=${encodeURIComponent(regionName)}`, {
+    credentials: 'include'
+  })
+    .then(async res => {
+      const text = await res.text();
+      try {
+        const data = JSON.parse(text);
+        console.log("✅ 대기 정보", data);
+
+        // ✅ 이 부분 추가!
+        document.getElementById("pm10").textContent = `${data.pm10Value} ㎍/㎥`;
+        document.getElementById("pm25").textContent = `${data.pm25Value} ㎍/㎥`;
+        document.getElementById("cai").textContent = data.khaiValue;
+
+        document.getElementById("pm10-grade").textContent = getAirQualityLabel(data.pm10Grade);
+        document.getElementById("pm25-grade").textContent = getAirQualityLabel(data.pm25Grade);
+        document.getElementById("cai-grade").textContent = getAirQualityLabel(data.khaiGrade);
+
+      } catch (e) {
+        console.error("❌ 응답이 JSON이 아님:", text);
+        throw e;
+      }
+    })
+    .catch(err => {
+      console.error("❌ 대기 정보 실패", err);
+      document.getElementById("pm10").textContent = "-- ㎍/㎥";
+      document.getElementById("pm25").textContent = "-- ㎍/㎥";
+      document.getElementById("cai").textContent = "--";
+
+      document.getElementById("pm10-grade").textContent = "--";
+      document.getElementById("pm25-grade").textContent = "--";
+      document.getElementById("cai-grade").textContent = "--";
+    });
+}
+
+function getAirQualityLabel(grade) {
+  switch (grade) {
+    case "1": return "좋음";
+    case "2": return "보통";
+    case "3": return "나쁨";
+    case "4": return "매우나쁨";
+    default: return "--";
+  }
+}
+
+function getNearestRegionName(lat, lon) {
+  if (!locationData || locationData.length === 0) {
+    console.warn("⚠️ locationData가 비어 있습니다.", locationData);
+    return null;
+  }
+
+  let closest = locationData[0];
+  let minDist = getDistance(lat, lon, closest.lat, closest.lon);
+
+  for (let i = 1; i < locationData.length; i++) {
+    const dist = getDistance(lat, lon, locationData[i].lat, locationData[i].lon);
+    if (dist < minDist) {
+      minDist = dist;
+      closest = locationData[i];
+    }
+  }
+
+  console.log("🧭 가장 가까운 지역 객체:", closest);
+  return closest.name;
+}
+
+function getDistance(lat1, lon1, lat2, lon2) {
+  const dx = lat1 - lat2;
+  const dy = lon1 - lon2;
+  return dx * dx + dy * dy;
+}

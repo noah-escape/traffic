@@ -38,11 +38,13 @@ public class SecurityConfig {
     this.oAuthFailureHandler = oAuthFailureHandler;
   }
 
+  // 🔐 비밀번호 암호화 방식
   @Bean
   public BCryptPasswordEncoder passwordEncoder() {
     return new BCryptPasswordEncoder();
   }
 
+  // 🔐 사용자 인증 제공자 설정
   @Bean
   public DaoAuthenticationProvider authenticationProvider() {
     DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
@@ -77,19 +79,16 @@ public class SecurityConfig {
             .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
         .authorizeHttpRequests(auth -> auth
             .requestMatchers(
-                "/api/proxy/**", "/api/proxy/bus/**",
-                "/api/proxy/naver-driving-path",
-                "/", "/login", "/register/**", "/login/oauth2/**",
+                "/", "/login", "/register/**",
                 "/css/**", "/js/**", "/image/**", "/favicon.ico",
                 "/json/**", "/pages/**", "/api/**", "/api/weather/**",
                 "/member/find/**", "/find-id", "/find-password",
                 "/board/list/**", "/board/view/**")
             .permitAll()
-            .anyRequest().authenticated()) // ✅ 나머지는 인증 필요
+            .anyRequest().authenticated())
         .formLogin(form -> form
             .loginPage("/login")
-            .defaultSuccessUrl("/",
-                true)
+            .defaultSuccessUrl("/", true)
             .permitAll())
         .oauth2Login(oauth2 -> oauth2
             .loginPage("/login")
@@ -99,10 +98,7 @@ public class SecurityConfig {
         .logout(logout -> logout
             .logoutSuccessUrl("/")
             .invalidateHttpSession(true)
-            .deleteCookies("JSESSIONID"))
-        .sessionManagement(session -> session
-            .maximumSessions(1)
-            .expiredUrl("/login?expired"));
+            .deleteCookies("JSESSIONID"));
 
     return http.build();
   }
