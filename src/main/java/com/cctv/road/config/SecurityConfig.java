@@ -3,15 +3,14 @@ package com.cctv.road.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 import com.cctv.road.member.security.OAuthFailureHandler;
 import com.cctv.road.member.security.OAuthSuccessHandler;
@@ -38,13 +37,11 @@ public class SecurityConfig {
     this.oAuthFailureHandler = oAuthFailureHandler;
   }
 
-  // 🔐 비밀번호 암호화 방식
   @Bean
   public BCryptPasswordEncoder passwordEncoder() {
     return new BCryptPasswordEncoder();
   }
 
-  // 🔐 사용자 인증 제공자 설정
   @Bean
   public DaoAuthenticationProvider authenticationProvider() {
     DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
@@ -79,16 +76,19 @@ public class SecurityConfig {
             .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
         .authorizeHttpRequests(auth -> auth
             .requestMatchers(
-                "/", "/login", "/register/**",
+                "/api/proxy/**", "/api/proxy/bus/**",
+                "/api/proxy/naver-driving-path",
+                "/", "/login", "/register/**", "/login/oauth2/**",
                 "/css/**", "/js/**", "/image/**", "/favicon.ico",
                 "/json/**", "/pages/**", "/api/**", "/api/weather/**",
                 "/member/find/**", "/find-id", "/find-password",
                 "/board/list/**", "/board/view/**")
             .permitAll()
-            .anyRequest().authenticated())
+            .anyRequest().authenticated()) // ✅ 나머지는 인증 필요
         .formLogin(form -> form
             .loginPage("/login")
-            .defaultSuccessUrl("/", true)
+            .defaultSuccessUrl("/",
+                true)
             .permitAll())
         .oauth2Login(oauth2 -> oauth2
             .loginPage("/login")
@@ -98,7 +98,10 @@ public class SecurityConfig {
         .logout(logout -> logout
             .logoutSuccessUrl("/")
             .invalidateHttpSession(true)
-            .deleteCookies("JSESSIONID"));
+            .deleteCookies("JSESSIONID"))
+        .sessionManagement(session -> session
+            .maximumSessions(1)
+            .expiredUrl("/login?expired"));
 
     return http.build();
   }
