@@ -77,13 +77,18 @@ public class SecurityConfig {
         .securityMatcher(request -> !request.getRequestURI().startsWith("/api/proxy/"))
         .csrf(csrf -> csrf
             .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
+        .headers(headers -> headers
+            .frameOptions(frameOptions -> frameOptions.disable()) // ❗️iframe 허용
+        )
         .authorizeHttpRequests(auth -> auth
             .requestMatchers(
                 "/", "/login", "/register/**",
                 "/css/**", "/js/**", "/image/**", "/favicon.ico",
                 "/json/**", "/pages/**", "/api/**", "/api/weather/**",
                 "/member/find/**", "/find-id", "/find-password",
-                "/board/list/**", "/board/view/**")
+                "/board/list/**", "/board/view/**",
+                "/chart-view", "/chart/**"
+                )
             .permitAll()
             .anyRequest().authenticated())
         .formLogin(form -> form
