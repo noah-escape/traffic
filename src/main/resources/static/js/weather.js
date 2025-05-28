@@ -1,7 +1,9 @@
 let map;
 let currentMarker = null;
+let locationData = [];
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  // 1. 위치 가져오기
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(onLocationSuccess, onLocationError);
   } else {
@@ -9,18 +11,34 @@ document.addEventListener("DOMContentLoaded", () => {
     showFallback("위치 정보 없음");
   }
 
-  let locationData = [];
+  // 2. 지역 데이터 로드
+  await initLocationData();
 
-  fetch('/json/weather.json') // 경로 확인!
-    .then(res => res.json())
-    .then(data => locationData = data);
+  // 3. 검색 관련 이벤트 등록
+  initLocationSearchEvents();
+});
 
+// ✅ 1. 지역 데이터 안전하게 불러오기
+async function initLocationData() {
+  try {
+    const res = await fetch('/json/weather.json');
+    locationData = await res.json();
+    console.log("✅ 지역 데이터 로드 완료", locationData.length);
+  } catch (error) {
+    console.error("❌ 지역 데이터 로드 실패", error);
+    alert("지역 데이터 로딩에 실패했습니다.");
+  }
+}
+
+// ✅ 2. 검색 입력 및 자동완성 처리
+function initLocationSearchEvents() {
   const input = document.getElementById("locationSearch");
   const list = document.getElementById("autocompleteList");
 
   input.addEventListener("input", () => {
     const keyword = input.value.trim();
     list.innerHTML = "";
+
     if (keyword.length < 1) {
       list.style.display = "none";
       return;
@@ -57,10 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
       alert("해당 지역을 찾을 수 없습니다.");
     }
   });
-
-
-
-});
+}
 
 function onLocationSuccess(position) {
   const lat = position.coords.latitude;
@@ -120,8 +135,8 @@ function updateMapAndWeather(lat, lon) {
     .then(response => response.json())
     .then(data => {
       console.log("✅ 날씨 응답", data);
-      renderHourlyForecast(data.daily);
-      renderDailyForecast(data.daily);
+      renderHourlyForecastSimple(data.daily);
+      renderCompactDailyForecast(data.middleTa, data.middleLand);
 
       const items = data.current?.response?.body?.items?.item ?? [];
       updateWeatherCard({
@@ -222,101 +237,75 @@ function showFallback(message = "날씨 정보 없음") {
   document.getElementById("weather-rain").textContent = "- mm";
 }
 
-function renderDailyForecast(dailyData) {
-  const tbody = document.querySelector('#daily-forecast-table tbody');
-  if (!tbody) return;
-  tbody.innerHTML = '';
-
-  const items = dailyData?.response?.body?.items?.item ?? [];
-  const grouped = {};
-
-  items.forEach(item => {
-    const date = item.fcstDate;
-    if (!grouped[date]) grouped[date] = {};
-    grouped[date][item.category] = item.fcstValue;
-  });
-
-  Object.entries(grouped)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .forEach(([fcstDate, values]) => {
-      const row = `<tr>
-        <td>${fcstDate}</td>
-        <td>${values.TMN ?? '-'}</td>
-        <td>${values.TMX ?? '-'}</td>
-        <td>${getWeatherDesc(values)}</td>
-      </tr>`;
-      tbody.insertAdjacentHTML('beforeend', row);
-    });
-}
-
-function getWeatherDesc(values) {
-  const sky = values.SKY;
-  const pty = values.PTY;
-  if (pty && pty !== "0") return "비";
-  if (sky === "1") return "맑음";
-  if (sky === "3") return "구름 많음";
-  if (sky === "4") return "흐림";
-  return "-";
-}
-
-function renderHourlyForecast(forecastData) {
-  const container = document.querySelector('.weather-scroll');
-  if (!container) return;
-  container.innerHTML = '';
-
+function renderHourlyForecastSimple(forecastData) {
   const items = forecastData?.response?.body?.items?.item ?? [];
   const grouped = {};
 
   items.forEach(item => {
-    const date = item.fcstDate;
-    const time = item.fcstTime;
-    if (!grouped[date]) grouped[date] = {};
-    if (!grouped[date][time]) grouped[date][time] = {};
-    grouped[date][time][item.category] = item.fcstValue;
+    const key = `${item.fcstDate}_${item.fcstTime}`;
+    if (!grouped[key]) grouped[key] = {};
+    grouped[key][item.category] = item.fcstValue;
+    grouped[key].date = item.fcstDate;
+    grouped[key].time = item.fcstTime;
   });
 
-  Object.entries(grouped).sort().forEach(([date, timeGroup]) => {
-    const block = document.createElement('div');
-    block.className = 'weather-date-block';
+  const sorted = Object.values(grouped).sort((a, b) =>
+    (a.date + a.time).localeCompare(b.date + b.time)
+  );
 
-    const label = document.createElement('div');
-    label.className = 'weather-date-label';
-    label.textContent = formatDateToKorean(date);
+  const hourRow = document.getElementById("forecast-hour-row");
+  const dateRow = document.getElementById("forecast-date-row");
+  const iconRow = document.getElementById("row-icon");
+  const tempRow = document.getElementById("row-temp");
+  const rainRow = document.getElementById("row-rain");
+  const humidRow = document.getElementById("row-humidity");
+  const windRow = document.getElementById("row-wind");
 
-    const row = document.createElement('div');
-    row.className = 'weather-hour-row';
+  hourRow.innerHTML = `<th>시간</th>`;
+  dateRow.innerHTML = `<th>날짜</th>`; // 첫 칸 비움
+  iconRow.innerHTML = `<th>날씨</th>`;
+  tempRow.innerHTML = `<th>기온</th>`;
+  rainRow.innerHTML = `<th>강수량</th>`;
+  humidRow.innerHTML = `<th>습도</th>`;
+  windRow.innerHTML = `<th>바람</th>`;
 
-    Object.entries(timeGroup).sort().forEach(([time, values]) => {
-      const hour = time.slice(0, 2);
-      const icon = getWeatherIcon(values);
+  // 날짜별 그룹 카운트 (colspan용)
+  const dateGroups = {};
+  sorted.forEach(({ date }) => {
+    dateGroups[date] = (dateGroups[date] || 0) + 1;
+  });
 
-      let windHTML = "-";
-      if (values.VEC && values.WSD) {
-        const arrow = getWindArrow8Dir(parseFloat(values.VEC));
-        const strength = getWindStrengthDesc(values.WSD);
-        windHTML = `
-          <div class="text-center">
-            <div style="font-size: 1.25rem;">${arrow}</div>
-            <div class="small text-muted">${strength} (${parseFloat(values.WSD).toFixed(1)} m/s)</div>
-          </div>
-        `;
-      }
+  // 날짜 병합 헤더
+  for (const [date, count] of Object.entries(dateGroups)) {
+    const formatted = formatDateToKorean(date); // ex: 5월 28일 (화)
+    dateRow.innerHTML += `<th colspan="${count}" class="text-center">${formatted}</th>`;
+  }
 
-      const card = document.createElement('div');
-      card.className = 'weather-hour';
-      card.innerHTML = `
-        <div class="time">${hour}시</div>
-        <div class="icon">${icon}</div>
-        <div class="temp">${values.TMP ?? "--"}℃</div>
-        <div class="rain">${values.POP ?? "--"}%</div>
-        <div class="wind">${windHTML}</div>
-      `;
-      row.appendChild(card);
-    });
+  // 각 시간별 데이터 출력
+  sorted.forEach(values => {
+    const hour = `${values.time.slice(0, 2)}시`;
+    const iconSrc = getWeatherIconImageSrc(values);
+    const temp = values.TMP ?? "--";
+    const rain = (values.PCP && values.PCP !== "강수없음") ? values.PCP : "0";
+    const isPureNumber = /^[\d.]+$/.test(rain); // 정규표현식으로 숫자만인지 확인
+    const rainDisplay = isPureNumber ? `${rain} mm` : rain;
 
-    block.appendChild(label);
-    block.appendChild(row);
-    container.appendChild(block);
+    const humidity = values.REH ?? "--";
+    const wind = values.WSD ?? "--";
+    const windArrow = values.VEC ? getWindArrow8Dir(values.VEC) : "–";
+    const windStrength = getWindStrengthDesc(wind);
+
+    hourRow.innerHTML += `<th>${hour}</th>`;
+    iconRow.innerHTML += `<td><img src="${iconSrc}" alt="날씨아이콘" width="35" height="36"></td>`;
+    tempRow.innerHTML += `<td>${temp}°C</td>`;
+    rainRow.innerHTML += `<td>${rainDisplay}</td>`;
+    humidRow.innerHTML += `<td>${humidity}%</td>`;
+    windRow.innerHTML += `
+    <td>
+      ${wind} m/s<br>
+      <div style="font-size: 1.25rem;">${windArrow}</div>
+      <div class="text-muted small">${windStrength}</div>
+    </td>`;
   });
 }
 
@@ -329,12 +318,101 @@ function formatDateToKorean(dateStr) {
   return `${parseInt(m)}월 ${parseInt(d)}일 (${day})`;
 }
 
-function getWeatherIcon(values) {
+function getWeatherIconImageSrc(values) {
   const pty = values.PTY;
   const sky = values.SKY;
-  if (pty && pty !== "0") return "🌧️";
-  if (sky === "1") return "☀️";
-  if (sky === "3") return "⛅";
-  if (sky === "4") return "☁️";
-  return "❓";
+  const hour = parseInt(values.time?.slice(0, 2));
+  const isNight = hour >= 18 || hour < 6;
+
+  // 강수 상태 우선
+  if (pty === "1" || pty === "2" || pty === "4" || pty === "5" || pty === "6" || pty === "9") {
+    return "/image/weather/rain.png";
+  }
+  if (pty === "3" || pty === "7") {
+    return "/image/weather/snow.png";
+  }
+
+  // 하늘 상태 + 시간
+  if (sky === "1") return isNight ? "/image/weather/clear-night.png" : "/image/weather/clear-day.png";
+  if (sky === "3") return isNight ? "/image/weather/cloudy-night.png" : "/image/weather/cloudy-day.png";
+  if (sky === "4") return "/image/weather/cloudy.png";
+
+  return "/image/weather/unknown.png"; // 예외 상황
 }
+
+
+function getFutureDate(daysAhead, returnObj = false) {
+  const date = new Date();
+  date.setDate(date.getDate() + daysAhead);
+  const day = date.toLocaleDateString('ko-KR', { weekday: 'short' });
+  const month = date.getMonth() + 1;
+  const dayNum = date.getDate();
+  if (returnObj) {
+    return { day, month, dayNum }; // ✅ 정확한 key 이름 사용
+  } else {
+    return `${month}월 ${dayNum}일 (${day})`;
+  }
+}
+
+function renderCompactDailyForecast(middleTa, middleLand) {
+  const container = document.getElementById("daily-forecast-cards");
+  if (!container) return;
+
+  const taItem = middleTa?.response?.body?.items?.item?.[0];
+  const landItem = middleLand?.response?.body?.items?.item?.[0];
+
+  if (!taItem || !landItem) {
+    container.innerHTML = "<div class='text-muted'>예보 데이터를 불러올 수 없습니다.</div>";
+    return;
+  }
+
+  container.innerHTML = "";
+
+  // ✅ 3일 뒤부터 시작 (D+3 ~ D+10)
+  for (let i = 4; i <= 10; i++) {
+    const dateObj = getFutureDate(i - 3, true);
+    const taMin = taItem[`taMin${i}`] ?? "--";
+    const taMax = taItem[`taMax${i}`] ?? "--";
+    const wfAm = landItem[`wf${i}Am`] ?? landItem[`wf${i}`] ?? "";
+    const wfPm = landItem[`wf${i}Pm`] ?? landItem[`wf${i}`] ?? "";
+    const rnAm = landItem[`rnSt${i}Am`] ?? landItem[`rnSt${i}`] ?? "0";
+    const rnPm = landItem[`rnSt${i}Pm`] ?? landItem[`rnSt${i}`] ?? "0";
+
+    const iconAmSrc = getWeatherImageSrcByText(wfAm, true);   // 오전
+    const iconPmSrc = getWeatherImageSrcByText(wfPm, false);  // 오후
+    const rainProbAm = `${parseInt(rnAm || 0)}%`;
+    const rainProbPm = `${parseInt(rnPm || 0)}%`;
+
+    const card = document.createElement("div");
+    card.className = "daily-card text-center p-3 rounded shadow-sm";
+
+    card.innerHTML = `
+  <div class="fw-bold">${dateObj.day}</div>
+  <div class="text-muted mb-1" style="font-size: 0.85rem;">${dateObj.month}/${dateObj.dayNum}</div>
+  <div class="d-flex justify-content-center gap-1 mb-1">
+  <img src="${iconAmSrc}" width="36" height="36" alt="오전">
+  <img src="${iconPmSrc}" width="36" height="36" alt="오후">
+  </div>
+  <div class="mt-2"><span class="text-primary">${taMin}°</span> / <span class="text-danger">${taMax}°</span></div>
+  <div class="text-info fw-semibold mt-1" style="font-size: 0.85rem;">${rainProbAm} / ${rainProbPm}</div>
+`;
+
+
+    container.appendChild(card);
+  }
+}
+
+function getWeatherImageSrcByText(text) {
+  if (!text) return "/image/weather/unknown.png";
+
+  const lower = text.toLowerCase();
+
+  if (lower.includes("비")) return "/image/weather/rain.png";
+  if (lower.includes("눈")) return "/image/weather/snow.png";
+  if (lower.includes("흐림")) return "/image/weather/cloudy.png";
+  if (lower.includes("구름")) return "/image/weather/cloudy-day.png";  // ✅ 항상 주간 아이콘
+  if (lower.includes("맑음")) return "/image/weather/clear-day.png";   // ✅ 항상 주간 아이콘
+
+  return "/image/weather/unknown.png";
+}
+

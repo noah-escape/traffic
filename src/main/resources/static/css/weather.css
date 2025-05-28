@@ -32,131 +32,6 @@
   font-size: 1.25rem;
 }
 
-/* 📌 전체 박스 꾸미기 */
-.card.hourly-forecast-wrapper {
-  border: none;
-  border-radius: 16px;
-  background: linear-gradient(145deg, #f8f9fa, #ffffff);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.07);
-  overflow: hidden;
-  margin-bottom: 2rem;
-}
-
-/* 📌 상단 헤더 */
-.card.hourly-forecast-wrapper .card-header {
-  background-color: #ffffff;
-  border-bottom: 1px solid #dee2e6;
-  padding: 1rem 1.5rem;
-  font-weight: bold;
-  font-size: 1.1rem;
-  color: #343a40;
-}
-
-/* 📌 스크롤 영역 */
-.weather-scroll-wrapper {
-  overflow-x: auto;
-  padding: 1rem 0;
-}
-
-/* 📌 스크롤바 (웹킷 기반 브라우저용) */
-.weather-scroll-wrapper::-webkit-scrollbar {
-  height: 8px;
-}
-.weather-scroll-wrapper::-webkit-scrollbar-track {
-  background: transparent;
-}
-.weather-scroll-wrapper::-webkit-scrollbar-thumb {
-  background: #ced4da;
-  border-radius: 4px;
-}
-
-/* 📌 스크롤 안 카드 정렬 */
-.weather-scroll {
-  display: flex;
-  flex-direction: row; /* 🔥 가로 정렬 */
-  gap: 2rem;
-  min-width: max-content;
-}
-
-/* ✅ 전체 날씨 예보 블록을 가로로 배치 */
-.weather-date-scroll-container {
-  display: flex;
-  overflow-x: auto;
-  gap: 2rem;
-  padding: 1rem;
-}
-
-.weather-date-block {
-  display: flex;
-  flex-direction: column;
-  min-width: 300px;
-  flex-shrink: 0;
-}
-
-.weather-date-label {
-  font-weight: bold;
-  font-size: 1rem;
-  padding: 0.25rem 0.5rem;
-  color: #495057;
-  white-space: nowrap;
-}
-
-.weather-hour-row {
-  display: flex;
-  gap: 16px;
-  overflow-x: auto;
-  padding: 0.25rem 0.5rem;
-}
-
-/* ✅ 개별 시간 카드 */
-.weather-hour {
-  flex: 0 0 auto;
-  width: 110px;
-  border: 1px solid #dee2e6;
-  border-radius: 0.75rem;
-  background-color: #fff;
-  padding: 1rem 0.5rem;
-  text-align: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-}
-
-
-.weather-hour:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
-}
-
-.weather-hour .time {
-  font-weight: 700;
-  font-size: 1rem;
-  color: #343a40;
-  margin-bottom: 8px;
-}
-
-.weather-hour .icon {
-  font-size: 2rem;
-  margin-bottom: 8px;
-}
-
-.weather-hour .temp {
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin-bottom: 4px;
-  color: #212529;
-}
-
-.weather-hour .rain {
-  font-size: 0.85rem;
-  color: #0d6efd;
-  font-weight: 500;
-}
-
-.weather-hour .wind {
-  font-size: 0.8rem;
-  color: #868e96;
-  margin-top: 4px;
-}
-
 .weather-loading-overlay {
   position: absolute;
   top: 0;
@@ -188,3 +63,99 @@
   background-color: #f8f9fa;
   cursor: pointer;
 }
+
+.daily-forecast-cards {
+  display: flex;
+  overflow-x: auto;
+  gap: 1rem;
+  padding: 1rem 0;
+}
+
+.daily-card {
+  width: 130px; /* 원하는 크기로 조정 가능 */
+  flex-shrink: 0;
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 0.75rem;
+  font-size: 0.9rem;
+  transition: transform 0.2s ease;
+}
+
+.daily-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+.weather-section {
+  margin-bottom: 3rem;
+}
+
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  border-left: 5px solid #0d6efd;
+  padding-left: 0.75rem;
+  margin-bottom: 1.5rem;
+  color: #212529;
+}
+
+/* 예보 테이블 공통 스타일 */
+#hourly-forecast-style-table th,
+#hourly-forecast-style-table td {
+  padding: 0.75rem;
+  font-size: 0.95rem;
+  min-width: 80px;
+  scroll-snap-align: start;
+}
+
+/* 시간 헤더 (위쪽) */
+#forecast-hour-row th,
+#forecast-date-row th {
+  background-color: #f8f9fa;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+/* 왼쪽 라벨 행 (날씨/기온/바람 등) */
+#hourly-forecast-style-table tbody th {
+  background-color: #f1f3f5;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #495057;
+}
+
+/* 아이콘 줄 */
+#row-icon td {
+  font-size: 1.5rem;
+}
+
+/* 기온 강조 */
+#row-temp td {
+  font-weight: bold;
+  color: #dc3545;
+}
+
+/* 강수량 강조 */
+#row-rain td {
+  color: #0d6efd;
+  font-size: 0.9rem;
+  min-width: 90px;
+  white-space: nowrap;
+}
+
+/* 바람 방향 이모지 크기 */
+#row-wind td span {
+  font-size: 1rem;
+}
+
+/* 테이블 테두리 */
+#hourly-forecast-style-table {
+  border: 1px solid #dee2e6;
+}
+
+/* 스크롤 부드럽게 */
+.table-responsive {
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+}
+
