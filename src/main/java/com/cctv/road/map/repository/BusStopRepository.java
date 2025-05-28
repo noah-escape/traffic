@@ -7,11 +7,20 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.cctv.road.map.entity.BusStop;
+import com.cctv.road.map.repository.projection.BusRouteView;
 
-public interface BusStopRepository extends JpaRepository<BusStop, Long> {
+public interface BusStopRepository extends JpaRepository<BusStop, Integer> {
 
-  List<BusStop> findByRouteNumberOrderByStationOrderAsc(String routeNumber);
+  List<BusStop> findByRouteNameOrderByStationOrderAsc(String routeNumber);
 
-  @Query(value = "SELECT DISTINCT route_id FROM bus_stop WHERE route_number = :routeNumber LIMIT 1", nativeQuery = true)
-  String findRouteIdByRouteNumber(@Param("routeNumber") String routeNumber);
+  @Query("SELECT DISTINCT b.routeId FROM BusStop b WHERE b.routeName = :routeNumber")
+  String findRouteIdByRouteNumber(@Param("routeNumber") String routeNumber); // ✅ 이게 꼭 필요함
+
+  @Query("SELECT DISTINCT b.routeId AS routeId, b.routeName AS routeName FROM BusStop b WHERE b.nodeId = :stopId")
+  List<BusRouteView> findRoutesByStopId(@Param("stopId") String stopId);
+
+  List<BusStop> findByLatitudeBetweenAndLongitudeBetween(double minLat, double maxLat, double minLng, double maxLng);
+
+  @Query("SELECT DISTINCT b.routeId, b.routeName FROM BusStop b WHERE b.nodeId = :nodeId")
+  List<Object[]> findRoutesByNodeId(@Param("nodeId") String nodeId);
 }
