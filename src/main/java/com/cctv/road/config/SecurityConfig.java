@@ -55,18 +55,32 @@ public class SecurityConfig {
     return authConfig.getAuthenticationManager();
   }
 
+  // ✅ 1번 체인: /api/proxy/** 는 인증 없이 허용 + CSRF 비활성화
   @Bean
-  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+  @Order(1)
+  public SecurityFilterChain apiChain(HttpSecurity http) throws Exception {
     http
-        .cors(Customizer.withDefaults())
-        .csrf(csrf -> csrf.ignoringRequestMatchers("/api/proxy/**")) // ✅ CSRF 예외 처리
+        .securityMatcher("/api/proxy/**")
+        .csrf(csrf -> csrf.disable())
+        .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+    return http.build();
+  }
+
+  // ✅ 2번 체인: 나머지 요청은 인증 필요, CSRF 켜짐
+  @Bean
+  @Order(2)
+  public SecurityFilterChain appChain(HttpSecurity http) throws Exception {
+    http
+        .securityMatcher(request -> !request.getRequestURI().startsWith("/api/proxy/"))
+        .csrf(csrf -> csrf
+            .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
         .authorizeHttpRequests(auth -> auth
             .requestMatchers(
                 "/api/proxy/**", "/api/proxy/bus/**",
                 "/api/proxy/naver-driving-path",
                 "/", "/login", "/register/**", "/login/oauth2/**",
                 "/css/**", "/js/**", "/image/**", "/favicon.ico",
-                "/json/**", "/pages/**", "/api/**",
+                "/json/**", "/pages/**", "/api/**", "/api/weather/**",
                 "/member/find/**", "/find-id", "/find-password",
                 "/board/list/**", "/board/view/**")
             .permitAll()
