@@ -2,7 +2,10 @@
   --navbar-height: 56px;
   --sidebar-width: 70px;
   --panal-width: 320px;
-  --medium-blue: #0d6efd;
+  --medium-blue: #3B82F6;
+  --medium-blue-dark: #2563EB;
+  --medium-blue-light: #60A5FA;
+  --medium-blue-bg: #E0F2FE;
   --dark-green: #198754;
   --navy: #001f3f;
   --golden-yellow: #ffc107;
@@ -101,13 +104,6 @@ aside.sidebar {
   overflow-y: auto;
   display: none;
   flex-direction: column;
-}
-
-body.dark-mode #cctvFilterPanel,
-body.dark-mode #busFilterPanel,
-body.dark-mode #bikeFilterPanel {
-  background-color: var(--background-dark);
-  color: white;
 }
 
 /* ✅ 상단 내용 영역 (스크롤 가능) */
@@ -327,6 +323,52 @@ body.dark-mode #bikeFilterPanel {
   border-radius: 8px;
   font-size: 14px;
   z-index: 1000;
+}
+
+#trafficToggleBox button {
+  background-color: var(--medium-blue);
+  color: white;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+#trafficToggleBox button:hover {
+  background-color: #0b5ed7;
+}
+
+/* 예쁜 범례 박스 */
+.traffic-legend-box {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  box-shadow: var(--card-shadow);
+  z-index: 1000;
+  display: none;
+  line-height: 1.6;
+  color: #212529;
+}
+
+.traffic-legend-box .legend-box {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.legend-box {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  margin-right: 6px;
 }
 
 /* ✅ 공통 스크롤바 */
@@ -600,17 +642,100 @@ body.dark-mode #bikeFilterPanel {
   /* 줄바꿈 시 약간 간격 */
 }
 
+/* 🅿️ 주차장 패널 */
+.parking-header {
+  background-color: var(--blue-gray);
+  color: white;
+}
+
+#parkingFilterPanel select.form-select,
+#parkingFilterPanel input.form-control {
+  background-color: white;
+  border: 1px solid var(--blue-gray-light);
+  font-size: 0.875rem;
+}
+
+#parkingFilterPanel .form-check-input:checked {
+  background-color: var(--medium-blue);
+  border-color: var(--medium-blue);
+}
+
+#parkingFilterPanel .form-check-label {
+  color: var(--text-color);
+}
+
+#parkingFilterPanel button.btn-outline-primary {
+  color: var(--medium-blue);
+  border-color: var(--medium-blue);
+}
+
+#parkingFilterPanel button.btn-outline-primary:hover {
+  background-color: var(--medium-blue);
+  color: white;
+}
+
+#parkingListBox .list-group-item {
+  border: none;
+  border-bottom: 1px solid #dee2e6;
+}
+
+#parkingListBox .list-group-item:hover {
+  cursor: pointer;
+}
+
+#parkingListBox .text-primary {
+  color: var(--blue-gray) !important;
+}
+
+#parkingCountText {
+  font-weight: 500;
+  color: var(--medium-blue);
+}
+
+.form-select:focus,
+.form-control:focus,
+.form-check-input:focus {
+  border-color: #ced4da;
+  box-shadow: none;
+}
+
+.parking-infowindow-container {
+  background-color: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+  border: 1px solid #dee2e6;
+  padding: 1rem;
+  min-width: 280px;
+  font-size: 15px;
+}
+
+.parking-name {
+  font-weight: 600;
+  color: var(--golden-yellow);
+  font-size: 1.05rem;
+}
+
+.section-title {
+  font-weight: 500;
+  color: var(--text-color);
+  font-size: 0.875rem;
+}
+
+.parking-stats {
+  background-color: #f8f9fa;
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  margin-top: 0.5rem;
+}
+
 body.light-mode .sidebar,
 body.dark-mode .sidebar {
   background-color: var(--light-blue);
   color: var(--text-color);
 }
 
-body.dark-mode h3,
-body.dark-mode h5,
-body.dark-mode h4,
-body.dark-mode p {
-  color: var(--text-color);
+body.dark-mode {
+  --text-color: #212529;
 }
 
 #mapTypeControl .btn {
@@ -672,4 +797,197 @@ body.dark-mode p {
   background: #6c757d;
   border-radius: 50%;
   border: none;
+}
+
+#busDetailContent p {
+  margin-bottom: 0.5rem;
+}
+
+#busArrivalPanel .offcanvas-body>div {
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.arrival-card {
+  gap: 0.5rem;
+}
+
+.bus-number-box {
+  background-color: #f1f3f5;
+  color: #212529;
+  font-weight: bold;
+  font-size: 1rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  display: inline-block;
+  max-width: 100px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.arrival-status {
+  font-size: 0.85rem;
+  white-space: nowrap;
+  color: #495057;
+}
+
+.btn-detail {
+  white-space: nowrap;
+  padding: 3px 10px;
+  font-size: 0.75rem;
+  border: 1px solid #0d6efd;
+  border-radius: 6px;
+  color: #0d6efd;
+  background-color: white;
+  transition: 0.2s;
+}
+
+.btn-detail:hover {
+  background-color: #0d6efd;
+  color: white;
+}
+
+#arrivalPanel {
+  transition: all 0.3s ease;
+  border-left: 1px solid #ddd;
+}
+
+#arrivalPanel .panel-body {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+#arrivalPanelBody > div {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* 🔹 도착 카드 스타일 */
+#arrivalPanelBody .card {
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  background-color: #fff;
+  transition: background 0.2s ease;
+}
+#arrivalPanelBody .card:hover {
+  background-color: #f8f9fa;
+}
+#arrivalPanelBody .card-body {
+  font-size: 0.9rem;
+}
+
+/* 🔹 혼잡도 색상 표시 */
+.text-success {
+  color: #28a745 !important; /* 여유 */
+}
+.text-warning {
+  color: #ffc107 !important; /* 보통 */
+}
+.text-danger {
+  color: #dc3545 !important; /* 혼잡 */
+}
+
+/* 🔹 상세 버튼 */
+.route-detail-btn {
+  font-size: 0.8rem;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+/* 🔹 버스 번호 강조 */
+.bus-number-box {
+  background-color: #007bff;
+  color: white;
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-weight: bold;
+  display: inline-block;
+  font-size: 0.9rem;
+}
+
+/* 🔹 상세 팝업 카드 */
+#routeDetailPopup {
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  padding: 10px;
+  font-size: 0.85rem;
+  z-index: 3000;
+}
+.route-popup-panel {
+  position: absolute;
+  top: 80px;
+  right: 20px;
+  z-index: 1000;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+  padding: 15px;
+  width: 220px;
+}
+
+.route-popup-panel .popup-content {
+  font-size: 14px;
+}
+
+.route-popup-panel .fw-bold {
+  font-size: 16px;
+}
+
+.bus-number-box {
+  padding: 3px 8px;
+  border-radius: 4px;
+  color: white;
+  font-weight: bold;
+  text-align: center;
+  font-size: 14px;
+  display: inline-block;
+}
+
+/* 🔹 헤더 */
+#busFilterPanel .bus-header {
+  background-color: var(--medium-blue) !important;
+}
+
+/* 🔹 입력 버튼 */
+#busFilterPanel .input-group .btn {
+  background-color: var(--medium-blue);
+  border-color: var(--medium-blue);
+  color: white;
+}
+
+#busFilterPanel .input-group .btn:hover {
+  background-color: #2563EB; /* 조금 진한 파란색 */
+  border-color: #2563EB;
+}
+
+/* 🔹 정류장 박스 hover 시 */
+#arrivalPanelBody .arrival-card:hover {
+  background-color: #F0F9FF;
+}
+
+/* 🔹 상세 정보 텍스트 컬러 */
+#arrivalPanelBody .text-primary {
+  color: var(--medium-blue) !important;
+}
+
+/* 🔹 주변정류소 버튼 통일 스타일 */
+#busFilterPanel .btn-primary {
+  background-color: var(--medium-blue);
+  border-color: var(--medium-blue);
+  color: white;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+#busFilterPanel .btn-primary:hover {
+  background-color: var(--medium-blue-dark);
+  border-color: var(--medium-blue-dark);
+}
+
+#arrivalPanelBody {
+  max-height: calc(100vh - 300px); /* 또는 적절한 값으로 조정 */
+  overflow-y: auto;
 }
