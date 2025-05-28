@@ -28,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 public class KmaWeatherService {
 
   private final ObjectMapper objectMapper = new ObjectMapper();
+  private final RestTemplate restTemplate = new RestTemplate();
 
   @Value("${kma.api.key}")
   private String kmaApiKey;
@@ -56,17 +57,30 @@ public class KmaWeatherService {
     return parseJson(getVilageFcst(lat, lon));
   }
 
+  public Map<String, Object> getMidTaAsJson(String regId) {
+    return parseJson(callMidApi("getMidTa", regId));
+  }
+
+  public Map<String, Object> getMidLandFcstAsJson(String regId) {
+    return parseJson(callMidApi("getMidLandFcst", regId));
+  }
+
   private Map<String, Object> parseJson(String json) {
     try {
-      // 실제 응답 로그 찍기
-      log.info("✅ 받은 JSON: {}", json);
-      return objectMapper.readValue(json, new TypeReference<>() {
-      });
+        log.info("✅ 받은 JSON: {}", json);
+
+        // 빠르게 오류 응답 확인
+        if (json.contains("\"resultCode\":\"03\"") || json.contains("NODATA_ERROR")) {
+            log.warn("⚠️ 기상청 응답에 데이터 없음: {}", json);
+            return Map.of("error", "데이터 없음", "raw", json);
+        }
+
+        return objectMapper.readValue(json, new TypeReference<>() {});
     } catch (Exception e) {
-      log.error("❌ JSON 파싱 실패! 원본 응답:\n{}", json); // 여기에 응답 전체 출력됨
-      throw new RuntimeException("기상청 JSON 파싱 실패", e);
+        log.error("❌ JSON 파싱 실패! 원본 응답:\n{}", json);
+        throw new RuntimeException("기상청 JSON 파싱 실패", e);
     }
-  }
+}
 
   private String callApi(String type, double lat, double lon) {
     try {
@@ -147,7 +161,7 @@ public class KmaWeatherService {
       log.info("🌐 최종 호출 URL (String): {}", rawUrl);
 
       URI uri = URI.create(rawUrl);
-      ResponseEntity<String> response = new RestTemplate().getForEntity(uri, String.class);
+      ResponseEntity<String> response = restTemplate.getForEntity(uri, String.class);
 
       log.info("✅ HTTP 상태코드: {}", response.getStatusCode());
       // log.info("📩 응답 데이터: {}", response.getBody());
@@ -159,5 +173,55 @@ public class KmaWeatherService {
       return "{}";
     }
   }
+
+  private String getMidForecastBaseTime() {
+    LocalDate now = LocalDate.now();
+    int hour = LocalTime.now().getHour();
+
+    if (hour < 6) {
+        // 아직 오전 예보도 없음 → 어제 18시 예보 사용
+        now = now.minusDays(1);
+        hour = 18;
+    } else if (hour < 18) {
+        hour = 6;
+    } else {
+        hour = 18;
+    }
+
+    return now.atTime(hour, 0)
+              .format(DateTimeFormatter.ofPattern("yyyyMMddHHmm"));
+}
+
+  private String callMidApi(String type, String regId) {
+  try {
+    String tmFc = getMidForecastBaseTime();
+
+    String encodedKey = URLEncoder.encode(kmaApiKey, StandardCharsets.UTF_8); // ✅ 인코딩 먼저!
+
+    String url = UriComponentsBuilder.fromHttpUrl("https://apis.data.go.kr/1360000/MidFcstInfoService/" + type)
+        .queryParam("serviceKey", encodedKey)
+        .queryParam("pageNo", 1)
+        .queryParam("numOfRows", 10)
+        .queryParam("dataType", "JSON")
+        .queryParam("regId", regId)
+        .queryParam("tmFc", tmFc)
+        .build(false) // ✅ 자동 인코딩 안 함
+        .toUriString();
+
+    log.info("🌐 호출할 중기 API URL: {}", url);
+
+    ResponseEntity<String> response = restTemplate.getForEntity(URI.create(url), String.class);
+
+    log.info("📨 중기 API 응답 ({}): {}", type, response.getBody());
+
+    return response.getBody();
+
+  } catch (Exception e) {
+    log.error("❌ 중기예보 API 호출 실패", e);
+    return "{}";
+  }
+}
+
+
 
 }

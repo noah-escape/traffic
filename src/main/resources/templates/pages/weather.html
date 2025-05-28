@@ -137,9 +137,7 @@
             </div>
           </div>
 
-
-
-          <div id="weather-box" class="card p-4 shadow-lg rounded-4 h-100 d-flex flex-column justify-content-between">
+          <div id="weather-box" class="card p-4 shadow-lg rounded-4 d-flex flex-column gap-3">
             <!-- 날짜/시간 -->
             <div class="text-end small text-muted mb-2">
               <span id="weather-date">--</span>
@@ -187,56 +185,54 @@
       </div>
 
       <!-- 예보 테이블 -->
-      <section class="content mt-5">
-        <div class="container-fluid">
-          <!-- 시간별 예보 -->
-          <div class="card hourly-forecast-wrapper mt-5">
-            <div class="card-header">
-              <h5 class="card-title mb-0">시간별 예보</h5>
-            </div>
-            <div class="card-body">
-              <div class="weather-scroll-wrapper">
-                <div class="weather-scroll">
-                  <!-- 시간별 예보 내부 반복 -->
-                  <div th:each="forecast, iterStat : ${hourlyForecasts}">
-                    <!-- 예보 카드 내용 -->
-                    <div class="forecast-card">
-                      <div class="forecast-time" th:text="${#temporals.format(forecast.dateTime, 'HH:mm')}">--:--
-                      </div>
-                      <div class="forecast-temp" th:text="${forecast.temperature + '°C'}">--°C</div>
-                      <div class="forecast-desc" th:text="${forecast.description}">--</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+      <section class="weather-section">
+        <div class="card shadow-sm p-4 my-5">
+          <h5 class="section-title">시간별 예보</h5>
+          <div class="table-responsive">
+            <table class="table table-bordered text-center align-middle" id="hourly-forecast-style-table">
+              <thead>
+                <tr id="forecast-date-row">
+                  <th>날짜</th> <!-- 왼쪽 라벨 칸 -->
+                  <!-- 날짜 (colspan 병합으로 들어감) -->
+                </tr>
+                <tr id="forecast-hour-row">
+                  <th>시간</th>
+                  <!-- 시간 채움 -->
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr id="row-icon">
+                  <th>날씨</th>
+                </tr>
+                <tr id="row-temp">
+                  <th>기온</th>
+                </tr>
+                <tr id="row-rain">
+                  <th>강수량</th>
+                </tr>
+                <tr id="row-humidity">
+                  <th>습도</th>
+                </tr>
+                <tr id="row-wind">
+                  <th>바람</th>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </section>
 
-      <!-- 일별 예보 -->
-      <div class="card">
-        <div class="card-header">
-          <h3 class="card-title">일별 예보</h3>
+      <section class="weather-section">
+        <div class="card shadow-sm p-4">
+          <h5 class="section-title">중기 예보</h5>
+          <div class="daily-forecast-cards d-flex flex-wrap gap-3 justify-content-between" id="daily-forecast-cards">
+            <!-- JS로 카드 삽입 -->
+          </div>
         </div>
-        <div class="card-body">
-          <table class="table table-bordered" id="daily-forecast-table">
-            <thead>
-              <tr>
-                <th>날짜</th>
-                <th>최저기온</th>
-                <th>최고기온</th>
-                <th>날씨</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+      </section>
     </div>
   </main>
-
 
   <!-- ✅ 스크롤 업 버튼 -->
   <button id="scrollToTopBtn" class="btn btn-warning rounded-circle shadow">

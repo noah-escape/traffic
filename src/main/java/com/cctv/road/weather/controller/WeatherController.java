@@ -1,12 +1,17 @@
 package com.cctv.road.weather.controller;
 
 import com.cctv.road.weather.service.KmaWeatherService;
+import com.cctv.road.weather.util.GeoUtil;
+
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/weather")
 @RequiredArgsConstructor
@@ -32,32 +37,32 @@ public class WeatherController {
         return ResponseEntity.ok(json);
     }
 
-    @GetMapping("/full") // 전체 통합 JSON (current, forecast, daily)
+    @GetMapping("/full")
     public ResponseEntity<?> getFullWeather(@RequestParam double lat, @RequestParam double lon) {
         try {
             Map<String, Object> current = kmaWeatherService.getUltraSrtNcstAsJson(lat, lon);
             Map<String, Object> forecast = kmaWeatherService.getUltraSrtFcstAsJson(lat, lon);
             Map<String, Object> daily = kmaWeatherService.getVilageFcstAsJson(lat, lon);
 
-            return ResponseEntity.ok(new WeatherBundle(current, forecast, daily));
+            // ✅ 바뀐 부분: 기온용/날씨용 코드 모두 추정
+            GeoUtil.RegionCodes codes = GeoUtil.getRegionCodes(lat, lon);
+            log.info("🧭 중기예보 지역코드: land={}, ta={}", codes.landRegId, codes.taRegId);
+
+            Map<String, Object> middleTa = kmaWeatherService.getMidTaAsJson(codes.taRegId);
+            Map<String, Object> middleLand = kmaWeatherService.getMidLandFcstAsJson(codes.landRegId);
+
+            return ResponseEntity.ok(Map.of(
+                    "current", current,
+                    "forecast", forecast,
+                    "daily", daily,
+                    "middleTa", middleTa,
+                    "middleLand", middleLand));
         } catch (Exception e) {
-            return ResponseEntity
-                    .status(500)
-                    .body(Map.of(
-                            "error", "기상청 API 호출 또는 파싱 실패",
-                            "message", e.getMessage()));
+            log.error("❌ 날씨 정보 조회 실패", e);
+            return ResponseEntity.status(500).body(Map.of(
+                    "error", "날씨 조회 중 오류 발생",
+                    "message", e.getMessage()));
         }
     }
 
-    public static class WeatherBundle {
-        public Map<String, Object> current;
-        public Map<String, Object> forecast;
-        public Map<String, Object> daily;
-
-        public WeatherBundle(Map<String, Object> current, Map<String, Object> forecast, Map<String, Object> daily) {
-            this.current = current;
-            this.forecast = forecast;
-            this.daily = daily;
-        }
-    }
 }
