@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
       부상자수: 0
     };
 
-    // 항상 전체 데이터를 기준으로 합산
+    // 전체 데이터를 기준으로 합산
     globalSidoData.forEach(d => {
       const 항목 = d["항목"];
       const 값 = parseFloat(d["값"]) || 0;
@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
       selectedSidos.includes(d["시도"])
     );
 
-    updateSummaryCards();  // ← 수정: 항상 전체 데이터 기준으로
+    updateSummaryCards(); // 전체 기준 카드 업데이트
 
     let traces = [];
     const yearList = Array.from(new Set(filteredSido.map(d => d["연도"]))).sort();
@@ -97,6 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
+    // 사고유형별 통계 차트 추가
     const categoryMap = new Map();
     filteredType.forEach(d => {
       const category = d["사고유형별"] || d["항목"] || "기타";
@@ -121,16 +122,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const chartEl = document.getElementById("chart");
     if (!traces.length) {
+      chartEl.innerHTML = "📭 시각화할 데이터가 없습니다.";
       return;
     }
 
+    // 동적 제목 구성
+    const chartTitle = `${selectedYear === "all" ? "전체 연도" : selectedYear} ${selectedMetric} 추이`;
+
     Plotly.newPlot(chartEl, traces, {
       title: {
-        text: `${selectedYear === "all" ? '전체 연도' : selectedYear} 교통사고 통계`,
+        text: chartTitle,
         font: { size: 22, color: "#333" }
       },
       margin: { t: 80, l: 60, r: 30, b: 80 },
-      legend: { orientation: "h", y: -0.3 },
+      legend: {
+        orientation: "h",
+        yanchor: "bottom",
+        y: -0.4,
+        xanchor: "center",
+        x: 0.5,
+        font: { size: 11 }
+      },
       xaxis: { title: "항목", tickangle: -30, tickfont: { size: 13 } },
       yaxis: { title: "건수", gridcolor: "#eaeaea", titlefont: { size: 15 } },
       plot_bgcolor: "#fff",
@@ -156,7 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const chartTypeGroup = document.getElementById("chartTypeGroup");
 
     if (!metricSelect || !yearSelect || !sidoGroup || !chartTypeGroup) {
-      console.error("🚨 필수 DOM 요소가 없습니다. HTML 구조를 확인하세요.");
+      console.error("🚨 필수 DOM 요소가 없습니다.");
       return;
     }
 
@@ -219,6 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
     chartTypeGroup.appendChild(typeCategoryGroup);
   }
 
+  // ✅ 데이터 로딩 및 초기화
   fetch("/chart/data/combined")
     .then(res => res.json())
     .then(data => {
@@ -239,6 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error("🚨 차트 로딩 중 에러 발생:", err);
     });
 
+  // ✅ 필터 이벤트 연결
   document.getElementById("metricSelect")?.addEventListener("change", drawChart);
   document.getElementById("yearSelect")?.addEventListener("change", drawChart);
   document.getElementById("sidoGroup")?.addEventListener("change", drawChart);

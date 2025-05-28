@@ -27,29 +27,32 @@
       </div>
     </section>
 
-    <!-- 필터 컨트롤 -->
-    <section class="controls">
+    <!-- ✅ 필터 컨트롤 한 줄 -->
+    <div class="controls">
       <div class="control-group">
-        <label for="metricSelect">항목</label>
+        <label for="metricSelect"></label>
         <select id="metricSelect"></select>
       </div>
       <div class="control-group">
-        <label for="yearSelect">연도</label>
+        <label for="yearSelect"></label>
         <select id="yearSelect"></select>
       </div>
-      <div class="control-group">
-        <label>차트 유형</label>
-        <div id="chartTypeGroup"></div>
-      </div>
-    </section>
+      <section class="control-group">
+        <div class="control-group" id="chartTypeGroup">
+          <div class="checkboxes">
+            <label><input type="checkbox" name="chartType" value="bar" checked> 막대</label>
+          </div>
+          <label><input type="checkbox" name="chartType" value="line"> 선</label>
+        </div>
+      </section>
+    </div>
 
-    <!-- 시도 체크박스 그룹 -->
+    <!-- ✅ 시도 선택 영역 -->
     <section class="control-group">
-      <label>시/도 선택</label>
       <div class="sido-group" id="sidoGroup"></div>
     </section>
 
-    <!-- 시도별 차트 -->
+    <!-- 차트 영역 -->
     <section class="chart-area">
       <div id="chart" style="width: 100%; height: 450px;"></div>
     </section>
