@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
 <head>
   <meta charset="UTF-8">
-  <title>게시글 상세보기</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>통계 & 자료</title>
 
   <!-- ✅ Favicon -->
   <link rel="icon" href="/image/main/icon.png" type="image/png">
@@ -22,8 +23,40 @@
 
   <!-- ✅ 프로젝트 전용 CSS & JS -->
   <link rel="stylesheet" th:href="@{/css/home.css}">
-  <link rel="stylesheet" th:href="@{/css/board/view.css}">
   <script th:src="@{/js/home.js}"></script>
+
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .iframe-container {
+      flex-grow: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    footer {
+      height: 60px;
+      text-align: center;
+      background-color: #add8e6;
+      padding: 20px;
+    }
+  </style>
 
 </head>
 
@@ -104,99 +137,11 @@
     </div>
   </nav>
 
-  <div class="view-container">
-    <h2 th:switch="${post.categoryId}">
-      <span th:case="1">[공지사항]</span>
-      <span th:case="2">[자유게시판]</span>
-      <span th:case="3">[민원게시판]</span>
-    </h2>
-
-    <h3 class="text-center" th:text="${post.subject}">제목</h3>
-
-    <div class="view-meta">
-      <p><strong>작성자 :</strong> <span th:text="${post.nickName}">닉네임</span></p>
-      <p><strong>작성일 :</strong> <span th:text="${#temporals.format(post.writedate, 'yyyy-MM-dd HH:mm')}"></span></p>
-      <p><strong>조회수 :</strong> <span th:text="${post.hit}"></span></p>
-    </div>
-
-    <div class="view-content" th:text="${post.content}">내용</div>
-
-    <!-- 첨부 이미지 섹션 -->
-    <div class="attachment-section">
-      <h5>첨부 이미지</h5>
-
-      <!-- 유효한 이미지가 1개 이상 있을 때만 출력 -->
-      <div th:if="${post.imageFileNames != null and !post.imageFileNames.?[imagePath != null].isEmpty()}">
-        <div th:each="image : ${post.imageFileNames}">
-          <img th:if="${image.imagePath != null}" th:src="${image.imagePath}" alt="게시글 이미지" width="400">
-        </div>
-      </div>
-
-      <!-- 유효한 이미지가 하나도 없을 때 -->
-      <div th:unless="${post.imageFileNames != null and !post.imageFileNames.?[imagePath != null].isEmpty()}">
-        <p>첨부된 이미지가 없습니다.</p>
-      </div>
-    </div>
-
-    <!-- ✅ 모든 버튼을 하나의 그룹으로 묶기 -->
-    <div class="button-group my-4">
-      <!-- 수정/삭제: 작성자 본인 또는 관리자만 -->
-      <th:block th:if="${canModify}">
-        <button type="button"
-          th:onclick="|location.href='/board/update/${post.categoryId}/${post.boardSeq}?page=${pageNum}&originCategoryId=${originCategoryId}'|">
-          수정하기
-        </button>
-
-        <button type="button" class="delete"
-          th:onclick="|if(confirm('정말 삭제하시겠습니까?')) location.href='/board/delete/${post.boardNum}?page=${pageNum}&originCategoryId=${originCategoryId}'|">
-          삭제하기
-        </button>
-      </th:block>
-
-      <!-- 목록보기: 항상 표시 -->
-      <button type="button"
-        th:onclick="|location.href='/board/list?page=${pageNum}&categoryId=${originCategoryId}'|">
-        목록보기
-      </button>
-
-    </div>
-
-    <!-- ✅ 댓글 리스트 -->
-    <div class="reply-list mt-4">
-      <!-- 제목 + 버튼 한 줄로 만들기 -->
-      <div class="button-group d-flex justify-content-between align-items-center mb-3">
-        <h5 class="mb-0">댓글</h5>
-        <th:block sec:authorize="isAuthenticated()">
-          <button type="button" id="comment-toggle-btn" onclick="toggleCommentForm()" class="reply-button">
-            댓글쓰기
-          </button>
-        </th:block>
-      </div>
-
-      <div th:if="${#lists.isEmpty(replies)}">
-        <p>등록된 댓글이 없습니다.</p>
-      </div>
-
-      <div th:each="reply : ${replies}" class="border-top py-3">
-        <p><strong th:text="${reply.member.nickName}">작성자</strong></p>
-        <p th:text="${reply.content}">댓글 내용</p>
-        <p class="text-muted" th:text="${#temporals.format(reply.writedate, 'yyyy-MM-dd HH:mm')}">작성일</p>
-      </div>
-
-      <!-- ✅ 댓글 폼을 리스트 아래로 이동 -->
-      <div id="comment-form" style="display: none; margin-top: 20px;">
-        <form th:action="@{/reply/write}" method="post">
-          <input type="hidden" name="boardNum" th:value="${post.boardNum}" />
-          <textarea name="content" placeholder="댓글을 입력하세요" required
-            style="width: 100%; height: 100px; resize: none;"></textarea>
-          <br />
-          <div class="comment-submit">
-            <button type="submit">댓글등록</button>
-          </div>
-        </form>
-      </div>
-    </div>
+  <!-- ✅ iframe 컨테이너 -->
+  <div style="flex: 1; min-height: 0;">
+    <iframe src="http://localhost:5001/chart/" style="width: 100%; height: 100%; border: none;"></iframe>
   </div>
+
 
   <button id="scrollToTopBtn" class="btn btn-warning rounded-circle shadow">
     <i class="bi bi-arrow-up"></i>
@@ -206,15 +151,6 @@
   <footer class="footer">
     ⓒ 2025 ROAD TRAFFIC Corp. All rights reserved.
   </footer>
-
-  <script>
-    function toggleCommentForm() {
-      const form = document.getElementById("comment-form");
-      const button = document.getElementById("comment-toggle-btn");
-      form.style.display = "block";
-      if (button) button.style.display = "none";
-    }
-  </script>
 
 </body>
 
