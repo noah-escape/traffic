@@ -118,10 +118,9 @@ function hideLoading() {
 
 function updateMapAndWeather(lat, lon) {
   showLoading();
-  
-  const regionName = getNearestRegionName(lat, lon); // 🔹 먼저 구하고
-  console.log("📍 지역명:", regionName);
-  loadAirQuality(regionName); // 🔹 미루지 말고 바로 호출
+
+  console.log("📍 선택된 위치:", lat, lon); // ✅ 지역명 대신 좌표 출력
+  loadAirQuality(lat, lon); // ✅ 이제 진짜 좌표로 API 호출
 
   const position = new naver.maps.LatLng(lat, lon);
   if (map) {
@@ -421,43 +420,52 @@ function getWeatherImageSrcByText(text) {
   return "/image/weather/unknown.png";
 }
 
-function loadAirQuality(regionName) {
-  if (!regionName) return;
+function loadAirQuality(lat, lon) {
+  fetch(`/api/weather/quality?lat=${lat}&lon=${lon}`)
+    .then(res => res.json())
+    .then(data => {
+      console.log("✅ 대기 정보", data);
 
-  fetch(`/api/weather/quality?region=${encodeURIComponent(regionName)}`, {
-    credentials: 'include'
-  })
-    .then(async res => {
-      const text = await res.text();
-      try {
-        const data = JSON.parse(text);
-        console.log("✅ 대기 정보", data);
+      const khaiLabel = getAirQualityLabel(data.khaiGrade);
+      const pm10Label = getAirQualityLabel(data.pm10Grade);
+      const pm25Label = getAirQualityLabel(data.pm25Grade);
 
-        // ✅ 이 부분 추가!
-        document.getElementById("pm10").textContent = `${data.pm10Value} ㎍/㎥`;
-        document.getElementById("pm25").textContent = `${data.pm25Value} ㎍/㎥`;
-        document.getElementById("cai").textContent = data.khaiValue;
+      document.getElementById("air-station").textContent = data.station || "--";
+      document.getElementById("air-khai").textContent = data.khaiValue || "--";
+      document.getElementById("air-khai-grade").textContent = khaiLabel;
 
-        document.getElementById("pm10-grade").textContent = getAirQualityLabel(data.pm10Grade);
-        document.getElementById("pm25-grade").textContent = getAirQualityLabel(data.pm25Grade);
-        document.getElementById("cai-grade").textContent = getAirQualityLabel(data.khaiGrade);
+      document.getElementById("air-pm10").textContent = data.pm10Value || "--";
+      document.getElementById("air-pm10-grade").textContent = pm10Label;
 
-      } catch (e) {
-        console.error("❌ 응답이 JSON이 아님:", text);
-        throw e;
-      }
+      document.getElementById("air-pm25").textContent = data.pm25Value || "--";
+      document.getElementById("air-pm25-grade").textContent = pm25Label;
+
+      // ✅ 이모지 설정
+      setAirQualityEmoji('khai', khaiLabel);
+      setAirQualityEmoji('pm10', pm10Label);
+      setAirQualityEmoji('pm25', pm25Label);
     })
     .catch(err => {
       console.error("❌ 대기 정보 실패", err);
-      document.getElementById("pm10").textContent = "-- ㎍/㎥";
-      document.getElementById("pm25").textContent = "-- ㎍/㎥";
-      document.getElementById("cai").textContent = "--";
-
-      document.getElementById("pm10-grade").textContent = "--";
-      document.getElementById("pm25-grade").textContent = "--";
-      document.getElementById("cai-grade").textContent = "--";
     });
 }
+
+function setAirQualityEmoji(idPrefix, gradeLabel) {
+  const emojiMap = {
+    '좋음': 'good.png',
+    '보통': 'normal.png',
+    '나쁨': 'bad.png',
+    '매우나쁨': 'verybad.png',
+    '기본': 'neutral.png',
+    '--': 'neutral.png' // 잘못된 값도 대비
+  };
+
+  const emoji = document.getElementById(`air-${idPrefix}-emoji`);
+  if (emoji) {
+    emoji.src = `/image/weather/${emojiMap[gradeLabel] || emojiMap['기본']}`;
+  }
+}
+
 
 function getAirQualityLabel(grade) {
   switch (grade) {

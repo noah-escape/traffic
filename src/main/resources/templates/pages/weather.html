@@ -182,35 +182,33 @@
             </div>
           </div>
           <!-- 🔸 대기 정보 카드 (날씨 카드 바로 아래) -->
-<div class="card p-4 shadow-lg rounded-4 mt-4" id="air-box">
-  <h5 class="mb-3 text-center">대기 정보</h5>
-  <div class="row g-3 text-center">
-    <div class="col">
-      <div class="weather-detail-box">
-        <div class="icon">🌫️</div>
-        <div class="label">미세먼지 (PM10)</div>
-        <div class="value" id="pm10">-- ㎍/㎥</div>
-        <div class="label small text-muted" id="pm10-grade">--</div>
-      </div>
-    </div>
-    <div class="col">
-      <div class="weather-detail-box">
-        <div class="icon">🌁</div>
-        <div class="label">초미세먼지 (PM2.5)</div>
-        <div class="value" id="pm25">-- ㎍/㎥</div>
-        <div class="label small text-muted" id="pm25-grade">--</div>
-      </div>
-    </div>
-    <div class="col">
-      <div class="weather-detail-box">
-        <div class="icon">📊</div>
-        <div class="label">통합지수 (CAI)</div>
-        <div class="value" id="cai">--</div>
-        <div class="label small text-muted" id="cai-grade">--</div>
-      </div>
-    </div>
-  </div>
-</div>
+          <div class="air-quality-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="mb-0">대기질 정보</h5>
+              <div class="station-info"><strong>측정소:</strong> <span id="air-station">--</span></div>
+            </div>
+
+            <div class="aqi-emoji-grid text-center">
+              <div class="aqi-item">
+                <div class="label">통합지수</div>
+                <img id="air-khai-emoji" src="/image/weather/neutral.png" alt="통합지수" class="emoji-icon">
+                <div id="air-khai-grade" class="grade-label">--</div>
+                <div><span id="air-khai">--</span></div> <!-- ✅ 수치 자리 -->
+              </div>
+              <div class="aqi-item">
+                <div class="label">미세먼지(PM10)</div>
+                <img id="air-pm10-emoji" src="/image/weather/neutral.png" alt="PM10" class="emoji-icon">
+                <div id="air-pm10-grade" class="grade-label">--</div>
+                <div><span id="air-pm10">--</span> ㎍/㎥</div> <!-- ✅ 수치 자리 -->
+              </div>
+              <div class="aqi-item">
+                <div class="label">초미세먼지(PM2.5)</div>
+                <img id="air-pm25-emoji" src="/image/weather/neutral.png" alt="PM2.5" class="emoji-icon">
+                <div id="air-pm25-grade" class="grade-label">--</div>
+                <div><span id="air-pm25">--</span> ㎍/㎥</div> <!-- ✅ 수치 자리 -->
+              </div>
+            </div>
+          </div>
 
         </div>
       </div>
