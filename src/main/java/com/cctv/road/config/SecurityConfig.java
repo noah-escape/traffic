@@ -87,7 +87,7 @@ public class SecurityConfig {
                 "/json/**", "/pages/**", "/api/**", "/api/weather/**",
                 "/member/find/**", "/find-id", "/find-password",
                 "/board/list/**", "/board/view/**",
-                "/chart-view", "/chart/**"
+                "/chart-view", "/chart/**", "/pages/map/**"
                 )
             .permitAll()
             .anyRequest().authenticated())

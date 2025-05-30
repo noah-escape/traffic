@@ -1,6 +1,5 @@
 package com.cctv.road.map.controller;
 
-
 import java.io.StringReader;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -20,6 +19,10 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +30,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ResponseStatusException;
@@ -49,9 +53,17 @@ import reactor.core.publisher.Mono;
 @RequestMapping("/api/proxy")
 public class ApiProxyController {
 
+  @Value("${naver.map.client-id}")
+  private String clientId;
+
+  @Value("${naver.map.client-secret}")
+  private String clientSecret;
+
   private final BusStopRepository busStopRepository;
 
   private final Map<String, Map<String, String>> routeTimeCache = new ConcurrentHashMap<>();
+
+  private final RestTemplate restTemplate = new RestTemplate();
 
   private final WebClient naverClient;
   private final WebClient seoulBusClient;
@@ -97,22 +109,29 @@ public class ApiProxyController {
   }
 
   @GetMapping("/naver-direction")
-  public Mono<String> getNaverDirectionRoute(
+  public ResponseEntity<?> proxyDirectionApi(
       @RequestParam double startLat,
       @RequestParam double startLng,
       @RequestParam double goalLat,
       @RequestParam double goalLng) {
-    return naverClient.get()
-        .uri(uriBuilder -> uriBuilder
-            .path("/map-direction/v1/driving")
-            .queryParam("start", startLng + "," + startLat)
-            .queryParam("goal", goalLng + "," + goalLat)
-            .queryParam("option", "trafast")
-            .build())
-        .accept(MediaType.APPLICATION_JSON)
-        .retrieve()
-        .bodyToMono(String.class)
-        .onErrorMap(e -> new RuntimeException("네이버 경로 탐색 API 호출 실패", e));
+    String url = UriComponentsBuilder.fromHttpUrl("https://maps.apigw.ntruss.com/map-direction/v1/driving")
+        .queryParam("start", startLng + "," + startLat)
+        .queryParam("goal", goalLng + "," + goalLat)
+        .queryParam("option", "trafast")
+        .toUriString();
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.set("X-NCP-APIGW-API-KEY-ID", clientId); // @Value로 주입된 client-id
+    headers.set("X-NCP-APIGW-API-KEY", clientSecret); // client-secret
+
+    HttpEntity<String> entity = new HttpEntity<>(headers);
+
+    try {
+      ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+      return ResponseEntity.ok(response.getBody());
+    } catch (Exception e) {
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("API 호출 실패: " + e.getMessage());
+    }
   }
 
   @GetMapping("/naver-geocode")
