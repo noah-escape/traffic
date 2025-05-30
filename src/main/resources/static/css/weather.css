@@ -1,12 +1,33 @@
+/* 하단선 정렬 및 레이아웃 개선 포함 전체 CSS */
+
+.row.align-items-stretch {
+  align-items: stretch;
+}
+
+.col-md-7,
+.col-md-5 {
+  display: flex;
+  flex-direction: column;
+}
+
 #map {
   width: 100%;
-  height: 500px;
+  min-height: 500px;
+  flex-grow: 1;
+  border-radius: 0.75rem;
 }
 
 #weather-box {
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(0, 0, 0, 0.05);
+  padding: 1.25rem;
+}
+
+#weather-box:hover {
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: none;
+  transform: none;
 }
 
 .weather-detail-box {
@@ -34,11 +55,8 @@
 
 .weather-loading-overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(255,255,255,0.8);
+  inset: 0;
+  background-color: rgba(255, 255, 255, 0.85);
   z-index: 1000;
   opacity: 0;
   visibility: hidden;
@@ -51,17 +69,21 @@
 }
 
 #autocompleteList {
-  max-height: 300px;
-  overflow-y: auto;
-  border: 1px solid #ddd;
-  border-top: none;
-  border-radius: 0 0 0.375rem 0.375rem;
-  background-color: #fff;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  display: none;
+  z-index: 1050;
 }
 
-.autocomplete-item:hover {
-  background-color: #f8f9fa;
-  cursor: pointer;
+#daily-forecast-style-wrapper {
+  background-color: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
 }
 
 .daily-forecast-cards {
@@ -72,18 +94,12 @@
 }
 
 .daily-card {
-  width: 130px; /* 원하는 크기로 조정 가능 */
+  width: 130px;
   flex-shrink: 0;
   background: white;
   border: 1px solid #e9ecef;
   border-radius: 0.75rem;
   font-size: 0.9rem;
-  transition: transform 0.2s ease;
-}
-
-.daily-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
 }
 
 .weather-section {
@@ -99,7 +115,16 @@
   color: #212529;
 }
 
-/* 예보 테이블 공통 스타일 */
+/* 예보 테이블 */
+#hourly-forecast-style-table-wrapper {
+  background-color: rgba(255, 255, 255, 0.9); /* 반투명 백그라운드 */
+  backdrop-filter: blur(8px);                /* 블러 효과 */
+  border: 1px solid rgba(0, 0, 0, 0.05);      /* 부드러운 테두리 */
+  border-radius: 1rem;                        /* 둥근 모서리 */
+  padding: 1.25rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); /* 그림자 */
+}
+
 #hourly-forecast-style-table th,
 #hourly-forecast-style-table td {
   padding: 0.75rem;
@@ -108,7 +133,6 @@
   scroll-snap-align: start;
 }
 
-/* 시간 헤더 (위쪽) */
 #forecast-hour-row th,
 #forecast-date-row th {
   background-color: #f8f9fa;
@@ -116,7 +140,6 @@
   white-space: nowrap;
 }
 
-/* 왼쪽 라벨 행 (날씨/기온/바람 등) */
 #hourly-forecast-style-table tbody th {
   background-color: #f1f3f5;
   font-weight: 600;
@@ -124,18 +147,15 @@
   color: #495057;
 }
 
-/* 아이콘 줄 */
 #row-icon td {
   font-size: 1.5rem;
 }
 
-/* 기온 강조 */
 #row-temp td {
   font-weight: bold;
   color: #dc3545;
 }
 
-/* 강수량 강조 */
 #row-rain td {
   color: #0d6efd;
   font-size: 0.9rem;
@@ -143,38 +163,49 @@
   white-space: nowrap;
 }
 
-/* 바람 방향 이모지 크기 */
-#row-wind td span {
+#row-wind td {
   font-size: 1rem;
 }
 
-/* 테이블 테두리 */
 #hourly-forecast-style-table {
   border: 1px solid #dee2e6;
 }
 
-/* 스크롤 부드럽게 */
 .table-responsive {
   overflow-x: auto;
   scroll-snap-type: x mandatory;
 }
 
-/* ✅ 대기 정보 카드 스타일 */
+/* 대기질 카드 스타일 */
 .air-quality-card {
   background-color: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(0, 0, 0, 0.05);
   border-radius: 1rem;
-  padding: 1.5rem;
+  padding: 1.25rem;
   box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  margin-top: 1rem;
+}
+
+.air-quality-card h5 {
+  font-size: 1.1rem;
+  font-weight: 700;
 }
 
 .station-info {
   font-size: 0.9rem;
   color: #495057;
+  padding-left: 0.25rem;
+  border-left: 3px solid #0d6efd;
+  background-color: #f8f9fa;
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.5rem;
 }
 
 .aqi-emoji-grid {
+  border-top: 1px solid #dee2e6;
+  padding-top: 1rem;
+  margin-top: 1rem;
   display: flex;
   justify-content: space-around;
   gap: 1rem;
@@ -206,3 +237,34 @@
   color: #333;
 }
 
+/* 입력창 여유 */
+.input-group {
+  margin-bottom: 1rem;
+}
+
+#emojiInfoCard {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 0.5rem;
+  background: white;
+  padding: 1rem 1.25rem;
+  width: 280px;
+  line-height: 1.4;
+  border: none;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  z-index: 1055;
+}
+
+#emojiInfoCard .small > div {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 0.8rem;
+  white-space: nowrap;  /* 🔹 줄바꿈 방지 */
+}
+
+#emojiInfoCard .small > div img {
+  margin-bottom: 0.25rem;
+}
