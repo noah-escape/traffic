@@ -67,22 +67,9 @@ public class WeatherController {
     }
 
     @GetMapping("/quality")
-    public ResponseEntity<?> getAirQuality(@RequestParam String region) {
-        try {
-            log.info("🌫️ 대기질 요청 들어옴: {}", region);
-            Map<String, String> airData = airQualityService.getAirQuality(region);
-
-            if (airData == null || airData.isEmpty()) {
-                return ResponseEntity.status(404).body(Map.of("error", "대기질 정보 없음", "region", region));
-            }
-
-            return ResponseEntity.ok(airData);
-        } catch (Exception e) {
-            log.error("❌ 대기질 응답 실패", e);
-            return ResponseEntity.status(500).body(Map.of(
-                    "error", "대기질 정보 실패",
-                    "message", e.getMessage()));
-        }
+    public ResponseEntity<?> getAirQuality(@RequestParam Double lat, @RequestParam Double lon) {
+        Map<String, String> airData = airQualityService.getAirQualityByLocation(lat, lon);
+        return ResponseEntity.ok(airData);
     }
 
 }

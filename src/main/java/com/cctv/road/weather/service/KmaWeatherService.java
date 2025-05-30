@@ -67,7 +67,7 @@ public class KmaWeatherService {
 
   private Map<String, Object> parseJson(String json) {
     try {
-        log.info("✅ 받은 JSON: {}", json);
+        // log.info("✅ 받은 JSON: {}", json);
 
         // 빠르게 오류 응답 확인
         if (json.contains("\"resultCode\":\"03\"") || json.contains("NODATA_ERROR")) {
@@ -140,8 +140,8 @@ public class KmaWeatherService {
       // log.info("🛰️ 요청 타입: {}", type);
       // log.info("📍 위도: {}, 경도: {}", lat, lon);
       // log.info("🧭 변환된 Grid 좌표: nx = {}, ny = {}", grid.nx, grid.ny);
-      log.info("📅 기준 날짜: {}, 기준 시간: {}", baseDateStr, baseTimeStr);
-      log.info("🔑 사용 중인 서비스 키(raw): {}", kmaApiKey);
+      // log.info("📅 기준 날짜: {}, 기준 시간: {}", baseDateStr, baseTimeStr);
+      // log.info("🔑 사용 중인 서비스 키(raw): {}", kmaApiKey);
 
       String encodedKey = URLEncoder.encode(kmaApiKey, StandardCharsets.UTF_8);
 
@@ -158,12 +158,12 @@ public class KmaWeatherService {
           .build(false) // 인코딩 안 하도록 false
           .toUriString();
 
-      log.info("🌐 최종 호출 URL (String): {}", rawUrl);
+      // log.info("🌐 최종 호출 URL (String): {}", rawUrl);
 
       URI uri = URI.create(rawUrl);
       ResponseEntity<String> response = restTemplate.getForEntity(uri, String.class);
 
-      log.info("✅ HTTP 상태코드: {}", response.getStatusCode());
+      // log.info("✅ HTTP 상태코드: {}", response.getStatusCode());
       // log.info("📩 응답 데이터: {}", response.getBody());
 
       return response.getBody();
@@ -208,11 +208,11 @@ public class KmaWeatherService {
         .build(false) // ✅ 자동 인코딩 안 함
         .toUriString();
 
-    log.info("🌐 호출할 중기 API URL: {}", url);
+    // log.info("🌐 호출할 중기 API URL: {}", url);
 
     ResponseEntity<String> response = restTemplate.getForEntity(URI.create(url), String.class);
 
-    log.info("📨 중기 API 응답 ({}): {}", type, response.getBody());
+    // log.info("📨 중기 API 응답 ({}): {}", type, response.getBody());
 
     return response.getBody();
 
