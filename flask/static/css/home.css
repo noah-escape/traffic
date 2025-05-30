@@ -28,191 +28,60 @@ body {
   font-family: 'Pretendard', sans-serif;
   background-color: var(--background-color);
   color: var(--text-color);
-  padding-top: 80px; /* navbar 높이 조절 */
+  padding-top: 80px;
 }
 
 main {
-  padding-top: 0; /* 중복 여백 방지 */
+  padding-top: 0;
 }
 
-h2 {
+h2, h1, h4 {
   text-align: center;
   color: var(--medium-blue);
-  margin: 30px;
+  margin: 30px 0;
 }
 
-#toggle-mode {
-  background-color: transparent;
-  color: white;
-  transition: all 0.3s ease;
-  border: none;
-}
-
-#toggle-mode:hover {
-  background-color: white;
-}
-
-.navbar {
-  position: fixed;
-  top: 0;
-  width: 100%;
-  z-index: 1000;
-  background-color: var(--light-blue);
-}
-
-.navbar-nav .nav-item {
-  margin: 0 12px;
-}
-
-.navbar-brand {
-  font-size: 1.5rem;
-  color: white;
-  padding-top: 0.5rem !important;
-}
-
-.nav-link {
-  color: white !important;
-  font-size: 1.2rem;
+.btn-primary,
+.btn-outline-primary {
   font-weight: 600;
-  padding: 10px 15px;
-}
-
-.nav-link:hover {
-  color: #6495ED !important;
-}
-
-.dropdown-menu .dropdown-item,
-.dropdown-menu button.dropdown-item {
-  background-color: var(--card-bg);
-  color: var(--navy);
-  border: none;
-}
-
-.dropdown-menu .dropdown-item:hover,
-.dropdown-menu button.dropdown-item:hover {
-  background-color: transparent;
-  color: #6495ED;
-  border: none;
-}
-
-.dropdown-item {
-  font-size: 0.85rem;
-  padding: 0.55rem 1rem;
-  border-radius: 0.5rem;
-  color: white;
-  text-align: center;
-}
-
-.dropdown-item:hover {
-  color: #6495ED;
-}
-
-.navbar-toggler {
-  background-color: var(--light-blue) !important;
-}
-
-.navbar-toggler:hover {
-  background-color: white !important;
-}
-
-.arrow-icon {
-  transition: transform 0.3s ease;
-}
-
-.arrow-icon.rotate {
-  transform: rotate(180deg);
-}
-
-.login-btn {
-  background-color: transparent;
-  color: white;
-  transition: all 0.3s ease;
-  border: none;
-}
-
-.login-btn:hover {
-  background-color: white;
-}
-
-hr {
-  background-color: white;
-  height: 3px;
-}
-
-.hero-section {
-  background: url('/image/main/main1.webp') no-repeat center center / cover;
-  height: 100vh;
-  position: relative;
-}
-
-.hero-content-box {
-  padding: 2rem 3rem;
-  background: rgba(255, 255, 255, 0.7);
-  border-radius: 10px;
-  max-width: 480px;
-  margin-right: 8vw;
-}
-
-.hero-title {
-  font-size: 2.5rem;
 }
 
 .card {
   transition: transform 0.3s ease;
-}
-
-.card i {
-  font-size: 3rem;
-}
-
-.card i.bi-bicycle {
-  font-size: 3.5rem;
+  background-color: var(--card-bg);
+  color: var(--text-color);
 }
 
 .card:hover {
   transform: translateY(-5px);
-  transition: transform 0.2s ease-in-out;
 }
 
-.service-btn {
-  background-color: var(--golden-yellow);
-  color: #000;
-  display: inline-block;
-  padding: 0.6rem 1.2rem;
+.card .card-title {
+  font-weight: bold;
+}
+
+.card .btn {
   font-weight: 600;
-  border: none;
-  transition: all 0.3s ease;
-  border-radius: 8px;
 }
 
-.service-btn:hover {
-  background-color: #cfa743;
-  color: white;
+.list-group-item {
+  background-color: var(--card-bg);
+  color: var(--text-color);
+  border-color: var(--blue-gray-light);
 }
 
-@media (max-width: 768px) {
-  .hero-section {
-    height: auto;
-    padding: 60px 0;
-    justify-content: center;
-    text-align: center;
-  }
-
-  .hero-content-box {
-    margin: 0 auto;
-    background: rgba(255, 255, 255, 0.95);
-    width: 90%;
-  }
+.list-group-item a {
+  color: var(--text-color);
+  text-decoration: none;
 }
 
-/* 🌞 기본적으로 다크 로고 숨기기 */
-.logo-dark {
-  display: none;
+.list-group-item a:hover {
+  color: #6495ED;
 }
 
-/* 🌞 라이트 모드용 */
-.logo-light {
-  display: inline;
+iframe {
+  border-radius: 6px;
+  overflow: hidden;
 }
 
 .footer {
@@ -224,76 +93,14 @@ hr {
   margin-top: auto;
 }
 
-#scrollToTopBtn {
-  position: fixed;
-  bottom: 40px;
-  right: 40px;
-  z-index: 999;
-  width: 55px;
-  height: 55px;
-  font-size: 1.6rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: #2F5597;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  transition: background-color 0.3s ease;
-}
-
-#scrollToTopBtn:hover {
-  background-color: #24497D;
-  color: white;
-}
-
-/* 🌚 다크모드 전용 스타일 추가 */
-body.dark-mode #responsibility,
-body.dark-mode .dropdown-menu {
-  background-color: var(--card-bg) !important;
-}
-
-body.dark-mode #responsibility h2,
-body.dark-mode #responsibility p,
-body.dark-mode #responsibility h5 {
+/* Dark mode adjustments */
+body.dark-mode .list-group-item {
+  background-color: var(--card-bg);
   color: var(--text-color);
+  border-color: var(--blue-gray-light);
 }
 
-/* 🌚 다크모드 - '내정보' 버튼 배경색 */
-body.dark-mode .login-btn,
-body.dark-mode .navbar-toggler,
-body.dark-mode #toggle-mode {
-  background-color: transparent !important;
-}
-
-body.dark-mode .login-btn:hover,
-body.dark-mode .navbar-toggler:hover,
-body.dark-mode #toggle-mode:hover {
-  background-color: var(--medium-blue) !important;
-  color: white;
-}
-
-/* 🌚 다크모드 - 내정보 드롭다운 항목 모두 통일 (a + button) */
-body.dark-mode .dropdown-menu .dropdown-item,
-body.dark-mode .dropdown-menu button.dropdown-item {
-  background-color: var(--card-bg) !important;
-  color: var(--text-color) !important;
-  border: none;
-}
-
-/* 🌚 다크모드 - 마우스 올렸을 때 색상 통일 */
-body.dark-mode .dropdown-menu .dropdown-item:hover,
-body.dark-mode .dropdown-menu button.dropdown-item:hover {
-  background-color: transparent !important;
-  color: #6495ED !important;
-  border: none;
-}
-
-/* 🌚 다크 모드용 */
-body.dark-mode .logo-light {
-  display: none;
-}
-
-body.dark-mode .logo-dark {
-  display: inline;
+body.dark-mode .card {
+  background-color: var(--card-bg);
+  color: var(--text-color);
 }
