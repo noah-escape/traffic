@@ -201,10 +201,9 @@ public class ApiProxyController {
     if (key == null || key.trim().isEmpty()) {
       throw new RuntimeException("API 키 누락");
     }
-    key = key.trim();
 
     String url = "http://ws.bus.go.kr/api/rest/buspos/getBusPosByRtid"
-        + "?serviceKey=" + key
+        + "?serviceKey=" + key.trim()
         + "&busRouteId=" + routeId
         + "&resultType=json";
 
@@ -218,10 +217,14 @@ public class ApiProxyController {
                   .GET()
                   .build(),
               HttpResponse.BodyHandlers.ofString());
+
       if (resp.statusCode() != 200) {
         throw new RuntimeException("서울시 API 오류: " + resp.statusCode());
       }
+
+      // 🔽 그대로 JSON 문자열 반환
       return resp.body();
+
     } catch (Exception e) {
       throw new RuntimeException("버스 위치 API 호출 실패: " + e.getMessage(), e);
     }

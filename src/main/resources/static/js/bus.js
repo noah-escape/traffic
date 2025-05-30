@@ -32,6 +32,52 @@ function clearBusMarkers() {
   busMarkers = [];
 }
 
+function getBusIconByTurnaround(bus, stationList) {
+  if (!bus.lastStnId || !bus.trnstnid || !Array.isArray(stationList) || stationList.length === 0) {
+    console.warn("❌ 방향 판단 실패: 필수 데이터 없음");
+    return defaultIcon("R");
+  }
+
+  // ✅ 비교를 위한 순서값 얻기 함수 (node_id 또는 stopId 대응)
+  const getOrder = (id) => {
+    const matched = stationList.find(
+      s =>
+        s.node_id == id ||
+        s.stopId == id ||        // 프론트 JS에서 stopId 이름일 수도 있음
+        s.station_id == id       // 혹시 모르니 추가
+    );
+    if (!matched || matched.stationOrder == null) {
+      console.warn("❌ 방향 판단 실패: station_order 없음", id, bus.trnstnid);
+      console.log("🧾 전체 stationList에서 찾을 수 없음. 예시:", stationList.slice(0, 3));
+    }
+    return matched?.stationOrder ?? null;
+  };
+
+  const lastSeq = getOrder(bus.lastStnId);   // 실시간 위치 기준 마지막 정류소
+  const turnSeq = getOrder(bus.trnstnid);    // 회차 정류소 기준
+
+  if (lastSeq == null || turnSeq == null) {
+    return defaultIcon("R");
+  }
+
+  // ✅ 방향 결정
+  return {
+    url: lastSeq < turnSeq
+      ? '/image/bus/icon-bus-R.png'  // 회차 전: 오른쪽
+      : '/image/bus/icon-bus-L.png', // 회차 후: 왼쪽
+    size: new naver.maps.Size(24, 24),
+    anchor: new naver.maps.Point(8, 24)
+  };
+}
+
+function defaultIcon(direction = "R") {
+  return {
+    url: `/image/bus/icon-bus-${direction}.png`,
+    size: new naver.maps.Size(24, 24),
+    anchor: new naver.maps.Point(8, 24)
+  };
+}
+
 async function showBusPositions({ routeId, routeNumber }) {
   let url = '';
   if (routeId) {
@@ -79,16 +125,13 @@ async function showBusPositions({ routeId, routeNumber }) {
       const carNo = bus.vehId;
 
       if (!isNaN(lat) && !isNaN(lng)) {
+        const icon = getBusIconByTurnaround(bus, routeStops);
+
         const marker = new naver.maps.Marker({
           position: new naver.maps.LatLng(lat, lng),
           map: map,
           title: `버스 번호: ${carNo}`,
-          icon: {
-            url: '/image/bus/icon-bus.png',
-            size: new naver.maps.Size(24, 24),
-            origin: new naver.maps.Point(0, 0),
-            anchor: new naver.maps.Point(8, 24)
-          }
+          icon
         });
 
         naver.maps.Event.addListener(marker, 'click', () => {

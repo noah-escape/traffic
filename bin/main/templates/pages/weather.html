@@ -91,7 +91,6 @@
             게시판
             <i class="bi bi-chevron-down ms-2 arrow-icon"></i>
           </a>
-          </a>
           <div class="collapse" id="boardDropdownMenu">
             <ul class="list-unstyled ps-0">
               <li><a class="dropdown-item text-center" th:href="@{/board/list(categoryId=2)}">자유게시판</a></li>
@@ -107,160 +106,197 @@
     </div>
   </nav>
 
-  <main class="flex-grow-1 py-5">
+  <main class="flex-grow-1 py-5 position-relative">
+    <!-- 로딩 오버레이는 main 전체 덮음 (nav, footer 제외) -->
+    <div id="weather-loading" class="weather-loading-overlay d-flex align-items-center justify-content-center">
+      <div class="text-center bg-white p-4 rounded shadow-sm">
+        <div class="spinner-border text-primary mb-3" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <div class="fw-semibold text-secondary">날씨 정보를 불러오는 중입니다...</div>
+      </div>
+    </div>
     <div class="container">
-      <div class="row">
+      <div class="row align-items-stretch">
         <!-- 지도 영역 (왼쪽) -->
-        <div class="col-md-7 mb-4">
-          <div class="position-relative" style="z-index: 1000;">
-            <div class="input-group mb-2">
+        <div class="col-md-7 mb-4 d-flex flex-column">
+          <div class="position-relative mb-2">
+            <div class="input-group">
               <input type="text" id="locationSearch" class="form-control" placeholder="지역명을 입력하세요" autocomplete="off">
               <button class="btn btn-primary" id="searchBtn">검색</button>
             </div>
-            <ul id="autocompleteList" class="list-group shadow-sm"
-              style="position: absolute; top: 100%; left: 0; right: 0; display: none;"></ul>
+            <ul id="autocompleteList" class="list-group shadow-sm"></ul>
           </div>
 
-
-          <div id="map" class="shadow-sm rounded"></div>
+          <div class="flex-grow-1 d-flex">
+            <div id="map" class="shadow-sm rounded flex-grow-1"></div>
+          </div>
         </div>
 
-        <!-- 날씨 카드 (오른쪽) -->
-        <div class="col-md-5">
-          <!-- 🔄 날씨 로딩 표시 -->
-          <div id="weather-loading" class="weather-loading-overlay d-flex align-items-center justify-content-center">
-            <div class="text-center bg-white p-4 rounded shadow-sm animate">
-              <div class="spinner-border text-primary mb-3" role="status" style="width: 2.5rem; height: 2.5rem;">
-                <span class="visually-hidden">Loading...</span>
+        <!-- 날씨 박스 영역 (오른쪽) -->
+        <div class="col-md-5 d-flex flex-column">
+          <div class="flex-grow-1 d-flex flex-column">
+            <div id="weather-box" class="card p-4 shadow-lg rounded-4 mb-3 flex-grow-1">
+              <!-- 날짜/시간 -->
+              <div class="text-end small text-muted mb-2">
+                <span id="weather-date">--</span>
+                <span id="weather-time">--</span>
               </div>
-              <div class="fw-semibold text-secondary">날씨 정보를 불러오는 중입니다...</div>
-            </div>
-          </div>
 
-          <div id="weather-box" class="card p-4 shadow-lg rounded-4 d-flex flex-column gap-3">
-            <!-- 날짜/시간 -->
-            <div class="text-end small text-muted mb-2">
-              <span id="weather-date">--</span>
-              <span id="weather-time">--</span>
-            </div>
+              <!-- 기온/체감 -->
+              <div class="text-center">
+                <h1 id="weather-temp" class="display-2 fw-bold mb-2">--°C</h1>
+                <div class="fs-5 text-secondary">체감 <span id="feels-like">--°C</span></div>
+              </div>
 
-            <!-- 기온/체감 -->
-            <div class="text-center">
-              <h1 id="weather-temp" class="display-2 fw-bold mb-2">--°C</h1>
-              <div class="fs-5 text-secondary">체감 <span id="feels-like">--°C</span></div>
-            </div>
-
-            <!-- 날씨 세부 정보 카드 -->
-            <div class="row g-3 mt-4">
-              <!-- 습도 -->
-              <div class="col">
-                <div class="weather-detail-box">
-                  <div class="icon">💧</div>
-                  <div class="label">습도</div>
-                  <div class="value" id="weather-humidity">--%</div>
+              <!-- 날씨 세부 정보 카드 -->
+              <div class="row g-3 mt-4">
+                <!-- 습도 -->
+                <div class="col">
+                  <div class="weather-detail-box">
+                    <div class="icon">💧</div>
+                    <div class="label">습도</div>
+                    <div class="value" id="weather-humidity">--%</div>
+                  </div>
                 </div>
-              </div>
 
-              <!-- 바람 -->
-              <div class="col">
-                <div class="weather-detail-box">
-                  <div class="icon">🍃</div>
-                  <div class="label">바람</div>
-                  <div class="value" id="weather-wind">--</div>
-                  <div class="label" id="weather-wind-dir">--</div>
+                <!-- 바람 -->
+                <div class="col">
+                  <div class="weather-detail-box">
+                    <div class="icon">🍃</div>
+                    <div class="label">바람</div>
+                    <div class="value" id="weather-wind">--</div>
+                    <div class="label" id="weather-wind-dir">--</div>
+                  </div>
                 </div>
-              </div>
 
-              <!-- 강수 -->
-              <div class="col">
-                <div class="weather-detail-box">
-                  <div class="icon">🌧️</div>
-                  <div class="label">강수</div>
-                  <div class="value" id="weather-rain">-- mm</div>
+                <!-- 강수 -->
+                <div class="col">
+                  <div class="weather-detail-box">
+                    <div class="icon">🌧️</div>
+                    <div class="label">강수</div>
+                    <div class="value" id="weather-rain">-- mm</div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-          <!-- 🔸 대기 정보 카드 (날씨 카드 바로 아래) -->
-          <div class="air-quality-card">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <h5 class="mb-0">대기질 정보</h5>
-              <div class="station-info"><strong>측정소:</strong> <span id="air-station">--</span></div>
+            <!-- 🔸 대기 정보 카드 (날씨 카드 바로 아래) -->
+            <div class="air-quality-card">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0 d-flex align-items-center position-relative">
+                  대기질 정보
+                  <button class="btn btn-sm ms-2 d-flex align-items-center justify-content-center" id="emojiInfoToggle"
+                    type="button" style="width: 32px; height: 32px;">
+                    <i class="bi bi-question-circle"></i>
+                  </button>
+
+                  <!-- 이모지 설명 카드 -->
+                  <div id="emojiInfoCard" class="info-card shadow-sm rounded" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                      <span class="fw-bold">이모티콘 의미</span>
+                      <button type="button" class="btn-close" aria-label="닫기" id="emojiInfoClose"></button>
+                    </div>
+                    <div class="d-flex justify-content-between text-center small gap-3">
+                      <div>
+                        <img src="/image/weather/good.png" alt="좋음" width="36" height="36"><br>
+                        <div>좋음</div>
+                      </div>
+                      <div>
+                        <img src="/image/weather/normal.png" alt="보통" width="36" height="36"><br>
+                        <div>보통</div>
+                      </div>
+                      <div>
+                        <img src="/image/weather/bad.png" alt="나쁨" width="36" height="36"><br>
+                        <div>나쁨</div>
+                      </div>
+                      <div>
+                        <img src="/image/weather/verybad.png" alt="매우 나쁨" width="36" height="36"><br>
+                        <div>매우 나쁨</div>
+                      </div>
+                    </div>
+                  </div>
+
+
+                </h5>
+
+
+
+                <div class="station-info"><strong>측정소:</strong> <span id="air-station">--</span></div>
+              </div>
+
+              <div class="aqi-emoji-grid text-center">
+                <div class="aqi-item">
+                  <div class="label">통합지수</div>
+                  <img id="air-khai-emoji" src="/image/weather/neutral.png" alt="통합지수" class="emoji-icon">
+                  <div id="air-khai-grade" class="grade-label">--</div>
+                  <div><span id="air-khai">--</span></div> <!-- ✅ 수치 자리 -->
+                </div>
+                <div class="aqi-item">
+                  <div class="label">미세먼지(PM10)</div>
+                  <img id="air-pm10-emoji" src="/image/weather/neutral.png" alt="PM10" class="emoji-icon">
+                  <div id="air-pm10-grade" class="grade-label">--</div>
+                  <div><span id="air-pm10">--</span> ㎍/㎥</div> <!-- ✅ 수치 자리 -->
+                </div>
+                <div class="aqi-item">
+                  <div class="label">초미세먼지(PM2.5)</div>
+                  <img id="air-pm25-emoji" src="/image/weather/neutral.png" alt="PM2.5" class="emoji-icon">
+                  <div id="air-pm25-grade" class="grade-label">--</div>
+                  <div><span id="air-pm25">--</span> ㎍/㎥</div> <!-- ✅ 수치 자리 -->
+                </div>
+              </div>
             </div>
 
-            <div class="aqi-emoji-grid text-center">
-              <div class="aqi-item">
-                <div class="label">통합지수</div>
-                <img id="air-khai-emoji" src="/image/weather/neutral.png" alt="통합지수" class="emoji-icon">
-                <div id="air-khai-grade" class="grade-label">--</div>
-                <div><span id="air-khai">--</span></div> <!-- ✅ 수치 자리 -->
-              </div>
-              <div class="aqi-item">
-                <div class="label">미세먼지(PM10)</div>
-                <img id="air-pm10-emoji" src="/image/weather/neutral.png" alt="PM10" class="emoji-icon">
-                <div id="air-pm10-grade" class="grade-label">--</div>
-                <div><span id="air-pm10">--</span> ㎍/㎥</div> <!-- ✅ 수치 자리 -->
-              </div>
-              <div class="aqi-item">
-                <div class="label">초미세먼지(PM2.5)</div>
-                <img id="air-pm25-emoji" src="/image/weather/neutral.png" alt="PM2.5" class="emoji-icon">
-                <div id="air-pm25-grade" class="grade-label">--</div>
-                <div><span id="air-pm25">--</span> ㎍/㎥</div> <!-- ✅ 수치 자리 -->
-              </div>
-            </div>
           </div>
-
         </div>
+
+        <!-- 예보 테이블 -->
+        <section class="weather-section">
+          <div class="my-5" id="hourly-forecast-style-table-wrapper">
+            <h5 class="section-title">시간별 예보</h5>
+            <div class="table-responsive">
+              <table class="table table-bordered text-center align-middle" id="hourly-forecast-style-table">
+                <thead>
+                  <tr id="forecast-date-row">
+                    <th>날짜</th> <!-- 왼쪽 라벨 칸 -->
+                    <!-- 날짜 (colspan 병합으로 들어감) -->
+                  </tr>
+                  <tr id="forecast-hour-row">
+                    <th>시간</th>
+                    <!-- 시간 채움 -->
+                  </tr>
+                </thead>
+
+                <tbody>
+                  <tr id="row-icon">
+                    <th>날씨</th>
+                  </tr>
+                  <tr id="row-temp">
+                    <th>기온</th>
+                  </tr>
+                  <tr id="row-rain">
+                    <th>강수량</th>
+                  </tr>
+                  <tr id="row-humidity">
+                    <th>습도</th>
+                  </tr>
+                  <tr id="row-wind">
+                    <th>바람</th>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="weather-section">
+          <div id="daily-forecast-style-wrapper" class="my-5">
+            <h5 class="section-title">중기 예보</h5>
+            <div class="daily-forecast-cards d-flex flex-wrap gap-3 justify-content-between" id="daily-forecast-cards">
+              <!-- JS로 카드 삽입 -->
+            </div>
+          </div>
+        </section>
       </div>
-
-      <!-- 예보 테이블 -->
-      <section class="weather-section">
-        <div class="card shadow-sm p-4 my-5">
-          <h5 class="section-title">시간별 예보</h5>
-          <div class="table-responsive">
-            <table class="table table-bordered text-center align-middle" id="hourly-forecast-style-table">
-              <thead>
-                <tr id="forecast-date-row">
-                  <th>날짜</th> <!-- 왼쪽 라벨 칸 -->
-                  <!-- 날짜 (colspan 병합으로 들어감) -->
-                </tr>
-                <tr id="forecast-hour-row">
-                  <th>시간</th>
-                  <!-- 시간 채움 -->
-                </tr>
-              </thead>
-
-              <tbody>
-                <tr id="row-icon">
-                  <th>날씨</th>
-                </tr>
-                <tr id="row-temp">
-                  <th>기온</th>
-                </tr>
-                <tr id="row-rain">
-                  <th>강수량</th>
-                </tr>
-                <tr id="row-humidity">
-                  <th>습도</th>
-                </tr>
-                <tr id="row-wind">
-                  <th>바람</th>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <section class="weather-section">
-        <div class="card shadow-sm p-4">
-          <h5 class="section-title">중기 예보</h5>
-          <div class="daily-forecast-cards d-flex flex-wrap gap-3 justify-content-between" id="daily-forecast-cards">
-            <!-- JS로 카드 삽입 -->
-          </div>
-        </div>
-      </section>
-    </div>
   </main>
 
   <!-- ✅ 스크롤 업 버튼 -->
