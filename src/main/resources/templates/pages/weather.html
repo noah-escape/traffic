@@ -119,24 +119,25 @@
     <div class="container">
       <div class="row align-items-stretch">
         <!-- 지도 영역 (왼쪽) -->
-        <div class="col-md-7 mb-4 d-flex flex-column">
-          <div class="position-relative mb-2">
-            <div class="input-group">
-              <input type="text" id="locationSearch" class="form-control" placeholder="지역명을 입력하세요" autocomplete="off">
-              <button class="btn btn-primary" id="searchBtn">검색</button>
-            </div>
-            <ul id="autocompleteList" class="list-group shadow-sm"></ul>
-          </div>
-
-          <div class="flex-grow-1 d-flex">
-            <div id="map" class="shadow-sm rounded flex-grow-1"></div>
-          </div>
-        </div>
+        <div class="col-md-7 mb-5">
+  <div class="left-wrapper d-flex flex-column">
+    <div class="position-relative mb-2">
+      <div class="input-group">
+        <input type="text" id="locationSearch" class="form-control" placeholder="지역명을 입력하세요" autocomplete="off">
+        <button class="btn btn-primary" id="searchBtn">검색</button>
+      </div>
+      <ul id="autocompleteList" class="list-group shadow-sm"></ul>
+    </div>
+    <div class="flex-grow-1 d-flex">
+      <div id="map" class="shadow-sm rounded flex-grow-1"></div>
+    </div>
+  </div>
+</div>
 
         <!-- 날씨 박스 영역 (오른쪽) -->
-        <div class="col-md-5 d-flex flex-column">
-          <div class="flex-grow-1 d-flex flex-column">
-            <div id="weather-box" class="card p-4 shadow-lg rounded-4 mb-3 flex-grow-1">
+        <div class="col-md-5">
+  <div class="right-wrapper d-flex flex-column h-100">
+    <div id="weather-box" class="card p-4 rounded-4 mb-3 flex-grow-1">
               <!-- 날짜/시간 -->
               <div class="text-end small text-muted mb-2">
                 <span id="weather-date">--</span>
@@ -250,11 +251,11 @@
         </div>
 
         <!-- 예보 테이블 -->
-        <section class="weather-section">
+        <section class="weather-section mb-4">
           <div class="my-5" id="hourly-forecast-style-table-wrapper">
             <h5 class="section-title">시간별 예보</h5>
-            <div class="table-responsive">
-              <table class="table table-bordered text-center align-middle" id="hourly-forecast-style-table">
+            <div class="table-responsive draggable-scroll">
+  <table class="table table-bordered text-center align-middle" id="hourly-forecast-style-table">
                 <thead>
                   <tr id="forecast-date-row">
                     <th>날짜</th> <!-- 왼쪽 라벨 칸 -->
@@ -289,7 +290,7 @@
         </section>
 
         <section class="weather-section">
-          <div id="daily-forecast-style-wrapper" class="my-5">
+          <div id="daily-forecast-style-wrapper">
             <h5 class="section-title">중기 예보</h5>
             <div class="daily-forecast-cards d-flex flex-wrap gap-3 justify-content-between" id="daily-forecast-cards">
               <!-- JS로 카드 삽입 -->

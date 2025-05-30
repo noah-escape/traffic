@@ -4,11 +4,11 @@ let locationData = [];
 let holidayDates = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // 1. 지역 데이터 먼저 로드
+  // ✅ 1. 지역 데이터 먼저 로드
   await initLocationData();
   await fetchHolidayDates();
 
-  // 2. 위치 가져오기 → 지역 데이터 로드 이후에 실행돼야 함
+  // ✅ 2. 위치 가져오기
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(onLocationSuccess, onLocationError);
   } else {
@@ -16,9 +16,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     showFallback("위치 정보 없음");
   }
 
-  // 3. 검색 이벤트 등록
+  // ✅ 3. 검색 이벤트 등록
   initLocationSearchEvents();
 
+  // ✅ 4. 대기질 이모지 설명 toggle
   const toggleBtn = document.getElementById("emojiInfoToggle");
   const card = document.getElementById("emojiInfoCard");
   const closeBtn = document.getElementById("emojiInfoClose");
@@ -36,6 +37,39 @@ document.addEventListener("DOMContentLoaded", async () => {
       card.style.display = "none";
     }
   });
+
+  // ✅ 5. 드래그 스크롤 초기화
+  const scrollContainers = document.querySelectorAll('.draggable-scroll');
+  scrollContainers.forEach(container => {
+    let isDown = false;
+    let startX;
+    let scrollLeft;
+
+    container.addEventListener('mousedown', e => {
+      isDown = true;
+      container.classList.add('scrolling');
+      startX = e.pageX - container.offsetLeft;
+      scrollLeft = container.scrollLeft;
+    });
+
+    container.addEventListener('mouseleave', () => {
+      isDown = false;
+      container.classList.remove('scrolling');
+    });
+
+    container.addEventListener('mouseup', () => {
+      isDown = false;
+      container.classList.remove('scrolling');
+    });
+
+    container.addEventListener('mousemove', e => {
+      if (!isDown) return;
+      e.preventDefault();
+      const x = e.pageX - container.offsetLeft;
+      const walk = (x - startX) * 1.5;
+      container.scrollLeft = scrollLeft - walk;
+    });
+  });
 });
 
 // ✅ 1. 지역 데이터 안전하게 불러오기
@@ -43,7 +77,7 @@ async function initLocationData() {
   try {
     const res = await fetch('/json/weather.json');
     locationData = await res.json();
-    console.log("✅ 지역 데이터 로드 완료", locationData.length);
+    // console.log("✅ 지역 데이터 로드 완료", locationData.length);
   } catch (error) {
     console.error("❌ 지역 데이터 로드 실패", error);
     alert("지역 데이터 로딩에 실패했습니다.");
@@ -97,6 +131,19 @@ function initLocationSearchEvents() {
   });
 }
 
+function syncHeights() {
+  const left = document.querySelector('.left-wrapper');
+  const right = document.querySelector('.right-wrapper');
+  if (!left || !right) return;
+
+  // 오른쪽 높이에 맞춤
+  left.style.height = `${right.offsetHeight}px`;
+}
+
+window.addEventListener("load", syncHeights);
+window.addEventListener("resize", syncHeights);
+setTimeout(syncHeights, 1000); // 로딩 지연 대비
+
 function onLocationSuccess(position) {
   const lat = position.coords.latitude;
   const lon = position.coords.longitude;
@@ -139,7 +186,7 @@ function hideLoading() {
 function updateMapAndWeather(lat, lon) {
   showLoading();
 
-  console.log("📍 선택된 위치:", lat, lon); // ✅ 지역명 대신 좌표 출력
+  // console.log("📍 선택된 위치:", lat, lon); // ✅ 지역명 대신 좌표 출력
   loadAirQuality(lat, lon); // ✅ 이제 진짜 좌표로 API 호출
 
   const position = new naver.maps.LatLng(lat, lon);
@@ -523,7 +570,7 @@ function getNearestRegionName(lat, lon) {
     }
   }
 
-  console.log("🧭 가장 가까운 지역 객체:", closest);
+  // console.log("🧭 가장 가까운 지역 객체:", closest);
   return closest.name;
 }
 
@@ -538,7 +585,7 @@ async function fetchHolidayDates() {
     const res = await fetch("/api/weather/holidays");
     const data = await res.json();
     holidayDates = data.dates
-    console.log("📅 공휴일", holidayDates);
+    // console.log("📅 공휴일", holidayDates);
   } catch (e) {
     console.error("❌ 공휴일 API 실패", e);
   }
@@ -553,3 +600,4 @@ function getDateColorClass(ymdStr) {
   if (day === 6) return "text-primary fw-bold"; // 토요일
   return "text-dark";
 }
+
