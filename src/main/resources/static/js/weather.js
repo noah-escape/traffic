@@ -1,10 +1,12 @@
 let map;
 let currentMarker = null;
 let locationData = [];
+let holidayDates = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
   // 1. 지역 데이터 먼저 로드
   await initLocationData();
+  await fetchHolidayDates();
 
   // 2. 위치 가져오기 → 지역 데이터 로드 이후에 실행돼야 함
   if (navigator.geolocation) {
@@ -158,7 +160,7 @@ function updateMapAndWeather(lat, lon) {
     .then(data => {
       console.log("✅ 날씨 응답", data);
       renderHourlyForecastSimple(data.daily);
-      renderCompactDailyForecast(data.middleTa, data.middleLand);
+      renderCompactDailyForecast(data.middleTa, data.middleLand, holidayDates);
 
       const items = data.current?.response?.body?.items?.item ?? [];
       updateWeatherCard({
@@ -304,12 +306,12 @@ function renderHourlyForecastSimple(forecastData) {
   }
 
   // 각 시간별 데이터 출력
-  sorted.forEach(values => {
+  sorted.slice(0, -1).forEach(values => {
     const hour = `${values.time.slice(0, 2)}시`;
     const iconSrc = getWeatherIconImageSrc(values);
     const temp = values.TMP ?? "--";
     const rain = (values.PCP && values.PCP !== "강수없음") ? values.PCP : "0";
-    const isPureNumber = /^[\d.]+$/.test(rain); // 정규표현식으로 숫자만인지 확인
+    const isPureNumber = /^[\d.]+$/.test(rain);
     const rainDisplay = isPureNumber ? `${rain} mm` : rain;
 
     const humidity = values.REH ?? "--";
@@ -376,7 +378,7 @@ function getFutureDate(daysAhead, returnObj = false) {
   }
 }
 
-function renderCompactDailyForecast(middleTa, middleLand) {
+function renderCompactDailyForecast(middleTa, middleLand, holidayList = []) {
   const container = document.getElementById("daily-forecast-cards");
   if (!container) return;
 
@@ -390,9 +392,18 @@ function renderCompactDailyForecast(middleTa, middleLand) {
 
   container.innerHTML = "";
 
-  // ✅ 3일 뒤부터 시작 (D+3 ~ D+10)
   for (let i = 4; i <= 10; i++) {
     const dateObj = getFutureDate(i - 3, true);
+    const fullDateStr = `2025-${String(dateObj.month).padStart(2, '0')}-${String(dateObj.dayNum).padStart(2, '0')}`;
+
+    const isSunday = dateObj.day === "일";
+    const isSaturday = dateObj.day === "토";
+    const isHoliday = holidayList.includes(fullDateStr);
+
+    let dayColor = "";
+    if (isHoliday || isSunday) dayColor = "text-danger fw-bold";
+    else if (isSaturday) dayColor = "text-primary fw-bold";
+
     const taMin = taItem[`taMin${i}`] ?? "--";
     const taMax = taItem[`taMax${i}`] ?? "--";
     const wfAm = landItem[`wf${i}Am`] ?? landItem[`wf${i}`] ?? "";
@@ -400,8 +411,8 @@ function renderCompactDailyForecast(middleTa, middleLand) {
     const rnAm = landItem[`rnSt${i}Am`] ?? landItem[`rnSt${i}`] ?? "0";
     const rnPm = landItem[`rnSt${i}Pm`] ?? landItem[`rnSt${i}`] ?? "0";
 
-    const iconAmSrc = getWeatherImageSrcByText(wfAm, true);   // 오전
-    const iconPmSrc = getWeatherImageSrcByText(wfPm, false);  // 오후
+    const iconAmSrc = getWeatherImageSrcByText(wfAm, true);
+    const iconPmSrc = getWeatherImageSrcByText(wfPm, false);
     const rainProbAm = `${parseInt(rnAm || 0)}%`;
     const rainProbPm = `${parseInt(rnPm || 0)}%`;
 
@@ -409,20 +420,20 @@ function renderCompactDailyForecast(middleTa, middleLand) {
     card.className = "daily-card text-center p-3 rounded shadow-sm";
 
     card.innerHTML = `
-  <div class="fw-bold">${dateObj.day}</div>
-  <div class="text-muted mb-1" style="font-size: 0.85rem;">${dateObj.month}/${dateObj.dayNum}</div>
-  <div class="d-flex justify-content-center gap-1 mb-1">
-  <img src="${iconAmSrc}" width="36" height="36" alt="오전">
-  <img src="${iconPmSrc}" width="36" height="36" alt="오후">
-  </div>
-  <div class="mt-2"><span class="text-primary">${taMin}°</span> / <span class="text-danger">${taMax}°</span></div>
-  <div class="text-info fw-semibold mt-1" style="font-size: 0.85rem;">${rainProbAm} / ${rainProbPm}</div>
-`;
-
+      <div class="${dayColor}">${dateObj.day}</div>
+      <div class="text-muted mb-1" style="font-size: 0.85rem;">${dateObj.month}/${dateObj.dayNum}</div>
+      <div class="d-flex justify-content-center gap-1 mb-1">
+        <img src="${iconAmSrc}" width="36" height="36" alt="오전">
+        <img src="${iconPmSrc}" width="36" height="36" alt="오후">
+      </div>
+      <div class="mt-2"><span class="text-primary">${taMin}°</span> / <span class="text-danger">${taMax}°</span></div>
+      <div class="text-info fw-semibold mt-1" style="font-size: 0.85rem;">${rainProbAm} / ${rainProbPm}</div>
+    `;
 
     container.appendChild(card);
   }
 }
+
 
 function getWeatherImageSrcByText(text) {
   if (!text) return "/image/weather/unknown.png";
@@ -522,3 +533,23 @@ function getDistance(lat1, lon1, lat2, lon2) {
   return dx * dx + dy * dy;
 }
 
+async function fetchHolidayDates() {
+  try {
+    const res = await fetch("/api/weather/holidays");
+    const data = await res.json();
+    holidayDates = data.dates
+    console.log("📅 공휴일", holidayDates);
+  } catch (e) {
+    console.error("❌ 공휴일 API 실패", e);
+  }
+}
+
+function getDateColorClass(ymdStr) {
+  const date = new Date(ymdStr);
+  const day = date.getDay(); // 0=일, 6=토
+  const isHoliday = holidayDates.includes(ymdStr);
+
+  if (day === 0 || isHoliday) return "text-danger fw-bold"; // 일요일 or 공휴일
+  if (day === 6) return "text-primary fw-bold"; // 토요일
+  return "text-dark";
+}
