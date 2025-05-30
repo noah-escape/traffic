@@ -4,11 +4,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title th:text="${categoryName} + ' 목록'">게시판</title>
+  <title> 뉴스보기 </title>
 
   <!-- ✅ Favicon -->
   <link rel="icon" href="/image/main/icon.png" type="image/png">
-  
+
   <!-- ✅ Bootstrap & 외부 공통 리소스 -->
   <link href="https://fonts.googleapis.com/css2?family=Pretendard&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -23,8 +23,41 @@
 
   <!-- ✅ 프로젝트 전용 CSS & JS -->
   <link rel="stylesheet" th:href="@{/css/home.css}">
-  <link rel="stylesheet" th:href="@{/css/board/list.css}">
   <script th:src="@{/js/home.js}"></script>
+
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .iframe-container {
+      flex-grow: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    footer {
+      height: 60px;
+      text-align: center;
+      background-color: #add8e6;
+      padding: 20px;
+    }
+  </style>
+
 </head>
 
 <body class="d-flex flex-column min-vh-100">
@@ -99,96 +132,19 @@
         <li class="nav-item"><a class="nav-link" th:href="@{/chart-view}">통계 & 자료</a></li>
         <li class="nav-item"><a class="nav-link" th:href="@{/pages/map/traffic}">지도</a></li>
         <li class="nav-item"><a class="nav-link" th:href="@{/news-view}">뉴스</a></li>
-        <li class="nav-item"><a class="nav-link" href="#weather">날씨</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/pages/weather}">날씨</a></li>
       </ul>
     </div>
   </nav>
 
-  <!-- container의 역할을 하는 div에 board-wrapper 클래스 추가 -->
-  <div class="container flex-grow-1"
-    th:classappend="${posts == null or posts.isEmpty()} ? ' board-wrapper-empty' : ' board-wrapper'">
-
-    <!-- 게시판 내용 (공지, 글 목록 등)는 이 안에 -->
-    <div class="board-content">
-      <h2 th:text="${categoryName} + ' 목록'">게시판 목록</h2>
-
-      <div class="write-container d-flex justify-content-end">
-        <sec:authorize access="isAuthenticated()">
-          <a th:href="@{/board/write(categoryId=${categoryId}, page=${pageNum})}" class="write-btn">글쓰기</a>
-        </sec:authorize>
-      </div>
-
-      <div class="section-title">📌 공지사항</div>
-      <div th:if="${notices != null and !notices.isEmpty()}" th:each="post : ${notices}" class="notice-card">
-        <a class="title" th:href="@{|/board/view/${post.boardNum}?page=${pageNum}&originCategoryId=${categoryId}|}">
-          [공지] <span th:text="${post.subject}">공지 제목</span>
-        </a>
-        <span class="meta">
-          <i class="bi bi-megaphone"></i> <span th:text="${post.nickName}">닉네임</span> ·
-          <i class="bi bi-clock"></i> <span
-            th:text="${#temporals.format(post.writedate, 'yyyy-MM-dd HH:mm')}">작성일</span> ·
-          <i class="bi bi-eye"></i> <span th:text="${post.hit}">0</span>
-        </span>
-      </div>
-      <p class="no-post" th:if="${notices == null or notices.isEmpty()}">등록된 공지사항이 없습니다.</p>
-
-      <div class="section-title">📝 게시글</div>
-      <div class="total-count text-start">
-        <p th:text="'총 ' + ${totalCount} + ' 건의 게시글이 있습니다.'"></p>
-      </div>
-      <div class="post-card d-flex justify-content-between align-items-center" th:each="post : ${posts}">
-        <div class="post-details d-flex flex-column w-100">
-          <a class="title" th:href="@{|/board/view/${post.boardNum}?page=${pageNum}&originCategoryId=${categoryId}|}"
-            th:text="${post.subject}">제목</a>
-
-          <!-- 제목 아래에 메타 정보 배치 -->
-          <span class="meta">
-            <i class="bi bi-file-person"></i> <span th:text="${post.nickName}">닉네임</span> ·
-            <i class="bi bi-clock"></i> <span
-              th:text="${#temporals.format(post.writedate, 'yyyy-MM-dd HH:mm')}">작성일</span> ·
-            <i class="bi bi-eye"></i> <span th:text="${post.hit}">0</span>
-          </span>
-        </div>
-
-        <!-- 이미지 아이콘을 아이콘 크기만큼만 차지 -->
-        <!-- 유효한 이미지(imagePath 있는 이미지)가 하나라도 있으면 아이콘 표시 -->
-        <div th:if="${post.imageFileNames != null and 
-  !post.imageFileNames.?[imagePath != null and !#strings.isEmpty(imagePath)].isEmpty()}"
-          class="image-indicator d-flex align-items-center">
-          <i class="bi bi-image me-2" style="font-size: 1.2rem;"></i>
-        </div>
-      </div>
-
-      <p class="no-post" th:if="${posts == null or posts.isEmpty()}">등록된 게시글이 없습니다.</p>
-    </div>
-
-    <!-- ✅ 페이징: 항상 board-wrapper 하단에 위치 -->
-    <div class="pagination d-flex justify-content-center mt-4">
-      <th:block th:if="${posts != null and !posts.isEmpty()}">
-        <a class="page-link" th:href="@{/board/list(categoryId=${categoryId}, page=${page.number})}"
-          th:classappend="${!page.hasPrevious()} ? ' disabled no-hover' : ''">이전</a>
-
-        <th:block th:if="${page.totalPages > 0}">
-          <a class="page-link" th:each="i : ${#numbers.sequence(1, page.totalPages)}"
-            th:href="@{/board/list(categoryId=${categoryId}, page=${i})}"
-            th:classappend="${i == page.number + 1} ? ' active' : ''" th:text="${i}">1</a>
-        </th:block>
-
-        <a class="page-link" th:href="@{/board/list(categoryId=${categoryId}, page=${page.number + 2})}"
-          th:classappend="${!page.hasNext()} ? ' disabled no-hover' : ''">다음</a>
-      </th:block>
-    </div>
+  <!-- ✅ 뉴스 iframe -->
+  <div class="iframe-container">
+    <iframe src="http://localhost:5001/news"></iframe>
   </div>
-
-  <button id="scrollToTopBtn" class="btn btn-warning rounded-circle shadow">
-    <i class="bi bi-arrow-up"></i>
-  </button>
 
   <!-- ✅ 푸터 -->
   <footer class="footer">
     ⓒ 2025 ROAD TRAFFIC Corp. All rights reserved.
   </footer>
-
 </body>
-
 </html>
