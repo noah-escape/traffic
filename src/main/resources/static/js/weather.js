@@ -109,7 +109,7 @@ function initLocationSearchEvents() {
       li.className = "list-group-item autocomplete-item";
       li.textContent = loc.name;
       li.addEventListener("click", () => {
-        input.value = loc.name;
+        input.value = ""
         list.innerHTML = "";
         list.style.display = "none";
         updateMapAndWeather(loc.lat, loc.lon);
@@ -125,6 +125,9 @@ function initLocationSearchEvents() {
     const found = locationData.find(loc => loc.name === keyword);
     if (found) {
       updateMapAndWeather(found.lat, found.lon);
+      input.value = "";
+      list.innerHTML = "";
+      list.style.display = "none";
     } else {
       alert("해당 지역을 찾을 수 없습니다.");
     }
@@ -150,7 +153,7 @@ function onLocationSuccess(position) {
 
   map = new naver.maps.Map('map', {
     center: new naver.maps.LatLng(lat, lon),
-    zoom: 5
+    zoom: 6
   });
 
   currentMarker = new naver.maps.Marker({
@@ -165,7 +168,7 @@ function onLocationSuccess(position) {
     updateMapAndWeather(lat, lon);
   });
 
-  updateMapAndWeather(lat, lon);
+  updateMapAndWeather(lat, lon, false);
 }
 
 function onLocationError(error) {
@@ -183,7 +186,7 @@ function hideLoading() {
   loading.classList.remove("show");
 }
 
-function updateMapAndWeather(lat, lon) {
+function updateMapAndWeather(lat, lon, zoomChange = true) {
   showLoading();
 
   // console.log("📍 선택된 위치:", lat, lon); // ✅ 지역명 대신 좌표 출력
@@ -191,6 +194,11 @@ function updateMapAndWeather(lat, lon) {
 
   const position = new naver.maps.LatLng(lat, lon);
   if (map) {
+    map.setCenter(position);
+    if (zoomChange) {
+      map.setZoom(9); // 검색 등에서만 확대
+    }
+
     if (currentMarker) {
       currentMarker.setMap(null);
     }
@@ -201,6 +209,9 @@ function updateMapAndWeather(lat, lon) {
       title: "선택 위치"
     });
   }
+
+  const regionName = getNearestRegionName(lat, lon);
+  document.getElementById("selected-location").textContent = `선택한 위치: ${regionName}`;
 
   fetch(`/api/weather/full?lat=${lat}&lon=${lon}`)
     .then(response => response.json())
@@ -285,10 +296,9 @@ function degToDir(deg) {
   return dirs[index];
 }
 
-function getWindArrow8Dir(deg) {
-  const arrows = ['↑', '↗', '→', '↘', '↓', '↙', '←', '↖'];
-  const index = Math.round(deg / 45) % 8;
-  return arrows[index]; // ✅ 화살표만 반환
+function getWindDirectionIcon(deg) {
+  const angle = parseFloat(deg);
+  return `<i class="bi bi-cursor-fill" style="display:inline-block; transform: rotate(${angle}deg);"></i>`;
 }
 
 function getWindStrengthDesc(speed) {
@@ -363,7 +373,7 @@ function renderHourlyForecastSimple(forecastData) {
 
     const humidity = values.REH ?? "--";
     const wind = values.WSD ?? "--";
-    const windArrow = values.VEC ? getWindArrow8Dir(values.VEC) : "–";
+    const windDirIcon = values.VEC ? getWindDirectionIcon(values.VEC) : "–";
     const windStrength = getWindStrengthDesc(wind);
 
     hourRow.innerHTML += `<th>${hour}</th>`;
@@ -372,11 +382,11 @@ function renderHourlyForecastSimple(forecastData) {
     rainRow.innerHTML += `<td>${rainDisplay}</td>`;
     humidRow.innerHTML += `<td>${humidity}%</td>`;
     windRow.innerHTML += `
-    <td>
-      ${wind} m/s<br>
-      <div style="font-size: 1.25rem;">${windArrow}</div>
-      <div class="text-muted small">${windStrength}</div>
-    </td>`;
+      <td>
+        ${wind} m/s<br>
+        ${windDirIcon}
+        <div class="text-muted small">${windStrength}</div>
+      </td>`;
   });
 }
 

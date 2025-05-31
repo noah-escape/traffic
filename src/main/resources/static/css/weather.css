@@ -19,7 +19,8 @@
   height: auto !important;
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* 중요! */
+  overflow: hidden;
+  /* 중요! */
 }
 
 #weather-box {
@@ -27,16 +28,32 @@
   backdrop-filter: blur(8px);
   border: 1px solid rgba(0, 0, 0, 0.05);
   padding: 1.25rem;
-  flex-grow: 0 !important;  /* 👈 grow 비활성화 */
+  flex-grow: 0 !important;
+  /* 👈 grow 비활성화 */
   flex-shrink: 0;
   flex-basis: auto;
-  height: auto !important;  /* 👈 자동 높이 */
+  height: auto !important;
+  /* 👈 자동 높이 */
 }
 
 #weather-box:hover {
   background: rgba(255, 255, 255, 0.9);
   box-shadow: none;
   transform: none;
+}
+
+#weather-wind {
+  white-space: nowrap;
+  display: block;
+  text-align: center;
+  font-weight: bold;
+  font-size: 1.25rem;
+}
+
+#weather-wind-dir {
+  white-space: nowrap;
+  display: block;
+  text-align: center;
 }
 
 .weather-detail-box {
@@ -132,12 +149,17 @@
 
 /* 예보 테이블 */
 #hourly-forecast-style-table-wrapper {
-  background-color: rgba(255, 255, 255, 0.9); /* 반투명 백그라운드 */
-  backdrop-filter: blur(8px);                /* 블러 효과 */
-  border: 1px solid rgba(0, 0, 0, 0.05);      /* 부드러운 테두리 */
-  border-radius: 1rem;                        /* 둥근 모서리 */
+  background-color: rgba(255, 255, 255, 0.9);
+  /* 반투명 백그라운드 */
+  backdrop-filter: blur(8px);
+  /* 블러 효과 */
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  /* 부드러운 테두리 */
+  border-radius: 1rem;
+  /* 둥근 모서리 */
   padding: 1.25rem;
-  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); /* 그림자 */
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  /* 그림자 */
 }
 
 #hourly-forecast-style-table th,
@@ -271,15 +293,16 @@
   z-index: 1055;
 }
 
-#emojiInfoCard .small > div {
+#emojiInfoCard .small>div {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   font-size: 0.8rem;
-  white-space: nowrap;  /* 🔹 줄바꿈 방지 */
+  white-space: nowrap;
+  /* 🔹 줄바꿈 방지 */
 }
 
-#emojiInfoCard .small > div img {
+#emojiInfoCard .small>div img {
   margin-bottom: 0.25rem;
 }
