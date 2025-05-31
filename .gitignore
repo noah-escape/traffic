@@ -46,9 +46,11 @@ test-output/
 
 # DB dump
 /init/*.sql
+team_project_db.sql
 
 # Docker 관련 파일
 docker-compose.yml
 Dockerfile/team_project_db.sql
-team_project_db.sql
+
+# 불필요한 임시 정리 디렉토리
 trafficRoad-fixed/

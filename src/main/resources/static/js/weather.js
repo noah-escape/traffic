@@ -191,6 +191,7 @@ function updateMapAndWeather(lat, lon, zoomChange = true) {
 
   // console.log("📍 선택된 위치:", lat, lon); // ✅ 지역명 대신 좌표 출력
   loadAirQuality(lat, lon); // ✅ 이제 진짜 좌표로 API 호출
+  loadWeatherAlerts(lat, lon); // 🔔 특보 불러오기
 
   const position = new naver.maps.LatLng(lat, lon);
   if (map) {
@@ -610,4 +611,39 @@ function getDateColorClass(ymdStr) {
   if (day === 6) return "text-primary fw-bold"; // 토요일
   return "text-dark";
 }
+
+function loadWeatherAlerts(lat, lon) {
+  fetch(`/api/weather/alerts?lat=${lat}&lon=${lon}`)
+    .then(res => res.json())
+    .then(alerts => {
+      const listLocal = document.getElementById("alert-local");
+      const listOthers = document.getElementById("alert-others");
+      const noneMsg = document.getElementById("alert-none-msg");
+      listLocal.innerHTML = "";
+      listOthers.innerHTML = "";
+
+      if (!alerts || alerts.length === 0) {
+        noneMsg.style.display = "block";
+        return;
+      }
+
+      noneMsg.style.display = "none";
+
+      const nearestRegion = getNearestRegionName(lat, lon);
+
+      alerts.forEach(alert => {
+        const li = document.createElement("li");
+        li.innerHTML = `<strong>[${alert.region}]</strong> ${alert.category} - ${alert.status}<br><span class="text-muted">${alert.date}</span>`;
+
+        if (alert.region.includes(nearestRegion)) {
+          listLocal.appendChild(li);
+        } else {
+          listOthers.appendChild(li);
+        }
+      });
+    })
+
+}
+
+
 

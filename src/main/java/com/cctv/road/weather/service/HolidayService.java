@@ -1,17 +1,19 @@
 package com.cctv.road.weather.service;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.w3c.dom.*;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.xml.parsers.DocumentBuilderFactory;
-import java.net.URI;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -32,7 +34,7 @@ public class HolidayService {
                     .queryParam("_type", "xml")
                     .build(true)
                     .toUri();
-                    // log.info("🔍 요청 연도: {}", year);
+            // log.info("🔍 요청 연도: {}", year);
 
             Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(uri.toString());
             NodeList items = doc.getElementsByTagName("item");
@@ -43,10 +45,10 @@ public class HolidayService {
                 String formatted = locdate.replaceFirst("(\\d{4})(\\d{2})(\\d{2})", "$1-$2-$3");
                 holidays.add(formatted);
             }
-          // log.info("🔍 응답 XML: {}", doc.getDocumentElement().getTextContent());
-          // log.info("📦 아이템 수: {}", items.getLength());
+            // log.info("🔍 응답 XML: {}", doc.getDocumentElement().getTextContent());
+            // log.info("📦 아이템 수: {}", items.getLength());
 
-          // log.info("✅ {}년 공휴일 {}건 로드 완료", year, holidays.size());
+            // log.info("✅ {}년 공휴일 {}건 로드 완료", year, holidays.size());
 
         } catch (Exception e) {
             log.error("❌ 공휴일 API 실패", e);
