@@ -201,14 +201,21 @@ function updateMapAndWeather(lat, lon, zoomChange = true) {
     }
 
     if (currentMarker) {
-      currentMarker.setMap(null);
-    }
+  currentMarker.setMap(null);
+}
 
-    currentMarker = new naver.maps.Marker({
-      position,
-      map,
-      title: "선택 위치"
-    });
+currentMarker = new naver.maps.Marker({
+  position,
+  map,
+  icon: {
+    url: '/image/weather/marker.png',
+    size: new naver.maps.Size(24, 24),
+    origin: new naver.maps.Point(0, 0),
+    anchor: new naver.maps.Point(12, 24)
+  },
+  title: "선택 위치"
+});
+
   }
 
   const regionName = getNearestRegionName(lat, lon);
