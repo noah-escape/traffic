@@ -184,8 +184,7 @@ public class ApiProxyController {
     // 1) DB에서 routeId 꺼내기
     String routeId = busStopRepository.findRouteIdByRouteNumber(routeNumber);
     if (routeId == null) {
-      throw new ResponseStatusException(
-          HttpStatus.NOT_FOUND, "해당 버스 번호(routeNumber)로 저장된 routeId가 없습니다: " + routeNumber);
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "routeId 없음");
     }
     // 2) 기존 로직 재사용
     return fetchBusPositionsFromSeoulApi(routeId);
