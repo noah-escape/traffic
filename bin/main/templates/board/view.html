@@ -96,10 +96,10 @@
             </ul>
           </div>
         </li>
-        <li class="nav-item"><a class="nav-link coming-soon" href="#statistics">통계 & 자료</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/chart-view}">통계 & 자료</a></li>
         <li class="nav-item"><a class="nav-link" th:href="@{/pages/map/traffic}">지도</a></li>
-        <li class="nav-item"><a class="nav-link coming-soon" href="#news">뉴스</a></li>
-        <li class="nav-item"><a class="nav-link coming-soon" href="#weather">날씨</a></li>
+        <li class="nav-item"><a class="nav-link" href="http://localhost:5001/news" target="_blank">뉴스</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/pages/weather}">날씨</a></li>
       </ul>
     </div>
   </nav>
@@ -154,8 +154,7 @@
       </th:block>
 
       <!-- 목록보기: 항상 표시 -->
-      <button type="button"
-        th:onclick="|location.href='/board/list?page=${pageNum}&categoryId=${originCategoryId}'|">
+      <button type="button" th:onclick="|location.href='/board/list?page=${pageNum}&categoryId=${originCategoryId}'|">
         목록보기
       </button>
 

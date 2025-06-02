@@ -5,7 +5,10 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +19,10 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -23,9 +30,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.util.UriComponentsBuilder;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -35,6 +44,7 @@ import com.cctv.road.map.dto.BusArrivalDto;
 import com.cctv.road.map.dto.BusRouteDto;
 import com.cctv.road.map.dto.UnifiedBusStopDto;
 import com.cctv.road.map.repository.BusStopRepository;
+import com.cctv.road.weather.util.GeoUtil;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import reactor.core.publisher.Mono;
@@ -43,9 +53,17 @@ import reactor.core.publisher.Mono;
 @RequestMapping("/api/proxy")
 public class ApiProxyController {
 
+  @Value("${naver.map.client-id}")
+  private String clientId;
+
+  @Value("${naver.map.client-secret}")
+  private String clientSecret;
+
   private final BusStopRepository busStopRepository;
 
   private final Map<String, Map<String, String>> routeTimeCache = new ConcurrentHashMap<>();
+
+  private final RestTemplate restTemplate = new RestTemplate();
 
   private final WebClient naverClient;
   private final WebClient seoulBusClient;
@@ -91,22 +109,29 @@ public class ApiProxyController {
   }
 
   @GetMapping("/naver-direction")
-  public Mono<String> getNaverDirectionRoute(
+  public ResponseEntity<?> proxyDirectionApi(
       @RequestParam double startLat,
       @RequestParam double startLng,
       @RequestParam double goalLat,
       @RequestParam double goalLng) {
-    return naverClient.get()
-        .uri(uriBuilder -> uriBuilder
-            .path("/map-direction/v1/driving")
-            .queryParam("start", startLng + "," + startLat)
-            .queryParam("goal", goalLng + "," + goalLat)
-            .queryParam("option", "trafast")
-            .build())
-        .accept(MediaType.APPLICATION_JSON)
-        .retrieve()
-        .bodyToMono(String.class)
-        .onErrorMap(e -> new RuntimeException("네이버 경로 탐색 API 호출 실패", e));
+    String url = UriComponentsBuilder.fromHttpUrl("https://maps.apigw.ntruss.com/map-direction/v1/driving")
+        .queryParam("start", startLng + "," + startLat)
+        .queryParam("goal", goalLng + "," + goalLat)
+        .queryParam("option", "trafast")
+        .toUriString();
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.set("X-NCP-APIGW-API-KEY-ID", clientId); // @Value로 주입된 client-id
+    headers.set("X-NCP-APIGW-API-KEY", clientSecret); // client-secret
+
+    HttpEntity<String> entity = new HttpEntity<>(headers);
+
+    try {
+      ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+      return ResponseEntity.ok(response.getBody());
+    } catch (Exception e) {
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("API 호출 실패: " + e.getMessage());
+    }
   }
 
   @GetMapping("/naver-geocode")
@@ -124,6 +149,11 @@ public class ApiProxyController {
 
   @GetMapping("/naver-place")
   public Mono<String> searchPlace(@RequestParam String query) {
+    // 2글자 이상 필터링 (너무 짧거나 초성만 들어오면 403 가능)
+    if (query == null || query.trim().length() < 2) {
+      return Mono.just("{\"error\":\"검색어는 2글자 이상이어야 합니다.\"}");
+    }
+
     return naverClient.get()
         .uri(uriBuilder -> uriBuilder
             .path("/map-place/v1/search")
@@ -154,8 +184,7 @@ public class ApiProxyController {
     // 1) DB에서 routeId 꺼내기
     String routeId = busStopRepository.findRouteIdByRouteNumber(routeNumber);
     if (routeId == null) {
-      throw new ResponseStatusException(
-          HttpStatus.NOT_FOUND, "해당 버스 번호(routeNumber)로 저장된 routeId가 없습니다: " + routeNumber);
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "routeId 없음");
     }
     // 2) 기존 로직 재사용
     return fetchBusPositionsFromSeoulApi(routeId);
@@ -171,10 +200,9 @@ public class ApiProxyController {
     if (key == null || key.trim().isEmpty()) {
       throw new RuntimeException("API 키 누락");
     }
-    key = key.trim();
 
     String url = "http://ws.bus.go.kr/api/rest/buspos/getBusPosByRtid"
-        + "?serviceKey=" + key
+        + "?serviceKey=" + key.trim()
         + "&busRouteId=" + routeId
         + "&resultType=json";
 
@@ -188,10 +216,14 @@ public class ApiProxyController {
                   .GET()
                   .build(),
               HttpResponse.BodyHandlers.ofString());
+
       if (resp.statusCode() != 200) {
         throw new RuntimeException("서울시 API 오류: " + resp.statusCode());
       }
+
+      // 🔽 그대로 JSON 문자열 반환
       return resp.body();
+
     } catch (Exception e) {
       throw new RuntimeException("버스 위치 API 호출 실패: " + e.getMessage(), e);
     }
@@ -760,6 +792,56 @@ public class ApiProxyController {
         .onErrorMap(e -> new RuntimeException("서울 주차장 정보 API 호출 실패", e));
   }
 
+  @GetMapping("/kma-weather")
+  public Mono<String> getKmaWeather(@RequestParam double lat, @RequestParam double lon) {
+    String serviceKey = dotenv.get("KMA_API_KEY");
+
+    System.out.println("🌐 [기상청] 날씨 요청 수신");
+    System.out.println("📍 위도: " + lat + ", 경도: " + lon);
+    System.out.println("🔑 serviceKey = " + serviceKey);
+    System.out.println("✅ ApiProxyController.getKmaWeather 실행됨");
+
+    // 위도/경도 → 격자
+    GeoUtil.GridXY grid = GeoUtil.convertGRID(lat, lon);
+
+    // 날짜/시간 계산
+    LocalTime now = LocalTime.now().minusMinutes(10);
+    if (now.getMinute() < 40)
+      now = now.minusHours(1);
+
+    String baseDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+    String baseTime = now.truncatedTo(ChronoUnit.HOURS).format(DateTimeFormatter.ofPattern("HHmm"));
+
+    String url = UriComponentsBuilder
+        .fromHttpUrl("https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst")
+        .queryParam("serviceKey", serviceKey)
+        .queryParam("numOfRows", 100)
+        .queryParam("pageNo", 1)
+        .queryParam("dataType", "JSON")
+        .queryParam("base_date", baseDate)
+        .queryParam("base_time", baseTime)
+        .queryParam("nx", grid.nx)
+        .queryParam("ny", grid.ny)
+        .build(false)
+        .toUriString();
+
+    System.out.println("🌐 최종 호출 URL: " + url);
+
+    // ✅ 이 부분이 핵심: URI 객체로 직접 넣는다
+    URI uri = URI.create(url);
+
+    return defaultClient.get()
+        .uri(uri) // 여기가 중요!!
+        .accept(MediaType.APPLICATION_JSON)
+        .retrieve()
+        .onStatus(status -> !status.is2xxSuccessful(), response -> response.bodyToMono(String.class).flatMap(body -> {
+          System.err.println("❌ [기상청] 오류 상태코드: " + response.statusCode());
+          System.err.println("❌ [기상청] 오류 응답:\n" + body);
+          return Mono.error(new RuntimeException("기상청 API 호출 실패"));
+        }))
+        .bodyToMono(String.class);
+  }
+
   /*
    * // 도로 중심선 버스 경로 찍기 봉 인 !!
    * 
@@ -809,4 +891,5 @@ public class ApiProxyController {
    * }
    * }
    */
+
 }

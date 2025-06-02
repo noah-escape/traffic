@@ -3,14 +3,15 @@ package com.cctv.road.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 import com.cctv.road.member.security.OAuthFailureHandler;
 import com.cctv.road.member.security.OAuthSuccessHandler;
@@ -37,11 +38,13 @@ public class SecurityConfig {
     this.oAuthFailureHandler = oAuthFailureHandler;
   }
 
+  // 🔐 비밀번호 암호화 방식
   @Bean
   public BCryptPasswordEncoder passwordEncoder() {
     return new BCryptPasswordEncoder();
   }
 
+  // 🔐 사용자 인증 제공자 설정
   @Bean
   public DaoAuthenticationProvider authenticationProvider() {
     DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
@@ -55,26 +58,44 @@ public class SecurityConfig {
     return authConfig.getAuthenticationManager();
   }
 
+  // ✅ 1번 체인: /api/proxy/** 는 인증 없이 허용 + CSRF 비활성화
   @Bean
-  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+  @Order(1)
+  public SecurityFilterChain apiChain(HttpSecurity http) throws Exception {
     http
-        .cors(Customizer.withDefaults())
-        .csrf(csrf -> csrf.ignoringRequestMatchers("/api/proxy/**")) // ✅ CSRF 예외 처리
+        .securityMatcher("/api/proxy/**")
+        .csrf(csrf -> csrf.disable())
+        .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+    return http.build();
+  }
+
+  // ✅ 2번 체인: 나머지 요청은 인증 필요, CSRF 켜짐
+  @Bean
+  @Order(2)
+  public SecurityFilterChain appChain(HttpSecurity http) throws Exception {
+    http
+        .securityMatcher(request -> !request.getRequestURI().startsWith("/api/proxy/"))
+        .csrf(csrf -> csrf
+            .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
+        .headers(headers -> headers
+            .frameOptions(frameOptions -> frameOptions.disable()) // ❗️iframe 허용
+        )
         .authorizeHttpRequests(auth -> auth
             .requestMatchers(
-                "/api/proxy/**", "/api/proxy/bus/**",
-                "/api/proxy/naver-driving-path",
-                "/", "/login", "/register/**", "/login/oauth2/**",
+                "/", "/login", "/register/**",
                 "/css/**", "/js/**", "/image/**", "/favicon.ico",
-                "/json/**", "/pages/**", "/api/**",
+                "/json/**", "/pages/**", "/api/**", "/api/weather/**",
                 "/member/find/**", "/find-id", "/find-password",
-                "/board/list/**", "/board/view/**")
+                "/board/list/**", "/board/view/**",
+
+                "/chart-view", "/chart/**", "/pages/map/**", "/news-view/**"
+
+                )
             .permitAll()
-            .anyRequest().authenticated()) // ✅ 나머지는 인증 필요
+            .anyRequest().authenticated())
         .formLogin(form -> form
             .loginPage("/login")
-            .defaultSuccessUrl("/",
-                true)
+            .defaultSuccessUrl("/", true)
             .permitAll())
         .oauth2Login(oauth2 -> oauth2
             .loginPage("/login")
@@ -84,10 +105,7 @@ public class SecurityConfig {
         .logout(logout -> logout
             .logoutSuccessUrl("/")
             .invalidateHttpSession(true)
-            .deleteCookies("JSESSIONID"))
-        .sessionManagement(session -> session
-            .maximumSessions(1)
-            .expiredUrl("/login?expired"));
+            .deleteCookies("JSESSIONID"));
 
     return http.build();
   }
