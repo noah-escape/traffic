@@ -52,8 +52,8 @@ function getBusIconByTurnaround(bus, stationList) {
   }
 
   const sx = parseFloat(startStop.lng), sy = parseFloat(startStop.lat);
-  const tx = parseFloat(turnStop.lng),  ty = parseFloat(turnStop.lat);
-  const lx = parseFloat(lastStop.lng),  ly = parseFloat(lastStop.lat);
+  const tx = parseFloat(turnStop.lng), ty = parseFloat(turnStop.lat);
+  const lx = parseFloat(lastStop.lng), ly = parseFloat(lastStop.lat);
 
   if ([sx, sy, tx, ty, lx, ly].some(v => isNaN(v))) {
     console.warn("❌ 좌표 파싱 실패");
@@ -940,14 +940,39 @@ async function loadArrivalAtStop(stopId, arsId) {
   }
 }
 
-document.body.addEventListener('click', e => {
+document.body.addEventListener('click', async e => {
   const target = e.target.closest('.arrival-item');
-  if (target && target.dataset.route) {
-    const route = target.dataset.route;
-    stopBusTracking();
-    startBusTracking({ routeNumber: route });  // ✅ 실시간 위치만 표시
+  if (!target || !target.dataset.route) return;
+
+  const routeNumber = target.dataset.route;
+  console.log("🚌 도착 리스트에서 선택한 노선:", routeNumber);
+
+  try {
+    // ❗ 절대로 지우지 마세요: 정류소 마커, 리스트, 팝업
+    stopBusTracking();     // 기존 추적 종료
+    clearBusMarkers();     // 기존 버스 마커만 제거 (정류소 마커는 그대로)
+
+    // 👉 방향 판단을 위한 정류소 목록만 갱신
+    const res = await fetch(`/api/proxy/bus/routes?routeNumber=${encodeURIComponent(routeNumber)}`);
+    const stops = await res.json();
+
+    if (!Array.isArray(stops) || stops.length === 0) {
+      alert("정류소 정보를 불러올 수 없습니다.");
+      return;
+    }
+
+    routeStops = stops;
+    currentRouteId = routeNumber;
+
+    // 👉 방향 포함된 실시간 마커 표시
+    startBusTracking({ routeNumber });
+
+  } catch (err) {
+    console.error("❌ 도착 리스트 클릭 처리 오류:", err);
+    alert("버스 위치를 표시할 수 없습니다.");
   }
-})
+});
+
 
 document.addEventListener("click", function (e) {
   const popup = document.getElementById("routeDetailPopup");
