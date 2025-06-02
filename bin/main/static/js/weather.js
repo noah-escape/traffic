@@ -16,6 +16,24 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // 3. 검색 이벤트 등록
   initLocationSearchEvents();
+
+  const toggleBtn = document.getElementById("emojiInfoToggle");
+  const card = document.getElementById("emojiInfoCard");
+  const closeBtn = document.getElementById("emojiInfoClose");
+
+  toggleBtn.addEventListener("click", () => {
+    card.style.display = (card.style.display === "none") ? "block" : "none";
+  });
+
+  closeBtn.addEventListener("click", () => {
+    card.style.display = "none";
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!card.contains(event.target) && !toggleBtn.contains(event.target)) {
+      card.style.display = "none";
+    }
+  });
 });
 
 // ✅ 1. 지역 데이터 안전하게 불러오기
@@ -503,3 +521,4 @@ function getDistance(lat1, lon1, lat2, lon2) {
   const dy = lon1 - lon2;
   return dx * dx + dy * dy;
 }
+
