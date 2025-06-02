@@ -474,6 +474,64 @@
     <script src="/js/parking.js" defer></script>
     <script src="/js/realtime-traffic.js" defer></script>
     <script src="/js/traffic.js" defer></script> <!-- 메인 -->
+
+    <script>
+      function isVisible(el) {
+        return el && window.getComputedStyle(el).display !== "none";
+      }
+
+      function adjustLegendPositions() {
+        const trafficBox = document.getElementById("trafficLegendBox");
+        const parkingBox = document.getElementById("parkingLegendBox");
+
+        const trafficVisible = isVisible(trafficBox);
+        const parkingVisible = isVisible(parkingBox);
+
+        if (trafficVisible) {
+          trafficBox.style.position = "fixed";
+          trafficBox.style.bottom = "16px";
+
+          if (parkingVisible) {
+            const parkingWidth = parkingBox.offsetWidth || 240;
+            const gap = 20;
+            trafficBox.style.setProperty("right", `${parkingWidth + gap}px`, "important");
+          } else {
+            trafficBox.style.setProperty("right", "16px", "important");
+          }
+        }
+
+        if (parkingVisible) {
+          parkingBox.style.position = "fixed";
+          parkingBox.style.bottom = "16px";
+          parkingBox.style.right = "16px";
+        }
+      }
+
+      function showTrafficLegend() {
+        const box = document.getElementById("trafficLegendBox");
+        box.style.display = "block";
+        adjustLegendPositions();
+      }
+
+      function hideTrafficLegend() {
+        const box = document.getElementById("trafficLegendBox");
+        box.style.display = "none";
+        adjustLegendPositions();
+      }
+
+      function showParkingLegend() {
+        const box = document.getElementById("parkingLegendBox");
+        box.style.display = "block";
+        adjustLegendPositions();
+      }
+
+      function hideParkingLegend() {
+        const box = document.getElementById("parkingLegendBox");
+        box.style.display = "none";
+        adjustLegendPositions();
+      }
+    </script>
+
 </body>
 
 </html>

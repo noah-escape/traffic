@@ -10,6 +10,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -45,8 +46,11 @@ import com.cctv.road.map.dto.BusRouteDto;
 import com.cctv.road.map.dto.UnifiedBusStopDto;
 import com.cctv.road.map.repository.BusStopRepository;
 import com.cctv.road.weather.util.GeoUtil;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.github.cdimascio.dotenv.Dotenv;
+import jakarta.annotation.PostConstruct;
 import reactor.core.publisher.Mono;
 
 @RestController
@@ -65,33 +69,39 @@ public class ApiProxyController {
 
   private final RestTemplate restTemplate = new RestTemplate();
 
-  private final WebClient naverClient;
-  private final WebClient seoulBusClient;
-  private final WebClient kakaoClient;
-  private final WebClient seoulOpenApiClient;
-  private final WebClient itsClient;
-  private final WebClient defaultClient;
+  private WebClient naverClient;
+  private WebClient seoulBusClient;
+  private WebClient kakaoClient;
+  private WebClient seoulOpenApiClient;
+  private WebClient itsClient;
+  private WebClient defaultClient;
 
-  private final Dotenv dotenv = Dotenv.configure().directory("./").load();
+  private final WebClient.Builder builder;
+
+  private final Dotenv dotenv = Dotenv.configure().load();
 
   @Autowired
   public ApiProxyController(WebClient.Builder builder, BusStopRepository busStopRepository) {
+    this.builder = builder;
     this.busStopRepository = busStopRepository;
+  }
 
-    // System.out.println("🔑 .env 로드 완료, SEOUL_BUS_API_KEY: " +
-    // (dotenv.get("SEOUL_BUS_API_KEY") != null ? "설정됨" : "없음"));
+  @PostConstruct
+  public void initNaverClient() {
 
-    this.naverClient = builder
-        .baseUrl("https://naveropenapi.apigw.ntruss.com")
-        .defaultHeader("X-NCP-APIGW-API-KEY-ID", dotenv.get("NAVER_MAP_CLIENT_ID"))
-        .defaultHeader("X-NCP-APIGW-API-KEY", dotenv.get("NAVER_MAP_CLIENT_SECRET"))
+    this.naverClient = WebClient.builder()
+        .baseUrl("https://maps.apigw.ntruss.com")
+        .defaultHeader("X-NCP-APIGW-API-KEY-ID", clientId)
+        .defaultHeader("X-NCP-APIGW-API-KEY", clientSecret)
         .build();
 
-    this.seoulBusClient = builder.baseUrl("http://ws.bus.go.kr").build();
+    this.seoulBusClient = builder
+        .baseUrl("http://ws.bus.go.kr")
+        .build();
 
     this.kakaoClient = builder
         .baseUrl("https://dapi.kakao.com")
-        .defaultHeader("Authorization", "KakaoAK " + dotenv.get("KAKAO_REST_API_KEY"))
+        .defaultHeader("Authorization", "KakaoAK " + System.getenv("KAKAO_REST_API_KEY"))
         .build();
 
     this.seoulOpenApiClient = builder
@@ -842,54 +852,52 @@ public class ApiProxyController {
         .bodyToMono(String.class);
   }
 
-  /*
-   * // 도로 중심선 버스 경로 찍기 봉 인 !!
-   * 
-   * @GetMapping("/naver-driving-path")
-   * public ResponseEntity<?> getSmoothedPath(
-   * 
-   * @RequestParam double startLat,
-   * 
-   * @RequestParam double startLng,
-   * 
-   * @RequestParam double goalLat,
-   * 
-   * @RequestParam double goalLng) {
-   * 
-   * try {
-   * String response = naverClient.get()
-   * .uri(uriBuilder -> uriBuilder
-   * .path("/map-direction/v1/driving")
-   * .queryParam("start", startLng + "," + startLat)
-   * .queryParam("goal", goalLng + "," + goalLat)
-   * .queryParam("option", "trafast")
-   * .build())
-   * .retrieve()
-   * .bodyToMono(String.class)
-   * .block(); // Mono -> String 동기 처리
-   * 
-   * ObjectMapper mapper = new ObjectMapper();
-   * JsonNode root = mapper.readTree(response);
-   * JsonNode pathArray = root.at("/route/trafast/0/path");
-   * 
-   * List<Map<String, Double>> coordinates = new ArrayList<>();
-   * for (JsonNode coord : pathArray) {
-   * double lng = coord.get(0).asDouble();
-   * double lat = coord.get(1).asDouble();
-   * Map<String, Double> point = new HashMap<>();
-   * point.put("lat", lat);
-   * point.put("lng", lng);
-   * coordinates.add(point);
-   * }
-   * 
-   * return ResponseEntity.ok(coordinates);
-   * 
-   * } catch (Exception e) {
-   * e.printStackTrace();
-   * return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-   * .body(Map.of("error", "경로 처리 실패: " + e.getMessage()));
-   * }
-   * }
-   */
+  // 도로 중심선 버스 경로 찍기 봉 인 !!
+/* 
+  @GetMapping("/naver-driving-path")
+  public ResponseEntity<?> getSmoothedPath(
 
+      @RequestParam double startLat,
+
+      @RequestParam double startLng,
+
+      @RequestParam double goalLat,
+
+      @RequestParam double goalLng) {
+
+    try {
+      String response = naverClient.get()
+          .uri(uriBuilder -> uriBuilder
+              .path("/map-direction-15/v1/driving")
+              .queryParam("start", startLng + "," + startLat)
+              .queryParam("goal", goalLng + "," + goalLat)
+              .queryParam("option", "trafast")
+              .build())
+          .retrieve()
+          .bodyToMono(String.class)
+          .block(); // Mono -> String 동기 처리
+
+      ObjectMapper mapper = new ObjectMapper();
+      JsonNode root = mapper.readTree(response);
+      JsonNode pathArray = root.at("/route/trafast/0/path");
+
+      List<Map<String, Double>> coordinates = new ArrayList<>();
+      for (JsonNode coord : pathArray) {
+        double lng = coord.get(0).asDouble();
+        double lat = coord.get(1).asDouble();
+        Map<String, Double> point = new HashMap<>();
+        point.put("lat", lat);
+        point.put("lng", lng);
+        coordinates.add(point);
+      }
+
+      return ResponseEntity.ok(coordinates);
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .body(Map.of("error", "경로 처리 실패: " + e.getMessage()));
+    }
+  }
+ */
 }

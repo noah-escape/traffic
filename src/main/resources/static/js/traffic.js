@@ -41,7 +41,7 @@ function clearAllMapMarkers() {
     window.customMarkers = [];
   }
 
-  console.log('🧹 모든 마커 제거 완료');
+  // console.log('🧹 모든 마커 제거 완료');
 }
 
 function resetPanelsAndCloseVideo() {
@@ -57,6 +57,8 @@ function resetPanelsAndCloseVideo() {
 
   // ✅ [2단계] 마커 및 레이어 초기화 통합 호출
   clearAllMapMarkers();
+
+  adjustLegendPositions();
 
   // 🗺️ 지도 중심 및 줌 초기화
   resetMapView();
@@ -312,25 +314,40 @@ document.addEventListener('DOMContentLoaded', () => {
       onActivate: () => {
         resetPanelsAndCloseVideo();
         panelStates.parking = true;
+
+        // 주차 패널 표시
         document.getElementById('parkingFilterPanel')?.style.setProperty('display', 'flex');
 
+        // 주차 데이터 로드 및 위치 표시
         const promise = window.loadSeoulCityParking?.();
+        window.showCurrentLocationOnMap?.();
 
-        if (typeof window.showCurrentLocationOnMap === 'function') {
-          window.showCurrentLocationOnMap();
-        }
-
+        // 지도 리사이즈
         adjustMapSizeToSidebar();
         setTimeout(() => {
           naver.maps.Event.trigger(map, 'resize');
         }, 300);
-        showParkingLegend();
+
+        // ✅ 주차 범례 보이기
+        document.getElementById('parkingLegendBox').style.display = 'block';
+
+        // ✅ 위치 자동 조정
+        adjustLegendPositions();
+
         return promise;
       },
       onDeactivate: () => {
         panelStates.parking = false;
         window.clearParkingMarkers?.();
-        hideParkingLegend();
+
+        // ✅ 주차 범례 숨기기
+        const parkingLegend = document.getElementById('parkingLegendBox');
+        parkingLegend.style.display = 'none';
+
+        // ✅ 위치 재조정: 교통 범례가 켜져 있으면 오른쪽으로 복귀
+        setTimeout(() => {
+          adjustLegendPositions();  // 💥 꼭 timeout 안에서 실행
+        }, 10);
       }
     }
   ];
@@ -507,11 +524,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 document.addEventListener('DOMContentLoaded', () => {
   const trafficBtn = document.getElementById('toggleTrafficLayer');
-  const legendBox = document.getElementById('trafficLegendBox');
   let trafficVisible = false;
 
   trafficBtn.addEventListener('click', () => {
     trafficVisible = !trafficVisible;
+
+    const legendBox = document.getElementById('trafficLegendBox'); // ✅ 매번 새로 가져오기
 
     if (trafficVisible) {
       if (!window.trafficLayer) {
@@ -519,10 +537,12 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       window.trafficLayer.setMap(window.map);
       legendBox.style.display = 'block';
+      adjustLegendPositions(); // ✅ 위치 동기화
       trafficBtn.classList.add('active');
     } else {
       window.trafficLayer?.setMap(null);
       legendBox.style.display = 'none';
+      adjustLegendPositions(); // ✅ 위치 복귀
       trafficBtn.classList.remove('active');
     }
   });
