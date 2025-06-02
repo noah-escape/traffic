@@ -88,7 +88,7 @@ public class SecurityConfig {
                 "/member/find/**", "/find-id", "/find-password",
                 "/board/list/**", "/board/view/**",
 
-                "/chart-view", "/chart/**", "/pages/map/**"
+                "/chart-view", "/chart/**", "/pages/map/**", "/news-view/**"
 
                 )
             .permitAll()
