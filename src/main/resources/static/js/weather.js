@@ -70,6 +70,17 @@ document.addEventListener("DOMContentLoaded", async () => {
       container.scrollLeft = scrollLeft - walk;
     });
   });
+  // ✅ 자동완성 닫기 (외부 클릭 시)
+  document.addEventListener("click", function (e) {
+    const input = document.getElementById("locationSearch");
+    const list = document.getElementById("autocompleteList");
+    const clearBtn = document.getElementById("clearInputBtn");
+
+    if (!input.contains(e.target) && !list.contains(e.target) && !clearBtn.contains(e.target)) {
+      list.style.display = "none";
+    }
+  });
+
 });
 
 // ✅ 1. 지역 데이터 안전하게 불러오기
@@ -88,17 +99,22 @@ async function initLocationData() {
 function initLocationSearchEvents() {
   const input = document.getElementById("locationSearch");
   const list = document.getElementById("autocompleteList");
+  const clearBtn = document.getElementById("clearInputBtn");
+  let currentIndex = -1;
 
   input.addEventListener("input", () => {
     const keyword = input.value.trim();
     list.innerHTML = "";
+    currentIndex = -1; // 방향키 탐색 초기화
 
-    if (keyword.length < 1) {
+    // X 버튼 표시 여부
+    clearBtn.classList.toggle("d-none", keyword.length === 0);
+    if (keyword.length === 0) {
       list.style.display = "none";
       return;
     }
 
-    const matches = locationData.filter(loc => loc.name.includes(keyword)).slice(0, 10);
+    const matches = locationData.filter(loc => loc.name.includes(keyword));
     if (matches.length === 0) {
       list.style.display = "none";
       return;
@@ -109,9 +125,10 @@ function initLocationSearchEvents() {
       li.className = "list-group-item autocomplete-item";
       li.textContent = loc.name;
       li.addEventListener("click", () => {
-        input.value = ""
+        input.value = "";
         list.innerHTML = "";
         list.style.display = "none";
+        clearBtn.classList.add("d-none");
         updateMapAndWeather(loc.lat, loc.lon);
       });
       list.appendChild(li);
@@ -120,6 +137,46 @@ function initLocationSearchEvents() {
     list.style.display = "block";
   });
 
+  // 키보드 탐색 및 Enter 처리
+  input.addEventListener("keydown", (e) => {
+    const items = list.querySelectorAll(".autocomplete-item");
+    if (items.length === 0) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      currentIndex = (currentIndex + 1) % items.length;
+      updateActiveItem(items);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      currentIndex = (currentIndex - 1 + items.length) % items.length;
+      updateActiveItem(items);
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (currentIndex >= 0 && currentIndex < items.length) {
+        items[currentIndex].click(); // 선택 항목 클릭
+      } else {
+        document.getElementById("searchBtn").click(); // 일반 검색 실행
+      }
+    }
+  });
+
+  function updateActiveItem(items) {
+  items.forEach((item, idx) => {
+    if (idx === currentIndex) {
+      item.classList.add("active");
+
+      // 🔥 선택된 항목이 보이도록 스크롤 조정
+      item.scrollIntoView({
+        block: "nearest",
+        behavior: "smooth" // 또는 "auto"
+      });
+    } else {
+      item.classList.remove("active");
+    }
+  });
+}
+
+  // 검색 버튼 클릭
   document.getElementById("searchBtn").addEventListener("click", () => {
     const keyword = input.value.trim();
     const found = locationData.find(loc => loc.name === keyword);
@@ -128,11 +185,22 @@ function initLocationSearchEvents() {
       input.value = "";
       list.innerHTML = "";
       list.style.display = "none";
+      clearBtn.classList.add("d-none");
     } else {
       alert("해당 지역을 찾을 수 없습니다.");
     }
   });
+
+  // X 아이콘 클릭 → 초기화
+  clearBtn.addEventListener("click", () => {
+    input.value = "";
+    list.innerHTML = "";
+    list.style.display = "none";
+    clearBtn.classList.add("d-none");
+    input.focus();
+  });
 }
+
 
 function syncHeights() {
   const left = document.querySelector('.left-wrapper');
@@ -201,20 +269,20 @@ function updateMapAndWeather(lat, lon, zoomChange = true) {
     }
 
     if (currentMarker) {
-  currentMarker.setMap(null);
-}
+      currentMarker.setMap(null);
+    }
 
-currentMarker = new naver.maps.Marker({
-  position,
-  map,
-  icon: {
-    url: '/image/weather/marker.png',
-    size: new naver.maps.Size(24, 24),
-    origin: new naver.maps.Point(0, 0),
-    anchor: new naver.maps.Point(12, 24)
-  },
-  title: "선택 위치"
-});
+    currentMarker = new naver.maps.Marker({
+      position,
+      map,
+      icon: {
+        url: '/image/weather/marker.png',
+        size: new naver.maps.Size(24, 24),
+        origin: new naver.maps.Point(0, 0),
+        anchor: new naver.maps.Point(12, 24)
+      },
+      title: "선택 위치"
+    });
 
   }
 
@@ -624,10 +692,8 @@ function loadWeatherAlerts(lat, lon) {
     .then(res => res.json())
     .then(alerts => {
       const listLocal = document.getElementById("alert-local");
-      const listOthers = document.getElementById("alert-others");
       const noneMsg = document.getElementById("alert-none-msg");
       listLocal.innerHTML = "";
-      listOthers.innerHTML = "";
 
       if (!alerts || alerts.length === 0) {
         noneMsg.style.display = "block";
@@ -639,18 +705,21 @@ function loadWeatherAlerts(lat, lon) {
       const nearestRegion = getNearestRegionName(lat, lon);
 
       alerts.forEach(alert => {
-        const li = document.createElement("li");
-        li.innerHTML = `<strong>[${alert.region}]</strong> ${alert.category} - ${alert.status}<br><span class="text-muted">${alert.date}</span>`;
-
+        // 현재 지역만 필터링
         if (alert.region.includes(nearestRegion)) {
+          const li = document.createElement("li");
+          li.innerHTML = `<strong>[${alert.region}]</strong> ${alert.category} - ${alert.status}<br><span class="text-muted">${alert.date}</span>`;
           listLocal.appendChild(li);
-        } else {
-          listOthers.appendChild(li);
         }
       });
-    })
 
+      // 현재 지역에 해당하는 특보가 없을 경우
+      if (listLocal.children.length === 0) {
+        noneMsg.style.display = "block";
+      }
+    });
 }
+
 
 
 

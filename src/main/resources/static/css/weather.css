@@ -69,10 +69,16 @@
 }
 
 .weather-loading-overlay {
-  position: absolute;
-  inset: 0;
+  position: fixed; /* ✅ 절대 위치 → 고정 위치 */
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   background-color: rgba(255, 255, 255, 0.85);
   z-index: 1000;
+  display: flex;
+  align-items: center;     /* ✅ 세로 중앙 */
+  justify-content: center; /* ✅ 가로 중앙 */
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.4s ease-in-out;
@@ -83,6 +89,23 @@
   visibility: visible;
 }
 
+#clearInputBtn i {
+  font-size: 1.25rem;
+  vertical-align: middle;
+}
+
+#clearInputBtn {
+  padding: 0 0.5rem;
+  border: none;
+  background: transparent;
+}
+
+#locationSearch:focus {
+  outline: none;
+  box-shadow: none;
+  border-color: #ced4da; /* 기본 테두리 색으로 유지 */
+}
+
 #autocompleteList {
   position: absolute;
   top: 100%;
@@ -90,7 +113,15 @@
   right: 0;
   display: none;
   z-index: 1050;
+  max-height: 410px;
+  overflow-y: auto;
 }
+
+.autocomplete-item.active {
+    background-color: #e9ecef;
+    color: black;
+    border: none;
+  }
 
 #daily-forecast-style-wrapper {
   background-color: rgba(255, 255, 255, 0.9);
