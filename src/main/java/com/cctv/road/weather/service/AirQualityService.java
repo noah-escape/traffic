@@ -20,8 +20,8 @@ import java.util.*;
 @RequiredArgsConstructor
 public class AirQualityService {
 
-    private final RestTemplate restTemplate = new RestTemplate();
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final RestTemplate restTemplate;
+    private final ObjectMapper objectMapper;
 
     @Value("${airkorea.api.key}")
     private String airKoreaApiKey;
@@ -40,7 +40,7 @@ public class AirQualityService {
                     .build(true).toUri();
 
             String response = restTemplate.getForObject(uri, String.class);
-            Map<String, Object> root = mapper.readValue(response, Map.class);
+            Map<String, Object> root = objectMapper.readValue(response, Map.class);
             List<Map<String, String>> items = (List<Map<String, String>>) ((Map) ((Map) root.get("response"))
                     .get("body")).get("items");
 
@@ -87,7 +87,7 @@ public class AirQualityService {
                     .build(true).toUri();
 
             ResponseEntity<String> response = restTemplate.getForEntity(uri, String.class);
-            Map<String, Object> root = mapper.readValue(response.getBody(), Map.class);
+            Map<String, Object> root = objectMapper.readValue(response.getBody(), Map.class);
 
             List<Map<String, String>> items = (List<Map<String, String>>)
                     ((Map) ((Map) root.get("response")).get("body")).get("items");
