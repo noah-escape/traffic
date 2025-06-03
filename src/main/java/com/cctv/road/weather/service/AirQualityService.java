@@ -37,7 +37,8 @@ public class AirQualityService {
                     .queryParam("returnType", "json")
                     .queryParam("numOfRows", 1000)
                     .queryParam("pageNo", 1)
-                    .build(true).toUri();
+                    .build(true)
+                    .toUri();
 
             String response = restTemplate.getForObject(uri, String.class);
             Map<String, Object> root = objectMapper.readValue(response, Map.class);

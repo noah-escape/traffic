@@ -7,9 +7,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.cctv.road.weather.service.AirQualityService;
+import com.cctv.road.weather.service.AstroService;
 import com.cctv.road.weather.service.HolidayService;
 import com.cctv.road.weather.service.KmaWeatherService;
 import com.cctv.road.weather.util.GeoUtil;
@@ -26,6 +28,7 @@ public class WeatherController {
     private final KmaWeatherService kmaWeatherService;
     private final AirQualityService airQualityService;
     private final HolidayService holidayService;
+    private final AstroService astroService;
 
     @GetMapping("/current") // 현재 실시간 날씨
     public ResponseEntity<?> getCurrentWeather(@RequestParam double lat, @RequestParam double lon) {
@@ -82,6 +85,17 @@ public class WeatherController {
     public ResponseEntity<?> getHolidays(@RequestParam(defaultValue = "2025") int year) {
         List<String> holidays = holidayService.getHolidayList(year);
         return ResponseEntity.ok(Map.of("year", year, "dates", holidays));
+    }
+
+    @GetMapping("/astro")
+    public Map<String, String> getAstroInfo(
+            @RequestParam double lat,
+            @RequestParam double lon,
+            @RequestParam(required = false, defaultValue = "Y") String dnYn,
+            @RequestParam(required = false) String date
+    ) {
+        String locdate = (date != null) ? date : java.time.LocalDate.now().toString().replace("-", "");
+        return astroService.getAstroInfo(lat, lon, locdate, dnYn);
     }
 
 }

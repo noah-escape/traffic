@@ -344,6 +344,8 @@ function updateMapAndWeather(lat, lon, zoomChange = true) {
 
   }
 
+  fetchAstroInfo(lat, lon);
+
   const regionName = getNearestRegionName(lat, lon);
   document.getElementById("selected-location").textContent = `선택한 위치: ${regionName}`;
 
@@ -745,5 +747,39 @@ function getDateColorClass(ymdStr) {
   return "text-dark";
 }
 
+let currentAstroMode = "sun";
+
+document.addEventListener("DOMContentLoaded", () => {
+  const astroToggleBtn = document.getElementById("astroToggleBtn");
+  if (astroToggleBtn) {
+    astroToggleBtn.addEventListener("click", () => {
+      currentAstroMode = currentAstroMode === "sun" ? "moon" : "sun";
+      updateAstroDisplay(currentAstroData, currentAstroMode);
+    });
+  }
+});
+
+let currentAstroData = null;
+
+function fetchAstroInfo(lat, lon) {
+    $.get(`/api/weather/astro?lat=${lat}&lon=${lon}`, function(data) {
+        currentAstroData = data;
+        updateAstroDisplay(data, currentAstroMode);
+    });
+}
+
+function updateAstroDisplay(data, mode) {
+    if (!data) return;
+
+    if (mode === "sun") {
+        $("#astro-type").text("🌞 일출/일몰");
+        $("#astro-rise").text(`일출: ${data.sunrise}`);
+        $("#astro-set").text(`일몰: ${data.sunset}`);
+    } else {
+        $("#astro-type").text("🌙 월출/월몰");
+        $("#astro-rise").text(`월출: ${data.moonrise}`);
+        $("#astro-set").text(`월몰: ${data.moonset}`);
+    }
+}
 
 

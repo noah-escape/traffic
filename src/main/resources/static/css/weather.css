@@ -123,6 +123,16 @@
     border: none;
   }
 
+.astro-card-style {
+  background-color: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  margin-top: 1rem;
+}
+
 #daily-forecast-style-wrapper {
   background-color: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(8px);

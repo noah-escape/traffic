@@ -122,13 +122,13 @@
         <div class="col-md-7 d-flex flex-column gap-3">
           <!-- 특보 -->
           <!-- <div class="card p-3 rounded-4 shadow-sm" id="alert-card"> -->
-            <!-- <h5 class="text-danger">기상 특보</h5> -->
+          <!-- <h5 class="text-danger">기상 특보</h5> -->
 
-            <!-- ✅ 현재 위치에 해당하는 특보만 표시 -->
-            <!-- <ul id="alert-local" class="list-unstyled small mb-2"></ul> -->
+          <!-- ✅ 현재 위치에 해당하는 특보만 표시 -->
+          <!-- <ul id="alert-local" class="list-unstyled small mb-2"></ul> -->
 
-            <!-- ✅ 특보 없을 경우 메시지 -->
-            <!-- <div id="alert-none-msg" class="text-muted small">현재 지역에 발표된 특보가 없습니다.</div> -->
+          <!-- ✅ 특보 없을 경우 메시지 -->
+          <!-- <div id="alert-none-msg" class="text-muted small">현재 지역에 발표된 특보가 없습니다.</div> -->
           <!-- </div> -->
 
           <div id="weather-box" class="card p-4 rounded-4 flex-grow-1">
@@ -280,6 +280,20 @@
 
           <div class="flex-grow-1 d-flex">
             <div id="map" class="shadow-sm rounded flex-grow-1"></div>
+          </div>
+
+          <div class="astro-card-style">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+              <h5 class="mb-0 d-flex align-items-center">
+                <span id="astro-type">🌞 일출/일몰</span>
+                <button id="astroToggleBtn" class="btn btn-sm ms-2 d-flex align-items-center justify-content-center"
+                  type="button" style="width: 32px; height: 32px;">
+                  <i class="bi bi-arrow-repeat"></i>
+                </button>
+              </h5>
+            </div>
+            <div class="small text-muted mb-1" id="astro-rise">일출: --</div>
+            <div class="small text-muted" id="astro-set">일몰: --</div>
           </div>
         </div>
       </div>
