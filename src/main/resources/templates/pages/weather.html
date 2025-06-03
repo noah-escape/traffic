@@ -191,41 +191,46 @@
             <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
               <h5 class="mb-0 d-flex align-items-center">
                 대기질 정보
-                <button class="btn btn-sm ms-2 d-flex align-items-center justify-content-center" id="emojiInfoToggle"
-                  type="button" style="width: 32px; height: 32px;">
-                  <i class="bi bi-question-circle"></i>
-                </button>
+                <div class="position-relative d-inline-block ms-2" style="z-index: 1050;">
+                  <button class="btn btn-sm d-flex align-items-center justify-content-center" id="emojiInfoToggle"
+                    type="button" style="width: 32px; height: 32px;">
+                    <i class="bi bi-question-circle"></i>
+                  </button>
+
+                  <!-- 이모티콘 설명 카드 -->
+                  <div id="emojiInfoCard" class="info-card shadow-sm rounded" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                      <span class="fw-bold">이모티콘 의미</span>
+                      <button type="button" class="btn-close" aria-label="닫기" id="emojiInfoClose"></button>
+                    </div>
+                    <div class="d-flex justify-content-between text-center small gap-3">
+                      <div>
+                        <img src="/image/weather/good.png" alt="좋음" width="36" height="36"><br>
+                        <div>좋음</div>
+                      </div>
+                      <div>
+                        <img src="/image/weather/normal.png" alt="보통" width="36" height="36"><br>
+                        <div>보통</div>
+                      </div>
+                      <div>
+                        <img src="/image/weather/bad.png" alt="나쁨" width="36" height="36"><br>
+                        <div>나쁨</div>
+                      </div>
+                      <div>
+                        <img src="/image/weather/verybad.png" alt="매우 나쁨" width="36" height="36"><br>
+                        <div>매우 나쁨</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </h5>
+
+              <!-- ✅ 측정소 정보는 여기에 그대로 유지 -->
               <div class="station-info small text-dark">
                 <strong>측정소:</strong> <span id="air-station">--</span>
               </div>
             </div>
 
-            <!-- 기존 이모지 설명 카드 -->
-            <div id="emojiInfoCard" class="info-card shadow-sm rounded" style="display: none;">
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="fw-bold">이모티콘 의미</span>
-                <button type="button" class="btn-close" aria-label="닫기" id="emojiInfoClose"></button>
-              </div>
-              <div class="d-flex justify-content-between text-center small gap-3">
-                <div>
-                  <img src="/image/weather/good.png" alt="좋음" width="36" height="36"><br>
-                  <div>좋음</div>
-                </div>
-                <div>
-                  <img src="/image/weather/normal.png" alt="보통" width="36" height="36"><br>
-                  <div>보통</div>
-                </div>
-                <div>
-                  <img src="/image/weather/bad.png" alt="나쁨" width="36" height="36"><br>
-                  <div>나쁨</div>
-                </div>
-                <div>
-                  <img src="/image/weather/verybad.png" alt="매우 나쁨" width="36" height="36"><br>
-                  <div>매우 나쁨</div>
-                </div>
-              </div>
-            </div>
 
             <!-- 대기질 카드들 -->
             <div class="aqi-emoji-grid text-center">
@@ -282,19 +287,35 @@
             <div id="map" class="shadow-sm rounded flex-grow-1"></div>
           </div>
 
-          <div class="astro-card-style">
-            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-              <h5 class="mb-0 d-flex align-items-center">
-                <span id="astro-type">🌞 일출/일몰</span>
-                <button id="astroToggleBtn" class="btn btn-sm ms-2 d-flex align-items-center justify-content-center"
-                  type="button" style="width: 32px; height: 32px;">
-                  <i class="bi bi-arrow-repeat"></i>
-                </button>
-              </h5>
+          <div class="astro-card-style text-center">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="mb-0 fw-bold" id="astro-title">일출/일몰</h5>
+              <button id="astroToggleBtn" class="btn btn-sm btn-outline-secondary">전환</button>
             </div>
-            <div class="small text-muted mb-1" id="astro-rise">일출: --</div>
-            <div class="small text-muted" id="astro-set">일몰: --</div>
+
+            <!-- SVG 반원 궤적 -->
+            <div class="sun-path-wrapper position-relative mx-auto mb-3">
+              <svg viewBox="0 -20 200 120" width="100%" height="120">
+                <path d="M0,100 A100,100 0 0,1 200,100" fill="none" stroke="#cde3ff" stroke-width="10" />
+                <circle id="astro-body" r="10" fill="gold" cx="100" cy="30"></circle>
+              </svg>
+              <div id="astro-remaining" class="fw-semibold text-dark mt-2">일몰까지 <span class="text-primary">--:--</span>
+                남았습니다.</div>
+            </div>
+
+            <!-- 시간 정보 -->
+            <div class="row small text-dark">
+              <div class="col">
+                <div class="fw-bold" id="astro-rise-label">일출</div>
+                <div id="astro-rise">--:--</div>
+              </div>
+              <div class="col">
+                <div class="fw-bold" id="astro-set-label">일몰</div>
+                <div id="astro-set">--:--</div>
+              </div>
+            </div>
           </div>
+
         </div>
       </div>
 

@@ -2,6 +2,8 @@ let map;
 let currentMarker = null;
 let locationData = [];
 let holidayDates = [];
+let currentAstroMode = 'sun'; // 🌞 or 🌙
+let currentAstroData = null;
 
 const EARTH_RADIUS_KM = 6371;
 
@@ -89,6 +91,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       container.scrollLeft = scrollLeft - walk;
     });
   });
+
   // ✅ 자동완성 닫기 (외부 클릭 시)
   document.addEventListener("click", function (e) {
     const input = document.getElementById("locationSearch");
@@ -100,6 +103,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
+  // ✅ Astro toggle button
+  const astroToggleBtn = document.getElementById("astroToggleBtn");
+  astroToggleBtn?.addEventListener("click", () => {
+    currentAstroMode = currentAstroMode === "sun" ? "moon" : "sun";
+    updateAstroDisplay(currentAstroData);
+  });
 });
 
 // ✅ 1. 지역 데이터 안전하게 불러오기
@@ -185,11 +194,9 @@ function initLocationSearchEvents() {
     items.forEach((item, idx) => {
       if (idx === currentIndex) {
         item.classList.add("active");
-
-        // 🔥 선택된 항목이 보이도록 스크롤 조정
         item.scrollIntoView({
           block: "nearest",
-          behavior: "smooth" // 또는 "auto"
+          behavior: "smooth"
         });
       } else {
         item.classList.remove("active");
@@ -222,19 +229,17 @@ function initLocationSearchEvents() {
   });
 }
 
-
 function syncHeights() {
   const left = document.querySelector('.left-wrapper');
   const right = document.querySelector('.right-wrapper');
   if (!left || !right) return;
 
-  // 오른쪽 높이에 맞춤
   left.style.height = `${right.offsetHeight}px`;
 }
 
 window.addEventListener("load", syncHeights);
 window.addEventListener("resize", syncHeights);
-setTimeout(syncHeights, 1000); // 로딩 지연 대비
+setTimeout(syncHeights, 1000);
 
 function onLocationSuccess(position) {
   const lat = position.coords.latitude;
@@ -250,15 +255,13 @@ function onLocationSuccess(position) {
     new naver.maps.LatLng(39.6, 132.0)
   );
 
-  // ✅ 커서 스타일 적용 함수
   function setMapCursor(cursorStyle) {
-    const mapCanvas = document.querySelector('#map > div'); // 네이버맵 내부 canvas
+    const mapCanvas = document.querySelector('#map > div');
     if (mapCanvas) {
       mapCanvas.style.cursor = cursorStyle;
     }
   }
 
-  // ✅ 거리 기반으로 가까운 등록 지역 판별
   function isCloseToAnyRegisteredLocation(lat, lon, maxDistanceKm = 25) {
     return locationData.some(loc => {
       const distance = haversineDistance(lat, lon, loc.lat, loc.lon);
@@ -266,7 +269,6 @@ function onLocationSuccess(position) {
     });
   }
 
-  // ✅ 커서 제어
   naver.maps.Event.addListener(map, 'mousemove', function (e) {
     const lat = e.coord.lat();
     const lon = e.coord.lng();
@@ -276,7 +278,6 @@ function onLocationSuccess(position) {
     setMapCursor((inside && nearValid) ? 'pointer' : 'not-allowed');
   });
 
-  // ✅ 클릭 제한
   naver.maps.Event.addListener(map, 'click', function (e) {
     const lat = e.coord.lat();
     const lon = e.coord.lng();
@@ -287,14 +288,12 @@ function onLocationSuccess(position) {
     updateMapAndWeather(lat, lon);
   });
 
-  // ✅ 초기 위치 마커
   currentMarker = new naver.maps.Marker({
     position: new naver.maps.LatLng(lat, lon),
     map: map,
     title: "현재 위치"
   });
 
-  // ✅ 초기 날씨 로드
   updateMapAndWeather(lat, lon, false);
 }
 
@@ -316,14 +315,14 @@ function hideLoading() {
 function updateMapAndWeather(lat, lon, zoomChange = true) {
   showLoading();
 
-  // console.log("📍 선택된 위치:", lat, lon); // ✅ 지역명 대신 좌표 출력
-  loadAirQuality(lat, lon); // ✅ 이제 진짜 좌표로 API 호출
+  loadAirQuality(lat, lon);
+  fetchAstroInfo(lat, lon);
 
   const position = new naver.maps.LatLng(lat, lon);
   if (map) {
     map.setCenter(position);
     if (zoomChange) {
-      map.setZoom(9); // 검색 등에서만 확대
+      map.setZoom(9);
     }
 
     if (currentMarker) {
@@ -341,10 +340,7 @@ function updateMapAndWeather(lat, lon, zoomChange = true) {
       },
       title: "선택 위치"
     });
-
   }
-
-  fetchAstroInfo(lat, lon);
 
   const regionName = getNearestRegionName(lat, lon);
   document.getElementById("selected-location").textContent = `선택한 위치: ${regionName}`;
@@ -376,6 +372,103 @@ function updateMapAndWeather(lat, lon, zoomChange = true) {
     .finally(() => {
       hideLoading();
     });
+}
+
+function fetchAstroInfo(lat, lon) {
+  fetch(`/api/weather/astro?lat=${lat}&lon=${lon}`)
+    .then(res => res.json())
+    .then(data => {
+      currentAstroData = data;
+      startAstroUpdater(data);
+    });
+}
+
+let astroInterval;
+
+function parseTimeStr(raw) {
+  if (typeof raw === "string") {
+    const str = raw.trim().replace(":", "").padStart(4, "0");
+    const h = parseInt(str.slice(0, 2), 10);
+    const m = parseInt(str.slice(2, 4), 10);
+    if (!isNaN(h) && !isNaN(m)) return { h, m };
+  }
+  return { h: NaN, m: NaN };
+}
+
+function formatTimeString(timeStr) {
+  if (!timeStr) return "--:--";
+  const str = timeStr.trim().replace(":", "").padStart(4, "0");
+  if (!/^\d{4}$/.test(str)) return "--:--";
+  return str.slice(0, 2) + ":" + str.slice(2);
+}
+
+function updateAstroDisplay(data) {
+  if (!data) return;
+
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}-${now.getDate().toString().padStart(2, "0")}`;
+
+  const isSun = currentAstroMode === "sun";
+  const riseRaw = isSun ? data.sunrise : data.moonrise;
+  const setRaw = isSun ? data.sunset : data.moonset;
+
+  console.log("🌄 Astro raw values:", { riseRaw, setRaw });
+
+  const rise = formatTimeString(riseRaw);
+  const set = formatTimeString(setRaw);
+  if (rise === "--:--" || set === "--:--") {
+    document.getElementById("astro-rise").textContent = "--:--";
+    document.getElementById("astro-set").textContent = "--:--";
+    document.getElementById("astro-remaining").innerHTML = "";
+    return;
+  }
+  console.log("🌄 Trimmed rise/set:", riseRaw.trim(), setRaw.trim());
+
+  document.getElementById("astro-title").textContent = `${isSun ? "일출/일몰" : "월출/월몰"}`;
+  document.getElementById("astro-rise-label").textContent = isSun ? "일출" : "월출";
+  document.getElementById("astro-set-label").textContent = isSun ? "일몰" : "월몰";
+  document.getElementById("astro-rise").textContent = rise;
+  document.getElementById("astro-set").textContent = set;
+
+  const { h: riseH, m: riseM } = parseTimeStr(riseRaw);
+  const { h: setH, m: setM } = parseTimeStr(setRaw);
+
+  const riseDate = new Date(todayStr);
+  riseDate.setHours(riseH, riseM, 0);
+
+  const setDate = new Date(todayStr);
+  setDate.setHours(setH, setM, 0);
+
+  const totalMins = (setDate - riseDate) / 60000;
+  const elapsed = (now - riseDate) / 60000;
+  const remaining = Math.max(totalMins - elapsed, 0);
+  const hrs = Math.floor(remaining / 60).toString().padStart(2, "0");
+  const mins = Math.floor(remaining % 60).toString().padStart(2, "0");
+
+  document.getElementById("astro-remaining").innerHTML =
+    `${isSun ? "일몰" : "월몰"}까지 <span class="text-primary">${hrs}:${mins}</span> 남았습니다.`;
+
+  updateAstroBodyOnArc(elapsed / totalMins);
+}
+
+function updateAstroBodyOnArc(ratio) {
+  const r = 100;
+  const theta = Math.PI * Math.min(Math.max(ratio, 0), 1);
+  const cx = 100 + r * Math.cos(Math.PI - theta);
+  const cy = 100 - r * Math.sin(Math.PI - theta);
+
+  const astroBody = document.getElementById("astro-body");
+  if (astroBody) {
+    astroBody.style.transition = "transform 0.5s ease-in-out";
+    astroBody.setAttribute("cx", cx);
+    astroBody.setAttribute("cy", cy);
+  }
+}
+
+function startAstroUpdater(data) {
+  updateAstroDisplay(data);
+  clearInterval(astroInterval);
+  astroInterval = setInterval(() => updateAstroDisplay(data), 60000);
 }
 
 function safeFindValue(items, category) {
@@ -479,26 +572,23 @@ function renderHourlyForecastSimple(forecastData) {
   const windRow = document.getElementById("row-wind");
 
   hourRow.innerHTML = `<th>시간</th>`;
-  dateRow.innerHTML = `<th>날짜</th>`; // 첫 칸 비움
+  dateRow.innerHTML = `<th>날짜</th>`;
   iconRow.innerHTML = `<th>날씨</th>`;
   tempRow.innerHTML = `<th>기온</th>`;
   rainRow.innerHTML = `<th>강수량</th>`;
   humidRow.innerHTML = `<th>습도</th>`;
   windRow.innerHTML = `<th>바람</th>`;
 
-  // 날짜별 그룹 카운트 (colspan용)
   const dateGroups = {};
   sorted.forEach(({ date }) => {
     dateGroups[date] = (dateGroups[date] || 0) + 1;
   });
 
-  // 날짜 병합 헤더
   for (const [date, count] of Object.entries(dateGroups)) {
-    const formatted = formatDateToKorean(date); // ex: 5월 28일 (화)
+    const formatted = formatDateToKorean(date);
     dateRow.innerHTML += `<th colspan="${count}" class="text-center">${formatted}</th>`;
   }
 
-  // 각 시간별 데이터 출력
   sorted.slice(0, -1).forEach(values => {
     const hour = `${values.time.slice(0, 2)}시`;
     const iconSrc = getWeatherIconImageSrc(values);
@@ -541,7 +631,6 @@ function getWeatherIconImageSrc(values) {
   const hour = parseInt(values.time?.slice(0, 2));
   const isNight = hour >= 18 || hour < 6;
 
-  // 강수 상태 우선
   if (pty === "1" || pty === "2" || pty === "4" || pty === "5" || pty === "6" || pty === "9") {
     return "/image/weather/rain.png";
   }
@@ -549,14 +638,12 @@ function getWeatherIconImageSrc(values) {
     return "/image/weather/snow.png";
   }
 
-  // 하늘 상태 + 시간
   if (sky === "1") return isNight ? "/image/weather/clear-night.png" : "/image/weather/clear-day.png";
   if (sky === "3") return isNight ? "/image/weather/cloudy-night.png" : "/image/weather/cloudy-day.png";
   if (sky === "4") return "/image/weather/cloudy.png";
 
-  return "/image/weather/unknown.png"; // 예외 상황
+  return "/image/weather/unknown.png";
 }
-
 
 function getFutureDate(daysAhead, returnObj = false) {
   const date = new Date();
@@ -565,7 +652,7 @@ function getFutureDate(daysAhead, returnObj = false) {
   const month = date.getMonth() + 1;
   const dayNum = date.getDate();
   if (returnObj) {
-    return { day, month, dayNum }; // ✅ 정확한 key 이름 사용
+    return { day, month, dayNum };
   } else {
     return `${month}월 ${dayNum}일 (${day})`;
   }
@@ -627,7 +714,6 @@ function renderCompactDailyForecast(middleTa, middleLand, holidayList = []) {
   }
 }
 
-
 function getWeatherImageSrcByText(text) {
   if (!text) return "/image/weather/unknown.png";
 
@@ -636,8 +722,8 @@ function getWeatherImageSrcByText(text) {
   if (lower.includes("비")) return "/image/weather/rain.png";
   if (lower.includes("눈")) return "/image/weather/snow.png";
   if (lower.includes("흐림")) return "/image/weather/cloudy.png";
-  if (lower.includes("구름")) return "/image/weather/cloudy-day.png";  // ✅ 항상 주간 아이콘
-  if (lower.includes("맑음")) return "/image/weather/clear-day.png";   // ✅ 항상 주간 아이콘
+  if (lower.includes("구름")) return "/image/weather/cloudy-day.png";
+  if (lower.includes("맑음")) return "/image/weather/clear-day.png";
 
   return "/image/weather/unknown.png";
 }
@@ -662,7 +748,6 @@ function loadAirQuality(lat, lon) {
       document.getElementById("air-pm25").textContent = data.pm25Value || "--";
       document.getElementById("air-pm25-grade").textContent = pm25Label;
 
-      // ✅ 이모지 설정
       setAirQualityEmoji('khai', khaiLabel);
       setAirQualityEmoji('pm10', pm10Label);
       setAirQualityEmoji('pm25', pm25Label);
@@ -679,7 +764,7 @@ function setAirQualityEmoji(idPrefix, gradeLabel) {
     '나쁨': 'bad.png',
     '매우나쁨': 'verybad.png',
     '기본': 'neutral.png',
-    '--': 'neutral.png' // 잘못된 값도 대비
+    '--': 'neutral.png'
   };
 
   const emoji = document.getElementById(`air-${idPrefix}-emoji`);
@@ -687,7 +772,6 @@ function setAirQualityEmoji(idPrefix, gradeLabel) {
     emoji.src = `/image/weather/${emojiMap[gradeLabel] || emojiMap['기본']}`;
   }
 }
-
 
 function getAirQualityLabel(grade) {
   switch (grade) {
@@ -716,7 +800,6 @@ function getNearestRegionName(lat, lon) {
     }
   }
 
-  // console.log("🧭 가장 가까운 지역 객체:", closest);
   return closest.name;
 }
 
@@ -730,8 +813,7 @@ async function fetchHolidayDates() {
   try {
     const res = await fetch("/api/weather/holidays");
     const data = await res.json();
-    holidayDates = data.dates
-    // console.log("📅 공휴일", holidayDates);
+    holidayDates = data.dates;
   } catch (e) {
     console.error("❌ 공휴일 API 실패", e);
   }
@@ -739,47 +821,10 @@ async function fetchHolidayDates() {
 
 function getDateColorClass(ymdStr) {
   const date = new Date(ymdStr);
-  const day = date.getDay(); // 0=일, 6=토
+  const day = date.getDay();
   const isHoliday = holidayDates.includes(ymdStr);
 
-  if (day === 0 || isHoliday) return "text-danger fw-bold"; // 일요일 or 공휴일
-  if (day === 6) return "text-primary fw-bold"; // 토요일
+  if (day === 0 || isHoliday) return "text-danger fw-bold";
+  if (day === 6) return "text-primary fw-bold";
   return "text-dark";
 }
-
-let currentAstroMode = "sun";
-
-document.addEventListener("DOMContentLoaded", () => {
-  const astroToggleBtn = document.getElementById("astroToggleBtn");
-  if (astroToggleBtn) {
-    astroToggleBtn.addEventListener("click", () => {
-      currentAstroMode = currentAstroMode === "sun" ? "moon" : "sun";
-      updateAstroDisplay(currentAstroData, currentAstroMode);
-    });
-  }
-});
-
-let currentAstroData = null;
-
-function fetchAstroInfo(lat, lon) {
-    $.get(`/api/weather/astro?lat=${lat}&lon=${lon}`, function(data) {
-        currentAstroData = data;
-        updateAstroDisplay(data, currentAstroMode);
-    });
-}
-
-function updateAstroDisplay(data, mode) {
-    if (!data) return;
-
-    if (mode === "sun") {
-        $("#astro-type").text("🌞 일출/일몰");
-        $("#astro-rise").text(`일출: ${data.sunrise}`);
-        $("#astro-set").text(`일몰: ${data.sunset}`);
-    } else {
-        $("#astro-type").text("🌙 월출/월몰");
-        $("#astro-rise").text(`월출: ${data.moonrise}`);
-        $("#astro-set").text(`월몰: ${data.moonset}`);
-    }
-}
-
-
