@@ -223,11 +223,35 @@ document.addEventListener('DOMContentLoaded', () => {
       onActivate: () => {
         resetPanelsAndCloseVideo();
         panelStates.route = true;
-        document.getElementById('routeFilterPanel')?.style.setProperty('display', 'flex');
+
+        const panel = document.getElementById('routeFilterPanel');
+        if (panel) {
+          panel.style.display = 'flex';
+          requestAnimationFrame(() => panel.classList.add('active'));
+          panel.classList.remove('hidden');
+        }
+
         window.setStartToCurrentLocation?.();
         window.initRouteEvents?.();
+
+        const range = document.getElementById('radiusRange');
+        if (range) updateRadiusLabel(range.value);
+
+        const list = document.getElementById('nearbyPlaceList');
+        if (list) list.innerHTML = '<div class="text-muted">카테고리를 선택하거나 원하는 장소를 검색하세요.</div>';
       },
       onDeactivate: () => {
+        panelStates.route = false;
+
+        const panel = document.getElementById('routeFilterPanel');
+        if (panel) {
+          panel.classList.add('hidden');
+          setTimeout(() => {
+            panel.classList.remove('active');
+            panel.style.display = 'none';
+          }, 300);
+        }
+
         window.clearRoute?.();
         window.clearRouteMarkers?.();
         window.removeRouteEvents?.();

@@ -244,23 +244,57 @@
       </div>
     </div>
 
-    <!-- 길찾기 패널 -->
+    <!-- 🧭 길찾기 사이드바 패널 -->
     <div id="routeFilterPanel" class="sidebar-panel" style="display: none;">
-      <div class="panel-body">
-        <h5>🧭 길찾기</h5>
 
-        <div class="route-input-row">
-          <input id="startPointLabel" placeholder="출발지 입력" class="form-control small-input" />
-          <input id="goalPointLabel" placeholder="도착지 입력" class="form-control small-input" />
+      <div class="flex-shrink-0">
+        <div class="bus-header bg-primary text-white py-2 px-3 d-flex justify-content-between align-items-center">
+          <h5>🧭 길찾기</h5>
         </div>
 
-        <ul id="startResultList" class="autocomplete-result list-group position-absolute w-100" style="display:none;">
-        </ul>
-        <ul id="goalResultList" class="autocomplete-result list-group position-absolute w-100" style="display:none;">
-        </ul>
+        <!-- 🔍 장소 검색 -->
+        <div>
+          <input id="placeSearchInput" class="form-control form-control-sm" placeholder="🔍 원하는 장소를 검색하세요">
+          <ul id="placeSearchResults" class="list-group mt-1" style="max-height: 150px; overflow-y: auto;"></ul>
+        </div>
+
+        <!-- 📍 반경 카테고리 + 슬라이더 -->
+        <div class="input-group">
+          <select id="categorySelect" class="form-select form-select-sm">
+            <option value="MT1">🛒 대형마트</option>
+            <option value="CS2">🏪 편의점</option>
+            <option value="PS3">🎒 어린이집/유치원</option>
+            <option value="SC4">🏫 학교</option>
+            <option value="AC5">📚 학원</option>
+            <option value="PK6">🅿️ 주차장</option>
+            <option value="OL7">⛽ 주유소</option>
+            <option value="SW8">🚇 지하철역</option>
+            <option value="BK9">🏦 은행</option>
+            <option value="CT1">🎭 문화시설</option>
+            <option value="AG2">🏠 중개업소</option>
+            <option value="PO3">🏛 공공기관</option>
+            <option value="AT4">🗺️ 관광명소</option>
+            <option value="AD5">🏨 숙박</option>
+            <option value="FD6" selected>🍽 음식점</option>
+            <option value="CE7">☕ 카페</option>
+            <option value="HP8">🏥 병원</option>
+            <option value="PM9">💊 약국</option>
+          </select>
+        </div>
+
+        <!-- 도착 정보 제목만 고정 -->
+        <div id="arrivalPanelBox">
+          <button class="btn btn-outline-primary w-100 btn-sm" onclick="searchFromMap()">📍 지도 중심 검색</button>
+        </div>
       </div>
 
-      <div class="panel-footer">
+      <!-- 🔽 스크롤 리스트 영역 -->
+      <div class="flex-grow-1 overflow-auto px-3 pb-3" id="nearbyPlaceList" style="font-size: 0.9rem;">
+        <div class="text-muted">🔎 장소를 검색하거나 내 위치를 기준으로 검색해보세요.</div>
+      </div>
+
+      <!-- 🔽 고정 푸터 -->
+      <div class="panel-footer text-center py-2 px-3 border-top bg-light">
         <button class="btn btn-danger w-100" onclick="resetRoutePanel()">🔁 초기화</button>
       </div>
     </div>

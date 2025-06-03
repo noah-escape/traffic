@@ -63,6 +63,9 @@ public class ApiProxyController {
   @Value("${naver.map.client-secret}")
   private String clientSecret;
 
+  @Value("${kakao.rest-api-key}")
+  private String kakaoApiKey;
+
   private final BusStopRepository busStopRepository;
 
   private final Map<String, Map<String, String>> routeTimeCache = new ConcurrentHashMap<>();
@@ -850,6 +853,29 @@ public class ApiProxyController {
           return Mono.error(new RuntimeException("기상청 API 호출 실패"));
         }))
         .bodyToMono(String.class);
+  }
+
+  // 주변 검색
+  @GetMapping("/kakao-nearby")
+  public ResponseEntity<String> getNearbyPlaces(
+      @RequestParam double lat,
+      @RequestParam double lng,
+      @RequestParam(defaultValue = "FD6") String category,
+      @RequestParam(defaultValue = "500") int radius) {
+    String url = UriComponentsBuilder
+        .fromHttpUrl("https://dapi.kakao.com/v2/local/search/category.json")
+        .queryParam("category_group_code", category)
+        .queryParam("x", lng)
+        .queryParam("y", lat)
+        .queryParam("radius", radius)
+        .build()
+        .toUriString();
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.set("Authorization", "KakaoAK " + kakaoApiKey);
+
+    HttpEntity<Void> entity = new HttpEntity<>(headers);
+    return restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
   }
 
   // 도로 중심선 버스 경로 찍기 봉 인 !!
