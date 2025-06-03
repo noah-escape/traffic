@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.cctv.road.weather.service.AirQualityService;
 import com.cctv.road.weather.service.HolidayService;
 import com.cctv.road.weather.service.KmaWeatherService;
-import com.cctv.road.weather.service.WeatherAlertService;
 import com.cctv.road.weather.util.GeoUtil;
 
 import lombok.RequiredArgsConstructor;
@@ -27,7 +26,6 @@ public class WeatherController {
     private final KmaWeatherService kmaWeatherService;
     private final AirQualityService airQualityService;
     private final HolidayService holidayService;
-    private final WeatherAlertService weatherAlertService;
 
     @GetMapping("/current") // 현재 실시간 날씨
     public ResponseEntity<?> getCurrentWeather(@RequestParam double lat, @RequestParam double lon) {
@@ -84,22 +82,6 @@ public class WeatherController {
     public ResponseEntity<?> getHolidays(@RequestParam(defaultValue = "2025") int year) {
         List<String> holidays = holidayService.getHolidayList(year);
         return ResponseEntity.ok(Map.of("year", year, "dates", holidays));
-    }
-
-    @GetMapping("/alerts")
-    public ResponseEntity<?> getWeatherAlerts(@RequestParam double lat, @RequestParam double lon) {
-        try {
-            GeoUtil.RegionCodes codes = GeoUtil.getRegionCodes(lat, lon);
-            String regionName = codes.name; // 필드 직접 접근
-
-            List<WeatherAlertService.AlertDto> alerts = weatherAlertService.getAlertsByRegion(regionName);
-
-            return ResponseEntity.ok(alerts);
-
-        } catch (Exception e) {
-            log.error("❌ 기상특보 조회 실패", e);
-            return ResponseEntity.status(500).body("특보 정보를 가져오지 못했습니다.");
-        }
     }
 
 }

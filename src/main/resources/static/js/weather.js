@@ -3,6 +3,25 @@ let currentMarker = null;
 let locationData = [];
 let holidayDates = [];
 
+const EARTH_RADIUS_KM = 6371;
+
+function haversineDistance(lat1, lon1, lat2, lon2) {
+  const toRad = angle => (angle * Math.PI) / 180;
+
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+
+  const lat1Rad = toRad(lat1);
+  const lat2Rad = toRad(lat2);
+
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1Rad) * Math.cos(lat2Rad) * Math.sin(dLon / 2) ** 2;
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return EARTH_RADIUS_KM * c;
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   // ✅ 1. 지역 데이터 먼저 로드
   await initLocationData();
@@ -123,7 +142,9 @@ function initLocationSearchEvents() {
     matches.forEach(loc => {
       const li = document.createElement("li");
       li.className = "list-group-item autocomplete-item";
-      li.textContent = loc.name;
+      const regex = new RegExp(`(${keyword})`, 'gi');
+      li.innerHTML = loc.name.replace(regex, '<span class="text-primary">$1</span>');
+
       li.addEventListener("click", () => {
         input.value = "";
         list.innerHTML = "";
@@ -161,20 +182,20 @@ function initLocationSearchEvents() {
   });
 
   function updateActiveItem(items) {
-  items.forEach((item, idx) => {
-    if (idx === currentIndex) {
-      item.classList.add("active");
+    items.forEach((item, idx) => {
+      if (idx === currentIndex) {
+        item.classList.add("active");
 
-      // 🔥 선택된 항목이 보이도록 스크롤 조정
-      item.scrollIntoView({
-        block: "nearest",
-        behavior: "smooth" // 또는 "auto"
-      });
-    } else {
-      item.classList.remove("active");
-    }
-  });
-}
+        // 🔥 선택된 항목이 보이도록 스크롤 조정
+        item.scrollIntoView({
+          block: "nearest",
+          behavior: "smooth" // 또는 "auto"
+        });
+      } else {
+        item.classList.remove("active");
+      }
+    });
+  }
 
   // 검색 버튼 클릭
   document.getElementById("searchBtn").addEventListener("click", () => {
@@ -224,18 +245,56 @@ function onLocationSuccess(position) {
     zoom: 6
   });
 
+  const KOREA_BOUNDS = new naver.maps.LatLngBounds(
+    new naver.maps.LatLng(32.5, 124.5),
+    new naver.maps.LatLng(39.6, 132.0)
+  );
+
+  // ✅ 커서 스타일 적용 함수
+  function setMapCursor(cursorStyle) {
+    const mapCanvas = document.querySelector('#map > div'); // 네이버맵 내부 canvas
+    if (mapCanvas) {
+      mapCanvas.style.cursor = cursorStyle;
+    }
+  }
+
+  // ✅ 거리 기반으로 가까운 등록 지역 판별
+  function isCloseToAnyRegisteredLocation(lat, lon, maxDistanceKm = 25) {
+    return locationData.some(loc => {
+      const distance = haversineDistance(lat, lon, loc.lat, loc.lon);
+      return distance <= maxDistanceKm;
+    });
+  }
+
+  // ✅ 커서 제어
+  naver.maps.Event.addListener(map, 'mousemove', function (e) {
+    const lat = e.coord.lat();
+    const lon = e.coord.lng();
+    const inside = KOREA_BOUNDS.hasLatLng(e.coord);
+    const nearValid = isCloseToAnyRegisteredLocation(lat, lon);
+
+    setMapCursor((inside && nearValid) ? 'pointer' : 'not-allowed');
+  });
+
+  // ✅ 클릭 제한
+  naver.maps.Event.addListener(map, 'click', function (e) {
+    const lat = e.coord.lat();
+    const lon = e.coord.lng();
+    const inside = KOREA_BOUNDS.hasLatLng(e.coord);
+    const nearValid = isCloseToAnyRegisteredLocation(lat, lon);
+
+    if (!inside || !nearValid) return;
+    updateMapAndWeather(lat, lon);
+  });
+
+  // ✅ 초기 위치 마커
   currentMarker = new naver.maps.Marker({
     position: new naver.maps.LatLng(lat, lon),
     map: map,
     title: "현재 위치"
   });
 
-  naver.maps.Event.addListener(map, 'click', function (e) {
-    const lat = e.coord.lat();
-    const lon = e.coord.lng();
-    updateMapAndWeather(lat, lon);
-  });
-
+  // ✅ 초기 날씨 로드
   updateMapAndWeather(lat, lon, false);
 }
 
@@ -259,7 +318,6 @@ function updateMapAndWeather(lat, lon, zoomChange = true) {
 
   // console.log("📍 선택된 위치:", lat, lon); // ✅ 지역명 대신 좌표 출력
   loadAirQuality(lat, lon); // ✅ 이제 진짜 좌표로 API 호출
-  loadWeatherAlerts(lat, lon); // 🔔 특보 불러오기
 
   const position = new naver.maps.LatLng(lat, lon);
   if (map) {
@@ -686,40 +744,6 @@ function getDateColorClass(ymdStr) {
   if (day === 6) return "text-primary fw-bold"; // 토요일
   return "text-dark";
 }
-
-function loadWeatherAlerts(lat, lon) {
-  fetch(`/api/weather/alerts?lat=${lat}&lon=${lon}`)
-    .then(res => res.json())
-    .then(alerts => {
-      const listLocal = document.getElementById("alert-local");
-      const noneMsg = document.getElementById("alert-none-msg");
-      listLocal.innerHTML = "";
-
-      if (!alerts || alerts.length === 0) {
-        noneMsg.style.display = "block";
-        return;
-      }
-
-      noneMsg.style.display = "none";
-
-      const nearestRegion = getNearestRegionName(lat, lon);
-
-      alerts.forEach(alert => {
-        // 현재 지역만 필터링
-        if (alert.region.includes(nearestRegion)) {
-          const li = document.createElement("li");
-          li.innerHTML = `<strong>[${alert.region}]</strong> ${alert.category} - ${alert.status}<br><span class="text-muted">${alert.date}</span>`;
-          listLocal.appendChild(li);
-        }
-      });
-
-      // 현재 지역에 해당하는 특보가 없을 경우
-      if (listLocal.children.length === 0) {
-        noneMsg.style.display = "block";
-      }
-    });
-}
-
 
 
 
