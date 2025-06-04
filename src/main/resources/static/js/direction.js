@@ -133,6 +133,7 @@ window.showRouteChoice = function (lat, lng, label, address = '', category = '',
 window.setAsStart = function (lat, lng, label) {
   if (routeStart.lat === lat && routeStart.lng === lng) {
     routeClickInfoWindow?.setMap(null);
+    popupLocked = false;
     return;
   }
 
@@ -161,6 +162,7 @@ window.setAsStart = function (lat, lng, label) {
 window.setAsGoal = function (lat, lng, label) {
   if (routeGoal.lat === lat && routeGoal.lng === lng) {
     routeClickInfoWindow?.setMap(null);
+    popupLocked = false;
     return;
   }
 
@@ -282,6 +284,7 @@ window.findDirection = function (startLat, startLng, goalLat, goalLng) {
     .catch(err => {
       console.error("❌ 경로 API 실패:", err);
       alert("경로를 가져올 수 없습니다.");
+      popupLocked = false;
     });
 };
 
@@ -296,7 +299,7 @@ function formatDuration(min) {
 
 window.clearRoute = function () {
   directionPolyline?.setMap(null);
-  directionInfoWindow?.close();
+  directionInfoWindow?.setMap(null);
   directionPolyline = directionInfoWindow = null;
   routeGoal = { lat: null, lng: null, label: "" };
   routeActive = false;

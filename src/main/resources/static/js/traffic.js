@@ -55,7 +55,35 @@ function resetPanelsAndCloseVideo() {
   document.getElementById('eventListPanel')?.style.setProperty('display', 'none');
   hideVideoContainer();
 
-  // ✅ [2단계] 마커 및 레이어 초기화 통합 호출
+  // ✅ 길찾기 리소스 및 상태 초기화
+  window.routeActive = false;
+  window.popupLocked = false;
+
+  if (window.mapClickListener) {
+    naver.maps.Event.removeListener(window.mapClickListener);
+    window.mapClickListener = null;
+  }
+
+  window.directionPolyline?.setMap(null);
+  window.directionInfoWindow?.setMap(null);
+  window.routeClickMarker?.setMap(null);
+  window.routeClickInfoWindow?.setMap(null);
+  window.startMarker?.setMap(null);
+  window.goalMarker?.setMap(null);
+  window.myLocationMarker?.setMap(null);
+
+  window.directionPolyline = null;
+  window.directionInfoWindow = null;
+  window.routeClickMarker = null;
+  window.routeClickInfoWindow = null;
+  window.startMarker = null;
+  window.goalMarker = null;
+  window.myLocationMarker = null;
+
+  window.routeStart = { lat: null, lng: null, label: "내 위치" };
+  window.routeGoal = { lat: null, lng: null, label: "" };
+
+  // ✅ 마커 및 레이어 초기화
   clearAllMapMarkers();
 
   adjustLegendPositions();
@@ -78,6 +106,10 @@ function resetPanelsAndCloseVideo() {
   if (routePanel && bootstrap?.Offcanvas?.getInstance(routePanel)) {
     bootstrap.Offcanvas.getInstance(routePanel).hide();
   }
+
+  // ✅ 장소 리스트 초기화 (optional)
+  const placeList = document.getElementById('nearbyPlaceList');
+  if (placeList) placeList.innerHTML = '<div class="text-muted">장소를 검색하세요.</div>';
 }
 
 function resetMapView() {
