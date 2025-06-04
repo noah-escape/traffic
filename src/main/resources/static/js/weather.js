@@ -317,6 +317,7 @@ function updateMapAndWeather(lat, lon, zoomChange = true) {
 
   loadAirQuality(lat, lon);
   fetchAstroInfo(lat, lon);
+  fetchWeatherAlerts(lat, lon);
 
   const position = new naver.maps.LatLng(lat, lon);
   if (map) {
@@ -412,7 +413,7 @@ function updateAstroDisplay(data) {
   const riseRaw = isSun ? data.sunrise : data.moonrise;
   const setRaw = isSun ? data.sunset : data.moonset;
 
-  console.log("🌄 Astro raw values:", { riseRaw, setRaw });
+  // console.log("🌄 Astro raw values:", { riseRaw, setRaw });
 
   const rise = formatTimeString(riseRaw);
   const set = formatTimeString(setRaw);
@@ -422,7 +423,7 @@ function updateAstroDisplay(data) {
     document.getElementById("astro-remaining").innerHTML = "";
     return;
   }
-  console.log("🌄 Trimmed rise/set:", riseRaw.trim(), setRaw.trim());
+  // console.log("🌄 Trimmed rise/set:", riseRaw.trim(), setRaw.trim());
 
   document.getElementById("astro-title").textContent = `${isSun ? "일출/일몰" : "월출/월몰"}`;
   document.getElementById("astro-rise-label").textContent = isSun ? "일출" : "월출";
@@ -827,4 +828,52 @@ function getDateColorClass(ymdStr) {
   if (day === 0 || isHoliday) return "text-danger fw-bold";
   if (day === 6) return "text-primary fw-bold";
   return "text-dark";
+}
+
+function fetchWeatherAlerts(lat, lon) {
+  fetch(`/api/weather/alerts?lat=${lat}&lon=${lon}`)
+    .then(res => res.json())
+    .then(data => {
+      console.log("📢 특보 응답 데이터", data);
+      const alerts = data.alerts || [];
+      const $list = document.getElementById('alert-local');
+      const $noneMsg = document.getElementById('alert-none-msg');
+
+      $list.innerHTML = ""; // 초기화
+
+      if (alerts.length === 0) {
+        $noneMsg.style.display = "block";
+        return;
+      }
+
+      $noneMsg.style.display = "none";
+      alerts.forEach(alert => {
+        const li = document.createElement("li");
+
+        // 기본 제목
+        const title = document.createElement("div");
+        title.innerHTML = `<span class="fw-bold text-danger">${alert.warnVar}</span> 
+    <span class="text-muted">(${alert.region})</span>`;
+
+        // 상세 메시지를 여러 줄로 분리
+        const detailList = document.createElement("ul");
+        detailList.classList.add("small", "text-secondary", "mb-0");
+        const lines = (alert.detail || "").split(/[\r\n]+/).filter(line => line.trim().length > 0);
+        for (const line of lines) {
+          const liDetail = document.createElement("li");
+          liDetail.textContent = line.trim();
+          detailList.appendChild(liDetail);
+        }
+
+        li.appendChild(title);
+        li.appendChild(detailList);
+        $list.appendChild(li);
+      });
+
+    })
+    .catch(err => {
+      console.error("❌ 기상특보 API 오류", err);
+      document.getElementById("alert-none-msg").textContent = "기상특보를 불러오는 중 오류가 발생했습니다.";
+      document.getElementById("alert-none-msg").style.display = "block";
+    });
 }

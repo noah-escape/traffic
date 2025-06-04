@@ -46,7 +46,7 @@ public class AirQualityService {
                     .get("body")).get("items");
 
             stationList = items;
-            log.info("✅ 대기질 측정소 {}개 로드 완료", items.size());
+            // log.info("✅ 대기질 측정소 {}개 로드 완료", items.size());
         } catch (Exception e) {
             log.error("❌ 측정소 목록 로드 실패", e);
         }

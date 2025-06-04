@@ -7,13 +7,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.cctv.road.weather.service.AirQualityService;
 import com.cctv.road.weather.service.AstroService;
 import com.cctv.road.weather.service.HolidayService;
 import com.cctv.road.weather.service.KmaWeatherService;
+import com.cctv.road.weather.service.WeatherAlertService;
 import com.cctv.road.weather.util.GeoUtil;
 
 import lombok.RequiredArgsConstructor;
@@ -29,6 +29,7 @@ public class WeatherController {
     private final AirQualityService airQualityService;
     private final HolidayService holidayService;
     private final AstroService astroService;
+    private final WeatherAlertService weatherAlertService;
 
     @GetMapping("/current") // 현재 실시간 날씨
     public ResponseEntity<?> getCurrentWeather(@RequestParam double lat, @RequestParam double lon) {
@@ -92,10 +93,17 @@ public class WeatherController {
             @RequestParam double lat,
             @RequestParam double lon,
             @RequestParam(required = false, defaultValue = "Y") String dnYn,
-            @RequestParam(required = false) String date
-    ) {
+            @RequestParam(required = false) String date) {
         String locdate = (date != null) ? date : java.time.LocalDate.now().toString().replace("-", "");
         return astroService.getAstroInfo(lat, lon, locdate, dnYn);
+    }
+
+    @GetMapping("/alerts")
+    public ResponseEntity<?> getWeatherAlerts(@RequestParam double lat, @RequestParam double lon) {
+        List<Map<String, String>> alerts = weatherAlertService.getAlertsByLocation(lat, lon);
+        return ResponseEntity.ok(Map.of(
+                "alerts", alerts,
+                "count", alerts.size()));
     }
 
 }

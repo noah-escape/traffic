@@ -41,12 +41,12 @@ public class AstroService {
           .build(true)
           .toUri();
 
-      log.info("📡 최종 요청 URI: {}", uri);
+      // log.info("📡 최종 요청 URI: {}", uri);
 
       ResponseEntity<String> response = restTemplate.getForEntity(uri, String.class);
       String json = response.getBody();
 
-      log.info("📨 천문 API 응답 본문: {}", json);
+      // log.info("📨 천문 API 응답 본문: {}", json);
 
       return parseAstroJson(json);
 
