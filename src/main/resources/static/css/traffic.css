@@ -643,13 +643,19 @@ aside.sidebar {
 }
 
 /* 🅿️ 주차장 패널 */
-.parking-header {
+.parking-header,
+.bus-header,
+.route-header{
   background-color: var(--blue-gray);
   color: white;
 }
 
 #parkingFilterPanel select.form-select,
-#parkingFilterPanel input.form-control {
+#parkingFilterPanel input.form-control,
+#busFilterPanel select.form-select,
+#busFilterPanel input.form-control,
+#routeFilterPanel select.form-select,
+#routeFilterPanel input.form-control {
   background-color: white;
   border: 1px solid var(--blue-gray-light);
   font-size: 0.875rem;
@@ -664,12 +670,18 @@ aside.sidebar {
   color: var(--text-color);
 }
 
-#parkingFilterPanel button.btn-outline-primary {
+#parkingFilterPanel button.btn-outline-primary,
+#busFilterPanel button.btn-outline-primary,
+#routeFilterPanel button.btn-outline-primary {
   color: var(--medium-blue);
   border-color: var(--medium-blue);
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
 
-#parkingFilterPanel button.btn-outline-primary:hover {
+#parkingFilterPanel button.btn-outline-primary:hover,
+#busFilterPanel button.btn-outline-primary:hover,
+#routeFilterPanel button.btn-outline-primary:hover {
   background-color: var(--medium-blue);
   color: white;
 }
@@ -683,7 +695,8 @@ aside.sidebar {
   cursor: pointer;
 }
 
-#parkingListBox .text-primary {
+#parkingListBox .text-primary,
+.border-bottom strong {
   color: var(--blue-gray) !important;
 }
 
@@ -946,23 +959,6 @@ body.dark-mode {
   display: inline-block;
 }
 
-/* 🔹 헤더 */
-#busFilterPanel .bus-header {
-  background-color: var(--medium-blue) !important;
-}
-
-/* 🔹 입력 버튼 */
-#busFilterPanel .input-group .btn {
-  background-color: var(--medium-blue);
-  border-color: var(--medium-blue);
-  color: white;
-}
-
-#busFilterPanel .input-group .btn:hover {
-  background-color: #2563EB; /* 조금 진한 파란색 */
-  border-color: #2563EB;
-}
-
 /* 🔹 정류장 박스 hover 시 */
 #arrivalPanelBody .arrival-card:hover {
   background-color: #F0F9FF;
@@ -971,20 +967,6 @@ body.dark-mode {
 /* 🔹 상세 정보 텍스트 컬러 */
 #arrivalPanelBody .text-primary {
   color: var(--medium-blue) !important;
-}
-
-/* 🔹 주변정류소 버튼 통일 스타일 */
-#busFilterPanel .btn-primary {
-  background-color: var(--medium-blue);
-  border-color: var(--medium-blue);
-  color: white;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-#busFilterPanel .btn-primary:hover {
-  background-color: var(--medium-blue-dark);
-  border-color: var(--medium-blue-dark);
 }
 
 #arrivalPanelBody {
@@ -1080,4 +1062,9 @@ body.dark-mode {
   font-weight: bold;
   color: #0d6efd;
   margin-top: 4px;
+}
+
+#nearbyPlaceList small.distance-text {
+  color: 	#28a197; /* 또는 위 추천 중 하나 */
+  font-size: 12px;
 }

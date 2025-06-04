@@ -188,7 +188,7 @@
 
       <!-- 🔹 고정 헤더 -->
       <div class="flex-shrink-0">
-        <div class="bus-header bg-primary text-white py-2 px-3 d-flex justify-content-between align-items-center">
+        <div class="bus-header py-2 px-3 d-flex justify-content-between align-items-center">
           <h5 class="mb-0"><i class="bi bi-signpost-2-fill me-1"></i> 버스 정보</h5>
           <button id="resetMapBtn" class="btn btn-sm btn-light" onclick="resetBusStopPanel()" title="목록 초기화">
             <i class="bi bi-arrow-clockwise"></i>
@@ -204,13 +204,15 @@
           </div>
 
           <!-- 버스 번호 검색 -->
-          <div class="input-group">
-            <input type="text" id="routeInput" class="form-control" placeholder="버스 번호 입력 (예: 100)">
-            <button class="btn btn-primary" onclick="searchBusRoute()">검색</button>
+          <div class="input-group mb-3">
+            <input type="text" id="routeInput" class="form-control form-control-sm" placeholder="버스 번호 입력 (예: 100)">
+            <button class="btn btn-sm btn-outline-primary" onclick="searchBusRoute()" title="검색">
+              <i class="bi bi-search"></i>
+            </button>
           </div>
 
           <div>
-            <button class="btn btn-primary btn-sm w-100" onclick="findNearbyStops()">📍 내 주변 정류소</button>
+            <button class="btn-outline-primary btn btn-sm w-100" onclick="findNearbyStops()">📍 내 주변 정류소</button>
           </div>
 
           <!-- 도착 정보 제목만 고정 -->
@@ -249,7 +251,7 @@
 
       <!-- 🔹 고정 헤더 -->
       <div class="flex-shrink-0">
-        <div class="bus-header bg-primary text-white py-2 px-3 d-flex justify-content-between align-items-center">
+        <div class="route-header py-2 px-3 d-flex justify-content-between align-items-center">
           <h5 class="mb-0"><i class="bi bi-geo-alt-fill me-1"></i> 길찾기</h5>
           <button class="btn btn-sm btn-light" onclick="resetRoutePanel()" title="내 위치로 초기화">
             <i class="bi bi-arrow-clockwise"></i>
@@ -291,12 +293,12 @@
 
           <!-- 📍 지도 중심 검색 -->
           <div>
-            <button class="btn btn-primary btn-sm w-100" onclick="searchFromMap()">📍 지도 중심 검색</button>
+            <button class="btn-outline-primary btn btn-sm w-100" onclick="searchFromMap()">📍 지도 중심 검색</button>
           </div>
 
           <!-- 🧭 도착 정보 제목 -->
           <div id="arrivalPanelBox">
-            <h6 class="fw-bold border-bottom pb-2">📌 결과 정보</h6>
+            <h6 id="resultTitle" class="fw-bold border-bottom pb-2">📌 결과 정보</h6>
           </div>
         </div>
       </div>

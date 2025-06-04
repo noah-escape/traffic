@@ -310,6 +310,9 @@ window.clearRouteMarkers = function () {
   goalMarker?.setMap(null); goalMarker = null;
   routeClickMarker?.setMap(null); routeClickMarker = null;
   routeClickInfoWindow?.setMap(null); routeClickInfoWindow = null;
+
+  myLocationMarker?.setMap(null);
+  myLocationMarker = null;
 };
 
 window.resetRoutePanel = function () {
@@ -320,7 +323,7 @@ window.resetRoutePanel = function () {
   mapClickListener && naver.maps.Event.removeListener(mapClickListener);
   mapClickListener = null;
   document.getElementById('nearbyPlaceList').innerHTML = '<div class="text-muted">장소를 검색하세요.</div>';
-  window.setStartToCurrentLocation();
+  // window.setStartToCurrentLocation();
 };
 
 window.searchNearbyPlaces = function () {
@@ -379,7 +382,7 @@ function displayNearbyPlaces(data, baseLat, baseLng) {
     div.innerHTML = `
       <strong>${place.place_name}</strong><br/>
       <span class="text-muted">${place.road_address_name || place.address_name}</span><br/>
-      <small class="text-primary">${distStr}</small>
+      <small class="distance-text">${distStr}</small>
     `;
 
     div.onclick = () => {
@@ -441,9 +444,17 @@ document.getElementById('placeSearchInput').addEventListener('input', function (
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-  if (!window.userLocation) window.setStartToCurrentLocation();
+  const categorySelect = document.getElementById('categorySelect');
 
-  document.getElementById('categorySelect').addEventListener('change', () => {
+  categorySelect?.addEventListener('change', () => {
+    const selectedOption = categorySelect.options[categorySelect.selectedIndex];
+    const categoryLabel = selectedOption?.text || '장소';
+
+    // ✅ 결과 제목 변경
+    const title = document.getElementById('resultTitle');
+    if (title) title.innerText = `📌 주변 ${categoryLabel}`;
+
+    // ✅ 장소 검색 실행
     searchFromMap();
   });
 });

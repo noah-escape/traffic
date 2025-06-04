@@ -71,6 +71,7 @@ function resetPanelsAndCloseVideo() {
   window.startMarker?.setMap(null);
   window.goalMarker?.setMap(null);
   window.myLocationMarker?.setMap(null);
+  window.userPositionMarker?.setMap(null);
 
   window.directionPolyline = null;
   window.directionInfoWindow = null;
