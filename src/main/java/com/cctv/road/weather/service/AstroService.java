@@ -24,12 +24,12 @@ public class AstroService {
   private final RestTemplate restTemplate;
   private final ObjectMapper objectMapper;
 
-  @Value("${astro.api.key}")
-  private String astroApiKey;
+  @Value("${kma.api.key}")
+  private String kmaApiKey;
 
   public Map<String, String> getAstroInfo(double lat, double lon, String date, String dnYn) {
     try {
-      String encodedKey = URLEncoder.encode(astroApiKey, StandardCharsets.UTF_8);
+      String encodedKey = URLEncoder.encode(kmaApiKey, StandardCharsets.UTF_8);
       String baseUrl = "http://apis.data.go.kr/B090041/openapi/service/RiseSetInfoService/getLCRiseSetInfo?ServiceKey=" + encodedKey;
 
       URI uri = UriComponentsBuilder

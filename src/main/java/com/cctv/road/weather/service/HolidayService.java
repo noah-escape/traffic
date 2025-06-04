@@ -1,6 +1,8 @@
 package com.cctv.road.weather.service;
 
 import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,8 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class HolidayService {
 
-    @Value("${holiday.api.key}")
-    private String holidayApiKey;
+    @Value("${kma.api.key}")
+    private String kmaApiKey;
 
     public List<String> getHolidayList(int year) {
         List<String> holidays = new ArrayList<>();
@@ -29,7 +31,7 @@ public class HolidayService {
             URI uri = UriComponentsBuilder
                     .fromHttpUrl("https://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getRestDeInfo")
                     .queryParam("solYear", year)
-                    .queryParam("ServiceKey", holidayApiKey)
+                    .queryParam("ServiceKey", URLEncoder.encode(kmaApiKey, StandardCharsets.UTF_8))
                     .queryParam("numOfRows", 100)
                     .queryParam("_type", "xml")
                     .build(true)

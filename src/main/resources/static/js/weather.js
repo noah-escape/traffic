@@ -403,56 +403,89 @@ function formatTimeString(timeStr) {
   return str.slice(0, 2) + ":" + str.slice(2);
 }
 
+function calculateMoonPhase(date = new Date()) {
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+
+  const c = Math.floor((year * 365.25) + (month * 30.6) + day - 694039.09);
+  const e = c / 29.5305882;
+  const b = e - Math.floor(e);
+  const moonAge = Math.round(b * 29.5305882);
+
+  return getMoonPhaseLabel(moonAge);
+}
+
+function getMoonPhaseLabel(age) {
+  if (age === 0) return { label: "신월", icon: "new.png" };
+  if (age >= 1 && age <= 6) return { label: "초승달", icon: "waxing-crescent.png" };
+  if (age >= 7 && age <= 13) return { label: "상현달", icon: "waxing-gibbous.png" };
+  if (age === 14) return { label: "보름달", icon: "full.png" };
+  if (age >= 15 && age <= 21) return { label: "하현달", icon: "waning-gibbous.png" };
+  if (age >= 22 && age <= 28) return { label: "그믐달", icon: "waning-crescent.png" };
+  return { label: "신월", icon: "new.png" };
+}
+
 function updateAstroDisplay(data) {
   if (!data) return;
 
-  const now = new Date();
-  const todayStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}-${now.getDate().toString().padStart(2, "0")}`;
-
   const isSun = currentAstroMode === "sun";
-  const riseRaw = isSun ? data.sunrise : data.moonrise;
-  const setRaw = isSun ? data.sunset : data.moonset;
 
-  // console.log("🌄 Astro raw values:", { riseRaw, setRaw });
-
-  const rise = formatTimeString(riseRaw);
-  const set = formatTimeString(setRaw);
-  if (rise === "--:--" || set === "--:--") {
-    document.getElementById("astro-rise").textContent = "--:--";
-    document.getElementById("astro-set").textContent = "--:--";
-    document.getElementById("astro-remaining").innerHTML = "";
-    return;
-  }
-  // console.log("🌄 Trimmed rise/set:", riseRaw.trim(), setRaw.trim());
-
-  document.getElementById("astro-title").textContent = `${isSun ? "일출/일몰" : "월출/월몰"}`;
+  // 공통: 타이틀 및 라벨 변경
+  document.getElementById("astro-title").textContent = isSun ? "일출/일몰" : "월출/월몰";
   document.getElementById("astro-rise-label").textContent = isSun ? "일출" : "월출";
   document.getElementById("astro-set-label").textContent = isSun ? "일몰" : "월몰";
+
+  const riseRaw = isSun ? data.sunrise : data.moonrise;
+  const setRaw = isSun ? data.sunset : data.moonset;
+  const rise = formatTimeString(riseRaw);
+  const set = formatTimeString(setRaw);
+
   document.getElementById("astro-rise").textContent = rise;
   document.getElementById("astro-set").textContent = set;
 
+  const arcWrapper = document.querySelector('.sun-path-wrapper');
+  if (arcWrapper) {
+    arcWrapper.style.display = isSun ? "block" : "none";
+  }
+
+  const remainingText = document.getElementById("astro-remaining");
+  if (!isSun) {
+  // 🌙 달 모드: 달 위상 정보만 표시
+  const moonPhase = calculateMoonPhase();
+  
+  if (remainingText) {
+    remainingText.style.setProperty("display", "block", "important");
+    remainingText.innerHTML = `
+    <img src="/image/moon/${moonPhase.icon}" alt="${moonPhase.label}" width="120">
+      오늘의 달 위상은 <span class="text-primary">${moonPhase.label}</span>입니다.<br>
+    `;
+  }
+  return;
+}
+
+  // 🌞 해 모드: 기존 궤도 및 남은 시간 표시 유지
+  const now = new Date();
   const { h: riseH, m: riseM } = parseTimeStr(riseRaw);
   const { h: setH, m: setM } = parseTimeStr(setRaw);
 
-  const riseDate = new Date(todayStr);
-  riseDate.setHours(riseH, riseM, 0);
-
-  const setDate = new Date(todayStr);
-  setDate.setHours(setH, setM, 0);
+  const todayStr = now.toISOString().split("T")[0];
+  const riseDate = new Date(`${todayStr}T${String(riseH).padStart(2, "0")}:${String(riseM).padStart(2, "0")}:00`);
+  const setDate = new Date(`${todayStr}T${String(setH).padStart(2, "0")}:${String(setM).padStart(2, "0")}:00`);
 
   const totalMins = (setDate - riseDate) / 60000;
   const elapsed = (now - riseDate) / 60000;
   const remaining = Math.max(totalMins - elapsed, 0);
-  const hrs = Math.floor(remaining / 60).toString().padStart(2, "0");
-  const mins = Math.floor(remaining % 60).toString().padStart(2, "0");
+  const hrs = String(Math.floor(remaining / 60)).padStart(2, "0");
+  const mins = String(Math.floor(remaining % 60)).padStart(2, "0");
 
-  document.getElementById("astro-remaining").innerHTML =
-    `${isSun ? "일몰" : "월몰"}까지 <span class="text-primary">${hrs}:${mins}</span> 남았습니다.`;
-
+  remainingText.innerHTML = `일몰까지 <span class="text-primary">${hrs}:${mins}</span> 남았습니다.`;
   updateAstroBodyOnArc(elapsed / totalMins);
 }
 
 function updateAstroBodyOnArc(ratio) {
+  if (currentAstroMode !== "sun") return; // 🌙 모드에서는 위치 업데이트 안함
+
   const r = 100;
   const theta = Math.PI * Math.min(Math.max(ratio, 0), 1);
   const cx = 100 + r * Math.cos(Math.PI - theta);

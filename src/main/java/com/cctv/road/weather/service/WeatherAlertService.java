@@ -31,8 +31,8 @@ public class WeatherAlertService {
   private final RestTemplate restTemplate;
   private final ObjectMapper objectMapper;
 
-  @Value("${kma.alerts.api.key}")
-  private String apiKey;
+  @Value("${kma.api.key}")
+  private String kmaApiKey;
 
   // ✅ stnId → 대표 지역명 (GeoUtil의 지역명과 맞춰야 함)
   private static final Map<String, String> STN_REGION_MAP = Map.ofEntries(
@@ -53,7 +53,7 @@ public class WeatherAlertService {
       log.info("🧭 좌표 기반 지역명: {}", region.name);
       String regionName = region.name;
 
-      String encodedKey = URLEncoder.encode(apiKey, StandardCharsets.UTF_8);
+      String encodedKey = URLEncoder.encode(kmaApiKey, StandardCharsets.UTF_8);
       String baseUrl = "https://apis.data.go.kr/1360000/WthrWrnInfoService/getWthrWrnList?serviceKey="
           + encodedKey;
 
@@ -118,7 +118,7 @@ public class WeatherAlertService {
 
   private String fetchAlertDetail(String tmFc, String tmSeq) {
     try {
-      String encodedKey = URLEncoder.encode(apiKey, StandardCharsets.UTF_8);
+      String encodedKey = URLEncoder.encode(kmaApiKey, StandardCharsets.UTF_8);
       URI uri = UriComponentsBuilder
           .fromHttpUrl("https://apis.data.go.kr/1360000/WthrWrnInfoService/getWthrWrnMsg")
           .queryParam("serviceKey", encodedKey)
@@ -159,7 +159,7 @@ public class WeatherAlertService {
   @PostConstruct
 public void logNationalAlertsOnce() {
   try {
-    String encodedKey = URLEncoder.encode(apiKey, StandardCharsets.UTF_8);
+    String encodedKey = URLEncoder.encode(kmaApiKey, StandardCharsets.UTF_8);
     URI uri = UriComponentsBuilder
         .fromHttpUrl("https://apis.data.go.kr/1360000/WthrWrnInfoService/getWthrWrnList")
         .queryParam("serviceKey", encodedKey)

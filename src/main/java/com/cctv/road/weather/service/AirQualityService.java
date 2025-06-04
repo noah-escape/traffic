@@ -23,8 +23,8 @@ public class AirQualityService {
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
-    @Value("${airkorea.api.key}")
-    private String airKoreaApiKey;
+    @Value("${kma.api.key}")
+    private String kmaApiKey;
 
     private List<Map<String, String>> stationList = new ArrayList<>();
 
@@ -33,7 +33,7 @@ public class AirQualityService {
         try {
             URI uri = UriComponentsBuilder
                     .fromHttpUrl("https://apis.data.go.kr/B552584/MsrstnInfoInqireSvc/getMsrstnList")
-                    .queryParam("serviceKey", URLEncoder.encode(airKoreaApiKey, StandardCharsets.UTF_8))
+                    .queryParam("serviceKey", URLEncoder.encode(kmaApiKey, StandardCharsets.UTF_8))
                     .queryParam("returnType", "json")
                     .queryParam("numOfRows", 1000)
                     .queryParam("pageNo", 1)
@@ -79,7 +79,7 @@ public class AirQualityService {
         try {
             URI uri = UriComponentsBuilder
                     .fromHttpUrl("https://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getMsrstnAcctoRltmMesureDnsty")
-                    .queryParam("serviceKey", URLEncoder.encode(airKoreaApiKey, StandardCharsets.UTF_8))
+                    .queryParam("serviceKey", URLEncoder.encode(kmaApiKey, StandardCharsets.UTF_8))
                     .queryParam("returnType", "json")
                     .queryParam("stationName", URLEncoder.encode(stationName, StandardCharsets.UTF_8)) // 인코딩 추가
                     .queryParam("dataTerm", "DAILY")

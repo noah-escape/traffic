@@ -122,13 +122,13 @@
         <div class="col-md-7 d-flex flex-column gap-3">
           <!-- 특보 -->
           <div class="card p-3 rounded-4 shadow-sm" id="alert-card">
-          <h5 class="text-danger">기상 특보</h5>
+            <h5 class="text-danger">기상 특보</h5>
 
-          <!-- ✅ 현재 위치에 해당하는 특보만 표시 -->
-          <ul id="alert-local" class="list-unstyled small mb-2"></ul>
+            <!-- ✅ 현재 위치에 해당하는 특보만 표시 -->
+            <ul id="alert-local" class="list-unstyled small mb-2"></ul>
 
-          <!-- ✅ 특보 없을 경우 메시지 -->
-          <div id="alert-none-msg" class="text-muted small">현재 지역에 발표된 특보가 없습니다.</div>
+            <!-- ✅ 특보 없을 경우 메시지 -->
+            <div id="alert-none-msg" class="text-muted small">현재 지역에 발표된 특보가 없습니다.</div>
           </div>
 
           <div id="weather-box" class="card p-4 rounded-4 flex-grow-1">
@@ -299,9 +299,12 @@
                 <path d="M0,100 A100,100 0 0,1 200,100" fill="none" stroke="#cde3ff" stroke-width="10" />
                 <circle id="astro-body" r="10" fill="gold" cx="100" cy="30"></circle>
               </svg>
-              <div id="astro-remaining" class="fw-semibold text-dark mt-2">일몰까지 <span class="text-primary">--:--</span>
-                남았습니다.</div>
             </div>
+
+            <!-- 여기로 astro-remaining 이동 -->
+            <div id="astro-remaining" class="fw-semibold text-dark text-center mb-3">일몰까지 <span
+                class="text-primary">--:--</span> 남았습니다.</div>
+
 
             <!-- 시간 정보 -->
             <div class="row small text-dark">
