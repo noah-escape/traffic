@@ -828,13 +828,19 @@ aside.sidebar {
 }
 
 /* 🅿️ 주차장 패널 */
-.parking-header {
+.parking-header,
+.bus-header,
+.route-header{
   background-color: var(--blue-gray);
   color: white;
 }
 
 #parkingFilterPanel select.form-select,
-#parkingFilterPanel input.form-control {
+#parkingFilterPanel input.form-control,
+#busFilterPanel select.form-select,
+#busFilterPanel input.form-control,
+#routeFilterPanel select.form-select,
+#routeFilterPanel input.form-control {
   background-color: white;
   border: 1px solid var(--blue-gray-light);
   font-size: 0.875rem;
@@ -849,12 +855,18 @@ aside.sidebar {
   color: var(--text-color);
 }
 
-#parkingFilterPanel button.btn-outline-primary {
+#parkingFilterPanel button.btn-outline-primary,
+#busFilterPanel button.btn-outline-primary,
+#routeFilterPanel button.btn-outline-primary {
   color: var(--medium-blue);
   border-color: var(--medium-blue);
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
 
-#parkingFilterPanel button.btn-outline-primary:hover {
+#parkingFilterPanel button.btn-outline-primary:hover,
+#busFilterPanel button.btn-outline-primary:hover,
+#routeFilterPanel button.btn-outline-primary:hover {
   background-color: var(--medium-blue);
   color: white;
 }
@@ -868,7 +880,8 @@ aside.sidebar {
   cursor: pointer;
 }
 
-#parkingListBox .text-primary {
+#parkingListBox .text-primary,
+.border-bottom strong {
   color: var(--blue-gray) !important;
 }
 
@@ -1131,23 +1144,6 @@ body.dark-mode {
   display: inline-block;
 }
 
-/* 🔹 헤더 */
-#busFilterPanel .bus-header {
-  background-color: var(--medium-blue) !important;
-}
-
-/* 🔹 입력 버튼 */
-#busFilterPanel .input-group .btn {
-  background-color: var(--medium-blue);
-  border-color: var(--medium-blue);
-  color: white;
-}
-
-#busFilterPanel .input-group .btn:hover {
-  background-color: #2563EB; /* 조금 진한 파란색 */
-  border-color: #2563EB;
-}
-
 /* 🔹 정류장 박스 hover 시 */
 #arrivalPanelBody .arrival-card:hover {
   background-color: #F0F9FF;
@@ -1158,21 +1154,102 @@ body.dark-mode {
   color: var(--medium-blue) !important;
 }
 
-/* 🔹 주변정류소 버튼 통일 스타일 */
-#busFilterPanel .btn-primary {
-  background-color: var(--medium-blue);
-  border-color: var(--medium-blue);
-  color: white;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-#busFilterPanel .btn-primary:hover {
-  background-color: var(--medium-blue-dark);
-  border-color: var(--medium-blue-dark);
-}
-
 #arrivalPanelBody {
   max-height: calc(100vh - 300px); /* 또는 적절한 값으로 조정 */
   overflow-y: auto;
+}
+
+.clean-popup .popup-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #0070f3;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.clean-popup .popup-category {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 2px;
+}
+
+.clean-popup .popup-address {
+  font-size: 13px;
+  color: #666;
+}
+
+.clean-popup .popup-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.clean-popup .popup-btn {
+  padding: 4px 10px;
+  font-size: 13px;
+  border: 1px solid #d0d0d0;
+  border-radius: 16px;
+  background-color: #f8f9fa;
+  color: #333;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.clean-popup .popup-btn:hover {
+  background-color: #e6f0ff;
+  border-color: #76baff;
+  color: #0056b3;
+}
+
+.popup-phone {
+  font-size: 13px;
+  color: #555;
+  margin-top: 2px;
+}
+
+.direction-duration-popup {
+  background-color: white;
+  border: 1px solid #ccc;
+  padding: 10px 12px;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  min-width: 130px;
+}
+
+.popup-title .label {
+  color: #6c757d;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.popup-duration {
+  font-size: 18px;
+  font-weight: bold;
+  color: #0d6efd;
+  margin-top: 4px;
+}
+
+.direction-duration-popup .popup-header {
+  text-align: center;
+  padding: 4px 8px;
+}
+
+.direction-duration-popup .popup-title {
+  font-size: 13px;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.direction-duration-popup .popup-duration {
+  font-size: 18px;
+  font-weight: bold;
+  color: #0d6efd;
+  margin-top: 4px;
+}
+
+#nearbyPlaceList small.distance-text {
+  color: 	#28a197; /* 또는 위 추천 중 하나 */
+  font-size: 12px;
 }
