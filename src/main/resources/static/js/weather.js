@@ -25,11 +25,16 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // ✅ 1. 지역 데이터 먼저 로드
   await initLocationData();
   await fetchHolidayDates();
 
-  // ✅ 2. 위치 가져오기
+  // ✅ 무조건 맨 먼저 지도 생성
+  map = new naver.maps.Map('map', {
+  center: new naver.maps.LatLng(36.5, 127.8), // 대한민국 중심
+  zoom: 6  
+});
+
+  // ✅ 위치 정보 요청
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(onLocationSuccess, onLocationError);
   } else {
@@ -37,7 +42,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     showFallback("위치 정보 없음");
   }
 
-  // ✅ 3. 검색 이벤트 등록
+  // 나머지 초기화 코드들은 그대로 유지
   initLocationSearchEvents();
 
   // ✅ 4. 대기질 이모지 설명 toggle
@@ -245,11 +250,6 @@ function onLocationSuccess(position) {
   const lat = position.coords.latitude;
   const lon = position.coords.longitude;
 
-  map = new naver.maps.Map('map', {
-    center: new naver.maps.LatLng(lat, lon),
-    zoom: 6
-  });
-
   const KOREA_BOUNDS = new naver.maps.LatLngBounds(
     new naver.maps.LatLng(32.5, 124.5),
     new naver.maps.LatLng(39.6, 132.0)
@@ -321,27 +321,27 @@ function updateMapAndWeather(lat, lon, zoomChange = true) {
 
   const position = new naver.maps.LatLng(lat, lon);
   if (map) {
-    map.setCenter(position);
-    if (zoomChange) {
-      map.setZoom(9);
-    }
-
-    if (currentMarker) {
-      currentMarker.setMap(null);
-    }
-
-    currentMarker = new naver.maps.Marker({
-      position,
-      map,
-      icon: {
-        url: '/image/weather/marker.png',
-        size: new naver.maps.Size(24, 24),
-        origin: new naver.maps.Point(0, 0),
-        anchor: new naver.maps.Point(12, 24)
-      },
-      title: "선택 위치"
-    });
+  if (zoomChange) {
+    map.setCenter(position);  // 줌 바꿀 때만 center도 같이!
+    map.setZoom(9);
   }
+
+  if (currentMarker) {
+    currentMarker.setMap(null);
+  }
+
+  currentMarker = new naver.maps.Marker({
+    position,
+    map,
+    icon: {
+      url: '/image/weather/marker.png',
+      size: new naver.maps.Size(24, 24),
+      origin: new naver.maps.Point(0, 0),
+      anchor: new naver.maps.Point(12, 24)
+    },
+    title: "선택 위치"
+  });
+}
 
   const regionName = getNearestRegionName(lat, lon);
   document.getElementById("selected-location").textContent = `선택한 위치: ${regionName}`;
@@ -874,33 +874,35 @@ function getDateColorClass(ymdStr) {
 }
 
 function fetchWeatherAlerts() {
+  const slideText = document.getElementById("alert-slide-text");
+
+  // 초기 기본 메시지는 자연스럽게 보여짐 (HTML에서 이미 들어감)
+  slideText.textContent = "현재 발효 중인 기상 특보가 없습니다.";
+  slideText.style.animation = "none";
+  slideText.style.left = "0";
+  slideText.style.position = "relative"; // 위치 초기화
+  slideText.classList.remove("start-100");
+  slideText.style.textAlign = "left"; 
+  slideText.style.width = "100%";
+
   fetch("/api/weather/alerts")
     .then(res => res.json())
     .then(data => {
-      const slideText = document.getElementById("alert-slide-text");
-      const slider = document.getElementById("weather-alert-slider");
-
-      slider.classList.remove("d-none"); // ✅ 무조건 보이게 처리
-
-      if (!Array.isArray(data) || data.length === 0) {
-        slideText.textContent = "현재 발효 중인 기상 특보가 없습니다.";
-        slideText.style.animation = "none";
-        slideText.style.left = "0"; // 🔥 위치 초기화
-        slideText.classList.remove("start-100"); // 🔥 Bootstrap 클래스 제거
-        return;
-      }
+      if (!Array.isArray(data) || data.length === 0) return;
 
       const message = data.map(alert => `[${alert.regionName}] ${alert.alertTitle}`).join(" ⎯ ");
       slideText.textContent = message;
 
-      // ✅ 슬라이드 애니메이션 다시 적용
       const textWidth = slideText.offsetWidth;
-      slideText.classList.remove("start-100"); // ✅ 기존 위치 초기화
-      slideText.style.left = ""; // ✅ 인라인 위치 초기화
-      slideText.style.animation = `slide-left ${textWidth / 50}s linear infinite`; // ✅ 애니메이션 설정
-
+      slideText.classList.add("start-100");
+      slideText.style.position = "absolute";
+      slideText.style.left = ""; // 초기화
+      slideText.style.animation = `slide-left ${textWidth / 50}s linear infinite`;
     })
     .catch(err => {
       console.error("❌ 특보 로딩 실패", err);
     });
 }
+
+
+
