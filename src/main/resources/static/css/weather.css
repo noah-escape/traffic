@@ -313,39 +313,6 @@
   color: #333;
 }
 
-#alert-card {
-  background-color: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: 1rem;
-  padding: 1.25rem;
-  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-  margin-bottom: 1rem;
-  transition: none !important;
-}
-
-#alert-card:hover {
-  background-color: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-  transform: none;
-}
-
-#alert-card h5 {
-  font-size: 1.1rem;
-  font-weight: 700;
-}
-
-#alert-list li {
-  margin-bottom: 0.5rem;
-  line-height: 1.4;
-}
-
-#alert-none-msg {
-  color: #6c757d;
-  font-size: 0.9rem;
-  margin-top: 0.5rem;
-}
-
 /* 입력창 여유 */
 .input-group {
   margin-bottom: 1rem;
