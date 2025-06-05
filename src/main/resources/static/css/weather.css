@@ -313,6 +313,25 @@
   color: #333;
 }
 
+#weather-alert-slider {
+  display: flex;
+  align-items: center;        /* 세로 정렬 */
+  justify-content: center;    /* 가운데 정렬 (or start) */
+  height: 2.5rem;
+  padding: 0 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  position: relative;         /* alert가 position-relative이므로 유지 가능 */
+}
+
+#alert-slide-text {
+  position: relative;         /* ❗ 기존 absolute 제거 */
+  left: auto;                 /* ❗ 위치 초기화 */
+  animation: none !important; /* 슬라이드 없을 때 애니메이션 제거 */
+  white-space: nowrap;
+  margin-left: 1rem;
+}
+
 /* 입력창 여유 */
 .input-group {
   margin-bottom: 1rem;

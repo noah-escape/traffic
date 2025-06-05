@@ -317,7 +317,7 @@ function updateMapAndWeather(lat, lon, zoomChange = true) {
 
   loadAirQuality(lat, lon);
   fetchAstroInfo(lat, lon);
-  fetchWeatherAlerts(lat, lon);
+  fetchWeatherAlerts();
 
   const position = new naver.maps.LatLng(lat, lon);
   if (map) {
@@ -451,18 +451,18 @@ function updateAstroDisplay(data) {
 
   const remainingText = document.getElementById("astro-remaining");
   if (!isSun) {
-  // 🌙 달 모드: 달 위상 정보만 표시
-  const moonPhase = calculateMoonPhase();
-  
-  if (remainingText) {
-    remainingText.style.setProperty("display", "block", "important");
-    remainingText.innerHTML = `
+    // 🌙 달 모드: 달 위상 정보만 표시
+    const moonPhase = calculateMoonPhase();
+
+    if (remainingText) {
+      remainingText.style.setProperty("display", "block", "important");
+      remainingText.innerHTML = `
     <img src="/image/moon/${moonPhase.icon}" alt="${moonPhase.label}" width="120">
       오늘의 달 위상은 <span class="text-primary">${moonPhase.label}</span>입니다.<br>
     `;
+    }
+    return;
   }
-  return;
-}
 
   // 🌞 해 모드: 기존 궤도 및 남은 시간 표시 유지
   const now = new Date();
@@ -863,50 +863,34 @@ function getDateColorClass(ymdStr) {
   return "text-dark";
 }
 
-function fetchWeatherAlerts(lat, lon) {
-  fetch(`/api/weather/alerts?lat=${lat}&lon=${lon}`)
+function fetchWeatherAlerts() {
+  fetch("/api/weather/alerts")
     .then(res => res.json())
     .then(data => {
-      console.log("📢 특보 응답 데이터", data);
-      const alerts = data.alerts || [];
-      const $list = document.getElementById('alert-local');
-      const $noneMsg = document.getElementById('alert-none-msg');
+      const slideText = document.getElementById("alert-slide-text");
+      const slider = document.getElementById("weather-alert-slider");
 
-      $list.innerHTML = ""; // 초기화
+      slider.classList.remove("d-none"); // ✅ 무조건 보이게 처리
 
-      if (alerts.length === 0) {
-        $noneMsg.style.display = "block";
+      if (!Array.isArray(data) || data.length === 0) {
+        slideText.textContent = "현재 발효 중인 기상 특보가 없습니다.";
+        slideText.style.animation = "none";
+        slideText.style.left = "0"; // 🔥 위치 초기화
+        slideText.classList.remove("start-100"); // 🔥 Bootstrap 클래스 제거
         return;
       }
 
-      $noneMsg.style.display = "none";
-      alerts.forEach(alert => {
-        const li = document.createElement("li");
+      const message = data.map(alert => `[${alert.regionName}] ${alert.alertTitle}`).join(" ⎯ ");
+      slideText.textContent = message;
 
-        // 기본 제목
-        const title = document.createElement("div");
-        title.innerHTML = `<span class="fw-bold text-danger">${alert.warnVar}</span> 
-    <span class="text-muted">(${alert.region})</span>`;
-
-        // 상세 메시지를 여러 줄로 분리
-        const detailList = document.createElement("ul");
-        detailList.classList.add("small", "text-secondary", "mb-0");
-        const lines = (alert.detail || "").split(/[\r\n]+/).filter(line => line.trim().length > 0);
-        for (const line of lines) {
-          const liDetail = document.createElement("li");
-          liDetail.textContent = line.trim();
-          detailList.appendChild(liDetail);
-        }
-
-        li.appendChild(title);
-        li.appendChild(detailList);
-        $list.appendChild(li);
-      });
+      // ✅ 슬라이드 애니메이션 다시 적용
+      const textWidth = slideText.offsetWidth;
+      slideText.classList.remove("start-100"); // ✅ 기존 위치 초기화
+      slideText.style.left = ""; // ✅ 인라인 위치 초기화
+      slideText.style.animation = `slide-left ${textWidth / 50}s linear infinite`; // ✅ 애니메이션 설정
 
     })
     .catch(err => {
-      console.error("❌ 기상특보 API 오류", err);
-      document.getElementById("alert-none-msg").textContent = "기상특보를 불러오는 중 오류가 발생했습니다.";
-      document.getElementById("alert-none-msg").style.display = "block";
+      console.error("❌ 특보 로딩 실패", err);
     });
 }
