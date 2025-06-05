@@ -11,7 +11,8 @@ let panelStates = {
   event: false,
   cctv: false,
   subway: false,
-  parking: false
+  parking: false,
+  vsl: false
 };
 
 function clearAllMapMarkers() {
@@ -30,6 +31,8 @@ function clearAllMapMarkers() {
   window.clearBikeStations?.();
   window.clearSubwayLayer?.();
   window.clearStationMarkers?.();
+  window.clearVslPanel?.();
+  window.hideVslMarkers()
 
   if (window.userPositionMarker) {
     window.userPositionMarker.setMap(null);
@@ -404,6 +407,19 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
           adjustLegendPositions();  // 💥 꼭 timeout 안에서 실행
         }, 10);
+      }
+    },
+    {
+      id: 'sidebarVslBtn',
+      key: 'vsl',
+      panelId: 'vslFilterPanel',
+      onActivate: () => {
+        document.getElementById("vslFilterPanel").style.display = "block";
+        window.loadVslListPanel && window.loadVslListPanel();
+      },
+      onDeactivate: () => {
+        document.getElementById("vslFilterPanel").style.display = "none";
+        window.hideVslPanel && window.hideVslPanel();
       }
     }
   ];
