@@ -48,7 +48,6 @@ function resetPanelsAndCloseVideo() {
   // 🔄 모든 패널 상태 비활성화 및 UI 숨김
   for (const k in panelStates) {
     panelStates[k] = false;
-    document.getElementById(`sidebar${capitalize(k)}Btn`)?.classList.remove('active');
     document.getElementById(`${k}FilterPanel`)?.style.setProperty('display', 'none');
   }
 
@@ -417,14 +416,21 @@ document.addEventListener('DOMContentLoaded', () => {
     button.addEventListener('click', () => {
       const isAlreadyActive = panelStates[key];
 
-      // 모든 상태 false 및 초기화
+      // 패널 상태 및 UI 초기화
       resetPanelsAndCloseVideo();
 
+      // 모든 버튼에서 .active 제거 (reset에서 하지 말고 여기서만!)
+      document.querySelectorAll('.sidebar-button').forEach(btn => {
+        btn.classList.remove('active');
+      });
+
       if (!isAlreadyActive) {
-        // 이 버튼만 활성화
         panelStates[key] = true;
         button.classList.add('active');
         onActivate?.();
+      } else {
+        panelStates[key] = false;
+        onDeactivate?.();
       }
     });
   });
