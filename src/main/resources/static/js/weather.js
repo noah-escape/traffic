@@ -30,9 +30,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ✅ 무조건 맨 먼저 지도 생성
   map = new naver.maps.Map('map', {
-  center: new naver.maps.LatLng(36.5, 127.8), // 대한민국 중심
-  zoom: 6  
-});
+    center: new naver.maps.LatLng(36.5, 127.8), // 대한민국 중심
+    zoom: 6
+  });
 
   // ✅ 위치 정보 요청
   if (navigator.geolocation) {
@@ -312,6 +312,41 @@ function hideLoading() {
   loading.classList.remove("show");
 }
 
+function extractTomorrowFromHourly(daily) {
+  const items = daily?.response?.body?.items?.item ?? [];
+  const now = new Date();
+  const tomorrowStr = new Date(now.setDate(now.getDate() + 1)).toISOString().slice(0, 10).replace(/-/g, '');
+
+  const amHours = ["0600", "0900", "1200"];
+  const pmHours = ["1500", "1800", "2100"];
+
+  const amItems = items.filter(i => i.fcstDate === tomorrowStr && amHours.includes(i.fcstTime));
+  const pmItems = items.filter(i => i.fcstDate === tomorrowStr && pmHours.includes(i.fcstTime));
+
+  function avg(category, list) {
+    const nums = list
+      .filter(i => i.category === category)
+      .map(i => parseFloat(i.fcstValue))
+      .filter(v => !isNaN(v) && v > -50 && v < 50); // ✔️ 이 범위로 걸러줘야 함
+    return nums.length ? (nums.reduce((a, b) => a + b, 0) / nums.length).toFixed(1) : "--";
+  }
+
+  function mode(category, list) {
+    const values = list.filter(i => i.category === category).map(i => i.fcstValue);
+    return values.length ? values.sort((a, b) =>
+      values.filter(v => v === a).length - values.filter(v => v === b).length).pop() : "";
+  }
+
+  return {
+    min: avg("TMP", amItems),
+    max: avg("TMP", pmItems),
+    wfAm: mode("SKY", amItems),
+    wfPm: mode("SKY", pmItems),
+    rainAm: mode("POP", amItems),
+    rainPm: mode("POP", pmItems)
+  };
+}
+
 function updateMapAndWeather(lat, lon, zoomChange = true) {
   showLoading();
 
@@ -321,27 +356,27 @@ function updateMapAndWeather(lat, lon, zoomChange = true) {
 
   const position = new naver.maps.LatLng(lat, lon);
   if (map) {
-  if (zoomChange) {
-    map.setCenter(position);  // 줌 바꿀 때만 center도 같이!
-    map.setZoom(9);
-  }
+    if (zoomChange) {
+      map.setCenter(position);  // 줌 바꿀 때만 center도 같이!
+      map.setZoom(9);
+    }
 
-  if (currentMarker) {
-    currentMarker.setMap(null);
-  }
+    if (currentMarker) {
+      currentMarker.setMap(null);
+    }
 
-  currentMarker = new naver.maps.Marker({
-    position,
-    map,
-    icon: {
-      url: '/image/weather/marker.png',
-      size: new naver.maps.Size(24, 24),
-      origin: new naver.maps.Point(0, 0),
-      anchor: new naver.maps.Point(12, 24)
-    },
-    title: "선택 위치"
-  });
-}
+    currentMarker = new naver.maps.Marker({
+      position,
+      map,
+      icon: {
+        url: '/image/weather/marker.png',
+        size: new naver.maps.Size(24, 24),
+        origin: new naver.maps.Point(0, 0),
+        anchor: new naver.maps.Point(12, 24)
+      },
+      title: "선택 위치"
+    });
+  }
 
   const regionName = getNearestRegionName(lat, lon);
   document.getElementById("selected-location").textContent = `선택한 위치: ${regionName}`;
@@ -349,9 +384,9 @@ function updateMapAndWeather(lat, lon, zoomChange = true) {
   fetch(`/api/weather/full?lat=${lat}&lon=${lon}`)
     .then(response => response.json())
     .then(data => {
-      console.log("✅ 날씨 응답", data);
+      // console.log("✅ 날씨 응답", data);
       renderHourlyForecastSimple(data.daily);
-      renderCompactDailyForecast(data.middleTa, data.middleLand, holidayDates);
+      renderCompactDailyForecast(data.middleTa, data.middleLand, holidayDates, extractTomorrowFromHourly(data.daily));
 
       const items = data.current?.response?.body?.items?.item ?? [];
       updateWeatherCard({
@@ -431,7 +466,7 @@ function updateAstroDisplay(data) {
   const riseRaw = isSun ? data.sunrise : data.moonrise;
   const setRaw = isSun ? data.sunset : data.moonset;
 
-  console.log("🌄 Astro raw values:", { riseRaw, setRaw });
+  // console.log("🌄 Astro raw values:", { riseRaw, setRaw });
 
   const rise = formatTimeString(riseRaw);
   const set = formatTimeString(setRaw);
@@ -455,10 +490,10 @@ function updateAstroDisplay(data) {
   const riseDate = new Date(todayStr);
   riseDate.setHours(riseH, riseM, 0);
   const setDate = new Date(todayStr);
-setDate.setHours(setH, setM, 0);
-if (setDate <= riseDate) {
-  setDate.setDate(setDate.getDate() + 1); // 🌙 moonset이 익일 새벽일 경우 보정
-}
+  setDate.setHours(setH, setM, 0);
+  if (setDate <= riseDate) {
+    setDate.setDate(setDate.getDate() + 1); // 🌙 moonset이 익일 새벽일 경우 보정
+  }
 
   const totalMins = (setDate - riseDate) / 60000;
   const elapsed = (now - riseDate) / 60000;
@@ -702,17 +737,12 @@ function getFutureDate(daysAhead, returnObj = false) {
   }
 }
 
-function renderCompactDailyForecast(middleTa, middleLand, holidayList = []) {
+function renderCompactDailyForecast(middleTa, middleLand, holidayList = [], dailyFallback = null) {
   const container = document.getElementById("daily-forecast-cards");
   if (!container) return;
 
   const taItem = middleTa?.response?.body?.items?.item?.[0];
   const landItem = middleLand?.response?.body?.items?.item?.[0];
-
-  if (!taItem || !landItem) {
-    container.innerHTML = "<div class='text-muted'>예보 데이터를 불러올 수 없습니다.</div>";
-    return;
-  }
 
   container.innerHTML = "";
 
@@ -728,12 +758,25 @@ function renderCompactDailyForecast(middleTa, middleLand, holidayList = []) {
     if (isHoliday || isSunday) dayColor = "text-danger fw-bold";
     else if (isSaturday) dayColor = "text-primary fw-bold";
 
-    const taMin = taItem[`taMin${i}`] ?? "--";
-    const taMax = taItem[`taMax${i}`] ?? "--";
-    const wfAm = landItem[`wf${i}Am`] ?? landItem[`wf${i}`] ?? "";
-    const wfPm = landItem[`wf${i}Pm`] ?? landItem[`wf${i}`] ?? "";
-    const rnAm = landItem[`rnSt${i}Am`] ?? landItem[`rnSt${i}`] ?? "0";
-    const rnPm = landItem[`rnSt${i}Pm`] ?? landItem[`rnSt${i}`] ?? "0";
+    // ⛔️ i === 4 이고, 예보 데이터 없으면 fallback 사용
+    let taMin = taItem?.[`taMin${i}`];
+    let taMax = taItem?.[`taMax${i}`];
+    let wfAm = landItem?.[`wf${i}Am`] ?? landItem?.[`wf${i}`];
+    let wfPm = landItem?.[`wf${i}Pm`] ?? landItem?.[`wf${i}`];
+    let rnAm = landItem?.[`rnSt${i}Am`] ?? landItem?.[`rnSt${i}`] ?? "0";
+    let rnPm = landItem?.[`rnSt${i}Pm`] ?? landItem?.[`rnSt${i}`] ?? "0";
+
+    // ✅ 내일 데이터 없을 경우 단기예보로 대체
+    if (i === 4 && (!taMin || !wfAm)) {
+      if (dailyFallback) {
+        taMin = dailyFallback.min;
+        taMax = dailyFallback.max;
+        wfAm = dailyFallback.wfAm;
+        wfPm = dailyFallback.wfPm;
+        rnAm = dailyFallback.rainAm;
+        rnPm = dailyFallback.rainPm;
+      }
+    }
 
     const iconAmSrc = getWeatherImageSrcByText(wfAm, true);
     const iconPmSrc = getWeatherImageSrcByText(wfPm, false);
@@ -750,7 +793,7 @@ function renderCompactDailyForecast(middleTa, middleLand, holidayList = []) {
         <img src="${iconAmSrc}" width="36" height="36" alt="오전">
         <img src="${iconPmSrc}" width="36" height="36" alt="오후">
       </div>
-      <div class="mt-2"><span class="text-primary">${taMin}°</span> / <span class="text-danger">${taMax}°</span></div>
+      <div class="mt-2"><span class="text-primary">${taMin ?? "--"}°</span> / <span class="text-danger">${taMax ?? "--"}°</span></div>
       <div class="text-info fw-semibold mt-1" style="font-size: 0.85rem;">${rainProbAm} / ${rainProbPm}</div>
     `;
 
@@ -776,7 +819,7 @@ function loadAirQuality(lat, lon) {
   fetch(`/api/weather/quality?lat=${lat}&lon=${lon}`)
     .then(res => res.json())
     .then(data => {
-      console.log("✅ 대기 정보", data);
+      // console.log("✅ 대기 정보", data);
 
       const khaiLabel = getAirQualityLabel(data.khaiGrade);
       const pm10Label = getAirQualityLabel(data.pm10Grade);
@@ -875,34 +918,69 @@ function getDateColorClass(ymdStr) {
 
 function fetchWeatherAlerts() {
   const slideText = document.getElementById("alert-slide-text");
-
-  // 초기 기본 메시지는 자연스럽게 보여짐 (HTML에서 이미 들어감)
-  slideText.textContent = "현재 발효 중인 기상 특보가 없습니다.";
-  slideText.style.animation = "none";
-  slideText.style.left = "0";
-  slideText.style.position = "relative"; // 위치 초기화
-  slideText.classList.remove("start-100");
-  slideText.style.textAlign = "left"; 
-  slideText.style.width = "100%";
+  const container = document.getElementById("weather-alert-slider");
 
   fetch("/api/weather/alerts")
     .then(res => res.json())
     .then(data => {
-      if (!Array.isArray(data) || data.length === 0) return;
+      // ✅ 중복 제거
+      const seen = new Set();
+      const uniqueAlerts = data.filter(alert => {
+        const key = `${alert.regionName}_${alert.alertTitle}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
 
-      const message = data.map(alert => `[${alert.regionName}] ${alert.alertTitle}`).join(" ⎯ ");
+      slideText.textContent = "📢 현재 발효 중인 기상 특보가 없습니다.";
+      slideText.style.position = "absolute";
+      slideText.style.left = "0";
+      slideText.style.animation = "none";
+      slideText.style.transform = "translateY(-50%)";
+      slideText.style.textAlign = "left";
+      slideText.style.paddingLeft = "1rem"; // ✅ 여기도!
+
+
+      // ✅ 메시지 생성
+      const message = uniqueAlerts.map(alert =>
+        `📢 ${alert.regionName} : ${alert.alertTitle}`
+      ).join("   |   ");
       slideText.textContent = message;
 
-      const textWidth = slideText.offsetWidth;
-      slideText.classList.add("start-100");
-      slideText.style.position = "absolute";
-      slideText.style.left = ""; // 초기화
-      slideText.style.animation = `slide-left ${textWidth / 50}s linear infinite`;
+      // ✅ 먼저 스타일 초기화
+      slideText.style.animation = "none";
+      slideText.style.left = "0";
+      slideText.style.transform = "translateY(-50%)";
+      slideText.style.textAlign = "left";
+
+      // ✅ DOM 업데이트 후 실제 길이 측정
+      setTimeout(() => {
+        const messageWidth = slideText.offsetWidth;
+        const containerWidth = container.offsetWidth;
+
+        if (messageWidth <= containerWidth) {
+          // ✅ 고정 표시 (짧을 경우)
+          slideText.style.position = "absolute";
+          slideText.style.left = "0";
+          slideText.style.animation = "none";
+          slideText.style.textAlign = "left";
+          slideText.style.paddingLeft = "1rem"; // ✅ 왼쪽 여백
+        } else {
+          // ✅ 슬라이드 적용
+          slideText.style.position = "absolute";
+          slideText.style.left = "100%";
+          slideText.offsetHeight; // reflow
+          slideText.style.animation = `slide-left ${duration}s linear infinite`;
+          slideText.style.paddingLeft = "0"; // ✅ 슬라이드일 때는 제거
+        }
+
+      }, 100); // 텍스트 반영 기다림
     })
     .catch(err => {
       console.error("❌ 특보 로딩 실패", err);
+      slideText.textContent = "⚠️ 기상 특보 정보를 가져오지 못했습니다.";
+      slideText.style.left = "0";
+      slideText.style.animation = "none";
+      slideText.style.transform = "translateY(-50%)";
     });
 }
-
-
-
