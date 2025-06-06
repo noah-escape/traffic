@@ -415,6 +415,28 @@ function fetchAstroInfo(lat, lon) {
     .then(res => res.json())
     .then(data => {
       currentAstroData = data;
+
+      const now = new Date();
+      const { h: riseH, m: riseM } = parseTimeStr(data.sunrise);
+      const { h: setH, m: setM } = parseTimeStr(data.sunset);
+
+      if (!isNaN(riseH) && !isNaN(setH)) {
+        const riseDate = new Date();
+        riseDate.setHours(riseH, riseM, 0);
+        riseDate.setSeconds(0);
+
+        const setDate = new Date();
+        setDate.setHours(setH, setM, 0);
+        setDate.setSeconds(0);
+
+        // 해가 떠있는 시간: 일출 <= 현재 < 일몰
+        if (now >= riseDate && now < setDate) {
+          currentAstroMode = "sun";
+        } else {
+          currentAstroMode = "moon";
+        }
+      }
+
       startAstroUpdater(data);
     });
 }
