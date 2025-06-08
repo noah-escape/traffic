@@ -14,6 +14,7 @@ import com.cctv.road.weather.service.AstroService;
 import com.cctv.road.weather.service.HolidayService;
 import com.cctv.road.weather.service.KmaWeatherService;
 import com.cctv.road.weather.service.WeatherAlertService;
+import com.cctv.road.weather.service.WeatherNewsService;
 import com.cctv.road.weather.util.GeoUtil;
 
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ public class WeatherController {
     private final HolidayService holidayService;
     private final AstroService astroService;
     private final WeatherAlertService weatherAlertService;
+    private final WeatherNewsService weatherNewsService;
 
     @GetMapping("/current") // 현재 실시간 날씨
     public ResponseEntity<?> getCurrentWeather(@RequestParam double lat, @RequestParam double lon) {
@@ -104,4 +106,8 @@ public class WeatherController {
     }
 
     
+    @GetMapping("/news")
+    public ResponseEntity<List<Map<String, Object>>> getWeatherNews() {
+        return ResponseEntity.ok(weatherNewsService.getRecentNews(10));
+    }
 }

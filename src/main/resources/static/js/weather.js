@@ -1008,3 +1008,15 @@ function fetchWeatherAlerts() {
     });
 }
 
+$(document).ready(function () {
+  $.get("/api/weather/news", function (data) {
+    const list = $("#news-list");
+    data.forEach(item => {
+      const li = `<li class="list-group-item">
+        <a href="${item.url}" target="_blank">${item.title}</a>
+        <span class="text-muted small float-end">${item.published_at}</span>
+      </li>`;
+      list.append(li);
+    });
+  });
+});
