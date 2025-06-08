@@ -1010,12 +1010,14 @@ function fetchWeatherAlerts() {
 
 $(document).ready(function () {
   $.get("/api/weather/news", function (data) {
-    const list = $("#news-list");
+    const list = $("#weather-news-list");
     data.forEach(item => {
-      const li = `<li class="list-group-item">
-        <a href="${item.url}" target="_blank">${item.title}</a>
-        <span class="text-muted small float-end">${item.published_at}</span>
-      </li>`;
+      const li = $(`
+        <li class="news-item">
+          <a href="${item.url}" target="_blank" class="news-title">${item.title}</a>
+          <span class="news-date">${item.published_at.split('T')[0]}</span>
+        </li>
+      `);
       list.append(li);
     });
   });
