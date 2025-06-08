@@ -954,14 +954,17 @@ function fetchWeatherAlerts() {
         return true;
       });
 
-      slideText.textContent = "📢 현재 발효 중인 기상 특보가 없습니다.";
-      slideText.style.position = "absolute";
-      slideText.style.left = "0";
-      slideText.style.animation = "none";
-      slideText.style.transform = "translateY(-50%)";
-      slideText.style.textAlign = "left";
-      slideText.style.paddingLeft = "1rem"; // ✅ 여기도!
-
+      // ✅ 특보 없을 경우 처리
+      if (uniqueAlerts.length === 0) {
+        slideText.textContent = "📢 현재 발효 중인 기상 특보가 없습니다.";
+        slideText.style.position = "absolute";
+        slideText.style.left = "0";
+        slideText.style.animation = "none";
+        slideText.style.transform = "translateY(-50%)";
+        slideText.style.textAlign = "left";
+        slideText.style.paddingLeft = "1rem";
+        return;
+      }
 
       // ✅ 메시지 생성
       const message = uniqueAlerts.map(alert =>
@@ -975,28 +978,26 @@ function fetchWeatherAlerts() {
       slideText.style.transform = "translateY(-50%)";
       slideText.style.textAlign = "left";
 
-      // ✅ DOM 업데이트 후 실제 길이 측정
       setTimeout(() => {
         const messageWidth = slideText.offsetWidth;
         const containerWidth = container.offsetWidth;
+        const duration = Math.max(message.length / 5, 15);
 
         if (messageWidth <= containerWidth) {
-          // ✅ 고정 표시 (짧을 경우)
+          // ✅ 고정 표시
           slideText.style.position = "absolute";
           slideText.style.left = "0";
           slideText.style.animation = "none";
-          slideText.style.textAlign = "left";
-          slideText.style.paddingLeft = "1rem"; // ✅ 왼쪽 여백
+          slideText.style.paddingLeft = "1rem";
         } else {
-          // ✅ 슬라이드 적용
+          // ✅ 슬라이드
           slideText.style.position = "absolute";
           slideText.style.left = "100%";
-          slideText.offsetHeight; // reflow
+          slideText.offsetHeight; // 강제 reflow
           slideText.style.animation = `slide-left ${duration}s linear infinite`;
-          slideText.style.paddingLeft = "0"; // ✅ 슬라이드일 때는 제거
+          slideText.style.paddingLeft = "0";
         }
-
-      }, 100); // 텍스트 반영 기다림
+      }, 100);
     })
     .catch(err => {
       console.error("❌ 특보 로딩 실패", err);
@@ -1006,3 +1007,4 @@ function fetchWeatherAlerts() {
       slideText.style.transform = "translateY(-50%)";
     });
 }
+

@@ -1,17 +1,21 @@
 package com.cctv.road.weather.service;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.net.URI;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -81,7 +85,8 @@ public class WeatherAlertService {
 
             ResponseEntity<Map> response = restTemplate.getForEntity(detailUri, Map.class);
             List<Map<String, Object>> items = extractItemList(response.getBody());
-            if (items.isEmpty()) return null;
+            if (items.isEmpty())
+                return null;
 
             Map<String, Object> item = items.get(0);
 
@@ -112,11 +117,20 @@ public class WeatherAlertService {
     @SuppressWarnings("unchecked")
     private List<Map<String, Object>> extractItemList(Map responseBody) {
         try {
-            Map<String, Object> response = (Map<String, Object>) responseBody.get("response");
-            Map<String, Object> body = (Map<String, Object>) response.get("body");
-            Map<String, Object> items = (Map<String, Object>) body.get("items");
+            if (responseBody == null)
+                return List.of();
 
-            if (items == null || !items.containsKey("item")) return List.of();
+            Map<String, Object> response = (Map<String, Object>) responseBody.get("response");
+            if (response == null)
+                return List.of();
+
+            Map<String, Object> body = (Map<String, Object>) response.get("body");
+            if (body == null)
+                return List.of();
+
+            Map<String, Object> items = (Map<String, Object>) body.get("items");
+            if (items == null || !items.containsKey("item"))
+                return List.of();
 
             Object itemObj = items.get("item");
             if (itemObj instanceof List) {
@@ -124,9 +138,11 @@ public class WeatherAlertService {
             } else if (itemObj instanceof Map) {
                 return List.of((Map<String, Object>) itemObj);
             }
+
         } catch (Exception e) {
             log.warn("❌ 아이템 리스트 파싱 실패: {}", e.getMessage());
         }
         return List.of();
     }
+
 }
