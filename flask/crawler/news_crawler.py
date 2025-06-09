@@ -104,7 +104,7 @@ def get_popular_news():
             "thumbnail": ""
         })
 
-    return popular_articles[:3]
+    return popular_articles[:5]
 
 # 테스트 실행
 if __name__ == "__main__":

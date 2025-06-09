@@ -6,6 +6,9 @@ bp = Blueprint("news", __name__)
 @bp.route("/news")
 def news_page():
     category_filter = request.args.get("category")
+    page = int(request.args.get("page", 1))  # 페이지 번호
+    per_page = 7  # 페이지당 기사 수
+
     all_articles = get_all_news()
     articles = all_articles
 
@@ -23,6 +26,14 @@ def news_page():
                     filtered.append(a)
         articles = filtered
 
+    # ✅ 페이지네이션 처리
+    total = len(articles)
+    start = (page - 1) * per_page
+    end = start + per_page
+    articles_page = articles[start:end]
+    total_pages = (total + per_page - 1) // per_page
+
+    # ✅ 속보 ticker
     keywords = ["속보", "긴급", "파업", "지연", "지하철", "사고", "정전", "무정차"]
     ticker = []
     for a in all_articles[:10]:
@@ -31,6 +42,7 @@ def news_page():
         if len(ticker) >= 5:
             break
 
+    # ✅ 인기기사
     try:
         popular_articles = get_popular_news()
     except Exception as e:
@@ -39,8 +51,10 @@ def news_page():
 
     return render_template(
         "news.html",
-        articles=articles,
+        articles=articles_page,
         selected=category_filter or "전체",
         ticker=ticker,
-        popular_articles=popular_articles
+        popular_articles=popular_articles,
+        page=page,
+        total_pages=total_pages
     )
