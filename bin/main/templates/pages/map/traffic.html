@@ -108,13 +108,8 @@
         </li>
         <li class="nav-item"><a class="nav-link" th:href="@{/chart-view}">통계 & 자료</a></li>
         <li class="nav-item"><a class="nav-link" th:href="@{/pages/map/traffic}">지도</a></li>
-<<<<<<< HEAD
-        <li class="nav-item"><a class="nav-link" href="http://localhost:5001/news" target="_blank">뉴스</a></li>
-        <li class="nav-item"><a class="nav-link" th:href="@{/pages/weather}">날씨</a></li>
-=======
         <li class="nav-item"><a class="nav-link" th:href="@{/news-view}">뉴스</a></li>
-        <li class="nav-item"><a class="nav-link" href="#weather">날씨</a></li>
->>>>>>> develop
+        <li class="nav-item"><a class="nav-link" th:href="@{/pages/weather}">날씨</a></li>
       </ul>
     </div>
   </nav>
@@ -123,18 +118,17 @@
   <div class="main-content d-flex">
     <!-- 사이드바 버튼 -->
     <aside class="sidebar">
-      <button id="sidebarCctvBtn" title="CCTV"><i class="fas fa-video"></i></button>
-      <button id="sidebarEventBtn" title="도로 이벤트"><i
+      <button id="sidebarCctvBtn" class="sidebar-button" title="CCTV"><i class="fas fa-video"></i></button>
+      <button id="sidebarEventBtn" class="sidebar-button" title="도로 이벤트"><i
           class="fas fa-triangle-exclamation popup-box event-popup"></i></button>
-      <button id="sidebarBusBtn" title="버스 위치"><i class="fas fa-bus"></i></button>
-      <button id="sidebarRouteBtn" title="길찾기"><i class="fas fa-route"></i></button>
-      <button id="sidebarBikeBtn" title="따릉이 대여소"><i class="fas fa-bicycle popup-box bike-popup"></i></button>
-      <button id="sidebarSubwayBtn" title="지하철"><i class="fas fa-train-subway"></i></button>
-      <button id="sidebarParkingBtn" title="주차장"><i class="fas fa-p"></i></button>
-<<<<<<< HEAD
-=======
-      <button id="sidebarVslBtn" title="가변형 속도제한표지정보"><i class="fa-solid fa-traffic-light"></i></button>
->>>>>>> develop
+      <button id="sidebarBusBtn" class="sidebar-button" title="버스 위치"><i class="fas fa-bus"></i></button>
+      <button id="sidebarRouteBtn" class="sidebar-button" title="길찾기"><i class="fas fa-route"></i></button>
+      <button id="sidebarBikeBtn" class="sidebar-button" title="따릉이 대여소"><i
+          class="fas fa-bicycle popup-box bike-popup"></i></button>
+      <button id="sidebarSubwayBtn" class="sidebar-button" title="지하철"><i class="fas fa-train-subway"></i></button>
+      <button id="sidebarParkingBtn" class="sidebar-button" title="주차장"><i class="fas fa-p"></i></button>
+      <button id="sidebarVslBtn" class="sidebar-button" title="가변형 속도제한표지정보"><i
+          class="fa-solid fa-traffic-light"></i></button>
     </aside>
 
     <!-- 지도 -->
@@ -160,42 +154,21 @@
       <button class="btn btn-light btn-sm mt-1" id="zoomOutBtn"><i class="fas fa-minus"></i></button>
     </div>
 
-
-    <!-- CCTV 영상창 -->
-    <div id="videoContainer" style="display: none;">
-      <div class="video-header">
-        <span id="videoTitle" class="video-title"></span>
-        <button id="closeVideoBtn" class="video-close-btn">X</button>
-      </div>
-      <video id="cctvVideo" controls autoplay muted></video>
-      <div class="video-footer">
-        <button id="fullscreenBtn" class="video-bottom-btn">전체화면</button>
-        <button id="openNewTabBtn" class="video-bottom-btn">새창</button>
-      </div>
-    </div>
-
-    <!-- CCTV 검색 패널 -->
+    <!-- CCTV 패널 -->
     <div id="cctvFilterPanel" class="cctv-panel" style="display: none;">
-<<<<<<< HEAD
-      <!-- ✅ 상단 탭 버튼 -->
-=======
->>>>>>> develop
       <div class="cctv-tab-bar">
         <button id="tabHighway" class="btn btn-outline-primary btn-sm w-100 mx-1">고속도로</button>
         <button id="tabNormalroad" class="btn btn-outline-primary btn-sm w-100 mx-1">국도</button>
       </div>
-<<<<<<< HEAD
-      <!-- ✅ 도로 리스트 (기본 보임) -->
       <ul id="roadList" class="list-group cctv-list scrollable-list"></ul>
-
-      <!-- ✅ 지도 타입 버튼 (하단 고정) -->
-      <div id="mapTypeButtons" class="map-type-buttons">
-        <button class="map-type-btn" data-type="NORMAL">일반지도</button>
-        <button class="map-type-btn" data-type="SATELLITE">위성지도</button>
-        <button class="map-type-btn" data-type="HYBRID">항공지도</button>
+      <div id="roadLineBtnWrapper" style="text-align:center; margin:16px 0 8px 0;">
+        <button id="toggleRoadLineBtn" class="btn btn-outline-primary btn-sm" style="width:85%;font-size:14px;">
+          🛣️ 도로중심선 보기
+        </button>
+        <div style="margin-top:5px; color:#d32; font-size:11px;">
+          도로중심선: 렌더링까지 다소 시간이 소요 될 수 있습니다.
+        </div>
       </div>
-=======
-      <ul id="roadList" class="list-group cctv-list scrollable-list"></ul>
     </div>
 
     <!-- 가변속도표지판정보 -->
@@ -211,7 +184,6 @@
         <hr class="val-tap-divider">
       </div>
       <ul id="vslListPanel" class="list-group cctv-list scrollable-list"></ul>
->>>>>>> develop
     </div>
 
     <!-- 🚌 정류장 마커 + 버스 추적 통합 패널 -->
@@ -219,7 +191,7 @@
 
       <!-- 🔹 고정 헤더 -->
       <div class="flex-shrink-0">
-        <div class="bus-header bg-primary text-white py-2 px-3 d-flex justify-content-between align-items-center">
+        <div class="bus-header py-2 px-3 d-flex justify-content-between align-items-center">
           <h5 class="mb-0"><i class="bi bi-signpost-2-fill me-1"></i> 버스 정보</h5>
           <button id="resetMapBtn" class="btn btn-sm btn-light" onclick="resetBusStopPanel()" title="목록 초기화">
             <i class="bi bi-arrow-clockwise"></i>
@@ -235,13 +207,15 @@
           </div>
 
           <!-- 버스 번호 검색 -->
-          <div class="input-group">
-            <input type="text" id="routeInput" class="form-control" placeholder="버스 번호 입력 (예: 100)">
-            <button class="btn btn-primary" onclick="searchBusRoute()">검색</button>
+          <div class="input-group mb-3">
+            <input type="text" id="routeInput" class="form-control form-control-sm" placeholder="버스 번호 입력 (예: 100)">
+            <button class="btn btn-sm btn-outline-primary" onclick="searchBusRoute()" title="검색">
+              <i class="bi bi-search"></i>
+            </button>
           </div>
 
           <div>
-            <button class="btn btn-primary btn-sm w-100" onclick="findNearbyStops()">📍 내 주변 정류소</button>
+            <button class="btn-outline-primary btn btn-sm w-100" onclick="findNearbyStops()">📍 내 주변 정류소</button>
           </div>
 
           <!-- 도착 정보 제목만 고정 -->
@@ -275,24 +249,71 @@
       </div>
     </div>
 
-    <!-- 길찾기 패널 -->
+    <!-- 🧭 길찾기 사이드바 패널 -->
     <div id="routeFilterPanel" class="sidebar-panel" style="display: none;">
-      <div class="panel-body">
-        <h5>🧭 길찾기</h5>
 
-        <div class="route-input-row">
-          <input id="startPointLabel" placeholder="출발지 입력" class="form-control small-input" />
-          <input id="goalPointLabel" placeholder="도착지 입력" class="form-control small-input" />
+      <!-- 🔹 고정 헤더 -->
+      <div class="flex-shrink-0">
+        <div class="route-header py-2 px-3 d-flex justify-content-between align-items-center">
+          <h5 class="mb-0"><i class="bi bi-geo-alt-fill me-1"></i> 길찾기</h5>
+          <button class="btn btn-sm btn-light" onclick="resetRoutePanel()" title="내 위치로 초기화">
+            <i class="bi bi-arrow-clockwise"></i>
+          </button>
         </div>
 
-        <ul id="startResultList" class="autocomplete-result list-group position-absolute w-100" style="display:none;">
-        </ul>
-        <ul id="goalResultList" class="autocomplete-result list-group position-absolute w-100" style="display:none;">
-        </ul>
+        <!-- 🔹 입력 섹션 -->
+        <div class="p-3 d-flex flex-column gap-3">
+
+          <!-- 🔍 장소 검색 -->
+          <div class="input-group">
+            <input id="placeSearchInput" class="form-control form-control-sm" placeholder="🔍 원하는 장소를 검색하세요">
+          </div>
+          <ul id="placeSearchResults" class="list-group" style="max-height: 150px; overflow-y: auto;"></ul>
+
+          <!-- 📍 반경 카테고리 -->
+          <div>
+            <select id="categorySelect" class="form-select form-select-sm">
+              <option value="MT1">🛒 대형마트</option>
+              <option value="CS2">🏪 편의점</option>
+              <option value="PS3">🎒 어린이집/유치원</option>
+              <option value="SC4">🏫 학교</option>
+              <option value="AC5">📚 학원</option>
+              <option value="PK6">🅿️ 주차장</option>
+              <option value="OL7">⛽ 주유소</option>
+              <option value="SW8">🚇 지하철역</option>
+              <option value="BK9">🏦 은행</option>
+              <option value="CT1">🎭 문화시설</option>
+              <option value="AG2">🏠 중개업소</option>
+              <option value="PO3">🏛 공공기관</option>
+              <option value="AT4">🗺️ 관광명소</option>
+              <option value="AD5">🏨 숙박</option>
+              <option value="FD6" selected>🍽 음식점</option>
+              <option value="CE7">☕ 카페</option>
+              <option value="HP8">🏥 병원</option>
+              <option value="PM9">💊 약국</option>
+            </select>
+          </div>
+
+          <!-- 📍 지도 중심 검색 -->
+          <div>
+            <button class="btn-outline-primary btn btn-sm w-100" onclick="searchFromMap()">📍 지도 중심 검색</button>
+          </div>
+
+          <!-- 🧭 도착 정보 제목 -->
+          <div id="arrivalPanelBox">
+            <h6 id="resultTitle" class="fw-bold border-bottom pb-2">📌 결과 정보</h6>
+          </div>
+        </div>
       </div>
 
-      <div class="panel-footer">
-        <button class="btn btn-danger w-100" onclick="resetRoutePanel()">🔁 초기화</button>
+      <!-- 🔹 스크롤 영역 -->
+      <div class="flex-grow-1 overflow-auto px-3 pb-3" id="nearbyPlaceList" style="font-size: 0.9rem;">
+        <div class="text-muted">🔎 장소를 검색하거나 내 위치를 기준으로 검색해보세요.</div>
+      </div>
+
+      <!-- 🔹 고정 푸터 -->
+      <div class="panel-footer text-center flex-shrink-0 py-2 px-3 border-top bg-light">
+        <small class="text-muted">※ 검색어나 범주를 선택하고 결과를 확인하세요.</small>
       </div>
     </div>
 
@@ -496,19 +517,74 @@
       </div>
     </div>
 
-    <script th:src="@{/js/cctv.js}" defer></script> <!-- 수정 -->
     <script type="module" src="/js/bus.js" defer></script>
     <script type="module" src="/js/bike.js" defer></script>
     <script type="module" src="/js/direction.js" defer></script>
     <script type="module" src="/js/event-layer.js" defer></script>
+    <script src="/js/cctv.js" defer></script>
     <script src="/js/subway.js" defer></script>
     <script src="/js/parking.js" defer></script>
     <script src="/js/realtime-traffic.js" defer></script>
-<<<<<<< HEAD
-=======
     <script src="/js/vsl.js" defer></script>
->>>>>>> develop
     <script src="/js/traffic.js" defer></script> <!-- 메인 -->
+
+    <script>
+      function isVisible(el) {
+        return el && window.getComputedStyle(el).display !== "none";
+      }
+
+      function adjustLegendPositions() {
+        const trafficBox = document.getElementById("trafficLegendBox");
+        const parkingBox = document.getElementById("parkingLegendBox");
+
+        const trafficVisible = isVisible(trafficBox);
+        const parkingVisible = isVisible(parkingBox);
+
+        if (trafficVisible) {
+          trafficBox.style.position = "fixed";
+          trafficBox.style.bottom = "16px";
+
+          if (parkingVisible) {
+            const parkingWidth = parkingBox.offsetWidth || 240;
+            const gap = 20;
+            trafficBox.style.setProperty("right", `${parkingWidth + gap}px`, "important");
+          } else {
+            trafficBox.style.setProperty("right", "16px", "important");
+          }
+        }
+
+        if (parkingVisible) {
+          parkingBox.style.position = "fixed";
+          parkingBox.style.bottom = "16px";
+          parkingBox.style.right = "16px";
+        }
+      }
+
+      function showTrafficLegend() {
+        const box = document.getElementById("trafficLegendBox");
+        box.style.display = "block";
+        adjustLegendPositions();
+      }
+
+      function hideTrafficLegend() {
+        const box = document.getElementById("trafficLegendBox");
+        box.style.display = "none";
+        adjustLegendPositions();
+      }
+
+      function showParkingLegend() {
+        const box = document.getElementById("parkingLegendBox");
+        box.style.display = "block";
+        adjustLegendPositions();
+      }
+
+      function hideParkingLegend() {
+        const box = document.getElementById("parkingLegendBox");
+        box.style.display = "none";
+        adjustLegendPositions();
+      }
+    </script>
+
 </body>
 
 </html>

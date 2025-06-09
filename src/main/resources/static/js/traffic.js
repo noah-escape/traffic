@@ -24,6 +24,7 @@ function clearAllMapMarkers() {
   window.clearRouteDisplay?.();
   window.removeRouteEvents?.();
   window.clearEventMarkers?.();
+  window.closeAllCctvOverlays?.();
   window.clearCctvMarkers?.();
   window.hideVideo?.();
   window.clearParkingMarkers?.();
@@ -198,19 +199,12 @@ document.addEventListener('DOMContentLoaded', () => {
   updateZoomSliderFromMap();
 
   // ✅ CCTV 패널
-  let cctvLoaded = false;
-  const sidebarCctvBtn = document.getElementById('sidebarCctvBtn');
-  sidebarCctvBtn?.addEventListener('click', () => {
+  document.getElementById('sidebarCctvBtn').addEventListener('click', () => {
     const panel = document.getElementById('cctvFilterPanel');
     if (!panel) return;
 
     panel.style.display = panel.style.display === 'flex' ? 'none' : 'flex';
     if (panel.style.display === 'flex') {
-      if (!cctvLoaded && window.preloadAllCctvs) {
-        window.preloadAllCctvs();
-        cctvLoaded = true;
-      }
-      window.loadRoadList?.();
     } else {
       window.clearCctvMarkers?.();
       window.hideVideo?.();
@@ -330,13 +324,11 @@ document.addEventListener('DOMContentLoaded', () => {
         resetPanelsAndCloseVideo();
         panelStates.cctv = true;
         document.getElementById('cctvFilterPanel')?.style.setProperty('display', 'flex');
-        window.applyCctvFilter?.();
+        window.loadRoadList?.();
       },
       onDeactivate: () => {
         panelStates.cctv = false;
-        window.clearCctvMarkers?.();
-        const roadList = document.getElementById('roadList');
-        if (roadList) roadList.innerHTML = '';
+        window.resetCctvPanel?.();
       }
     },
     {
