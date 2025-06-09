@@ -1014,7 +1014,7 @@ $(document).ready(function () {
     data.forEach(item => {
       const li = $(`
         <li class="news-item">
-          <a href="${item.url}" target="_blank" class="news-title">${item.title}</a>
+          <a href="${item.url}" class="news-title">${item.title}</a>
           <span class="news-date">${item.published_at.split('T')[0]}</span>
         </li>
       `);
