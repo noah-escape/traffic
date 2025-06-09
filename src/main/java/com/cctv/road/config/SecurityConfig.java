@@ -86,13 +86,8 @@ public class SecurityConfig {
                 "/css/**", "/js/**", "/image/**", "/favicon.ico",
                 "/json/**", "/pages/**", "/api/**", "/api/weather/**",
                 "/member/find/**", "/find-id", "/find-password",
-<<<<<<< HEAD
-                "/board/list/**", "/board/view/**",
-                "/chart-view", "/chart/**", "/pages/map/**"
-=======
                 "/board/list/**", "/board/view/**", "/naver-driving-path/**",
                 "/chart-view", "/chart/**", "/pages/map/**", "/news-view/**"
->>>>>>> develop
                 )
             .permitAll()
             .anyRequest().authenticated())
