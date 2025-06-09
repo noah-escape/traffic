@@ -233,6 +233,76 @@ aside.sidebar {
   gap: 4px;
 }
 
+#videoContainer, .video-container {
+  position: relative; /* absolute 대신 InfoWindow 내에선 relative가 안전 */
+  top: 0; left: 0;
+  width: 400px;
+  max-height: calc(100vh - 120px);
+  background: white;
+  border-radius: var(--card-radius, 12px);
+  box-shadow: var(--card-shadow, 0 2px 12px #0003);
+  padding: 16px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.3s ease-in-out;
+  border: 2px solid #000;
+  overflow: hidden;
+}
+
+.video-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.video-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: var(--navy, #1d3557);
+}
+
+.video-close-btn {
+  background: none;
+  border: none;
+  font-size: 22px;
+  font-weight: bold;
+  color: #999;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.video-close-btn:hover { color: #333; }
+
+#cctvVideoPlayer, .cctv-video {
+  width: 100%;
+  height: 245px;
+  object-fit: contain;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  background: #000;
+}
+
+.video-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.video-bottom-btn {
+  background-color: var(--blue-gray, #f4f8fb);
+  border: 1px solid #ccc;
+  padding: 8px 14px;
+  font-size: 14px;
+  color: #333;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.video-bottom-btn:hover { background-color: #dee2e6; }
+
 /* ▶ CCTV 리스트 공통 */
 .cctv-list {
   flex-grow: 1;

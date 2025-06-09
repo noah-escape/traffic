@@ -123,9 +123,12 @@
           class="fas fa-triangle-exclamation popup-box event-popup"></i></button>
       <button id="sidebarBusBtn" class="sidebar-button" title="버스 위치"><i class="fas fa-bus"></i></button>
       <button id="sidebarRouteBtn" class="sidebar-button" title="길찾기"><i class="fas fa-route"></i></button>
-      <button id="sidebarBikeBtn" class="sidebar-button" title="따릉이 대여소"><i class="fas fa-bicycle popup-box bike-popup"></i></button>
+      <button id="sidebarBikeBtn" class="sidebar-button" title="따릉이 대여소"><i
+          class="fas fa-bicycle popup-box bike-popup"></i></button>
       <button id="sidebarSubwayBtn" class="sidebar-button" title="지하철"><i class="fas fa-train-subway"></i></button>
       <button id="sidebarParkingBtn" class="sidebar-button" title="주차장"><i class="fas fa-p"></i></button>
+      <button id="sidebarVslBtn" class="sidebar-button" title="가변형 속도제한표지정보"><i
+          class="fa-solid fa-traffic-light"></i></button>
     </aside>
 
     <!-- 지도 -->
@@ -151,27 +154,21 @@
       <button class="btn btn-light btn-sm mt-1" id="zoomOutBtn"><i class="fas fa-minus"></i></button>
     </div>
 
-
-    <!-- CCTV 영상창 -->
-    <div id="videoContainer" style="display: none;">
-      <div class="video-header">
-        <span id="videoTitle" class="video-title"></span>
-        <button id="closeVideoBtn" class="video-close-btn">X</button>
-      </div>
-      <video id="cctvVideo" controls autoplay muted></video>
-      <div class="video-footer">
-        <button id="fullscreenBtn" class="video-bottom-btn">전체화면</button>
-        <button id="openNewTabBtn" class="video-bottom-btn">새창</button>
-      </div>
-    </div>
-
-    <!-- CCTV 검색 패널 -->
+    <!-- CCTV 패널 -->
     <div id="cctvFilterPanel" class="cctv-panel" style="display: none;">
       <div class="cctv-tab-bar">
         <button id="tabHighway" class="btn btn-outline-primary btn-sm w-100 mx-1">고속도로</button>
         <button id="tabNormalroad" class="btn btn-outline-primary btn-sm w-100 mx-1">국도</button>
       </div>
       <ul id="roadList" class="list-group cctv-list scrollable-list"></ul>
+      <div id="roadLineBtnWrapper" style="text-align:center; margin:16px 0 8px 0;">
+        <button id="toggleRoadLineBtn" class="btn btn-outline-primary btn-sm" style="width:85%;font-size:14px;">
+          🛣️ 도로중심선 보기
+        </button>
+        <div style="margin-top:5px; color:#d32; font-size:11px;">
+          도로중심선: 렌더링까지 다소 시간이 소요 될 수 있습니다.
+        </div>
+      </div>
     </div>
 
     <!-- 가변속도표지판정보 -->
@@ -520,11 +517,11 @@
       </div>
     </div>
 
-    <script th:src="@{/js/cctv.js}" defer></script> <!-- 수정 -->
     <script type="module" src="/js/bus.js" defer></script>
     <script type="module" src="/js/bike.js" defer></script>
     <script type="module" src="/js/direction.js" defer></script>
     <script type="module" src="/js/event-layer.js" defer></script>
+    <script src="/js/cctv.js" defer></script>
     <script src="/js/subway.js" defer></script>
     <script src="/js/parking.js" defer></script>
     <script src="/js/realtime-traffic.js" defer></script>
