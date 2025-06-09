@@ -4,6 +4,15 @@
   align-items: stretch;
 }
 
+<<<<<<< HEAD
+#map {
+  width: 100%;
+  height: 450px;
+  flex-grow: 1;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 1rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+=======
 .col-md-7,
 .col-md-5 {
   display: flex;
@@ -15,6 +24,7 @@
   min-height: 500px;
   flex-grow: 1;
   border-radius: 0.75rem;
+>>>>>>> develop
 }
 
 #weather-box {
@@ -22,6 +32,14 @@
   backdrop-filter: blur(8px);
   border: 1px solid rgba(0, 0, 0, 0.05);
   padding: 1.25rem;
+<<<<<<< HEAD
+  flex-grow: 0 !important;
+  flex-shrink: 0;
+  flex-basis: auto;
+  height: 450px; 
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+=======
+>>>>>>> develop
 }
 
 #weather-box:hover {
@@ -30,6 +48,23 @@
   transform: none;
 }
 
+<<<<<<< HEAD
+#weather-wind {
+  white-space: nowrap;
+  display: block;
+  text-align: center;
+  font-weight: bold;
+  font-size: 1.25rem;
+}
+
+#weather-wind-dir {
+  white-space: nowrap;
+  display: block;
+  text-align: center;
+}
+
+=======
+>>>>>>> develop
 .weather-detail-box {
   background-color: #f8f9fa;
   border-radius: 0.75rem;
@@ -54,10 +89,23 @@
 }
 
 .weather-loading-overlay {
+<<<<<<< HEAD
+  position: fixed; /* ✅ 절대 위치 → 고정 위치 */
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(255, 255, 255, 0.85);
+  z-index: 1000;
+  display: flex;
+  align-items: center;     /* ✅ 세로 중앙 */
+  justify-content: center; /* ✅ 가로 중앙 */
+=======
   position: absolute;
   inset: 0;
   background-color: rgba(255, 255, 255, 0.85);
   z-index: 1000;
+>>>>>>> develop
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.4s ease-in-out;
@@ -68,6 +116,26 @@
   visibility: visible;
 }
 
+<<<<<<< HEAD
+#clearInputBtn i {
+  font-size: 1.25rem;
+  vertical-align: middle;
+}
+
+#clearInputBtn {
+  padding: 0 0.5rem;
+  border: none;
+  background: transparent;
+}
+
+#locationSearch:focus {
+  outline: none;
+  box-shadow: none;
+  border-color: #ced4da; /* 기본 테두리 색으로 유지 */
+}
+
+=======
+>>>>>>> develop
 #autocompleteList {
   position: absolute;
   top: 100%;
@@ -75,6 +143,58 @@
   right: 0;
   display: none;
   z-index: 1050;
+<<<<<<< HEAD
+  max-height: 410px;
+  overflow-y: auto;
+}
+
+.autocomplete-item.active {
+    background-color: #e9ecef;
+    color: black;
+    border: none;
+  }
+
+.astro-card-style {
+  background-color: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  height: 350px;
+}
+
+.sun-path-wrapper {
+  max-width: 240px;
+  position: relative;
+  overflow: visible;
+}
+
+#astro-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #212529;
+}
+
+#astro-body {
+  transition: none;
+}
+
+#astro-rise-label,
+#astro-set-label {
+  font-size: 0.95rem;     /* 🔹 더 눈에 띄게 */
+  font-weight: 600;
+  color: #495057;         /* 🔹 좀 더 진한 회색 */
+  margin-bottom: 0.25rem; /* 🔹 텍스트 위 간격 */
+}
+
+#astro-rise,
+#astro-set {
+  font-size: 1.25rem;     /* 🔹 숫자 크기 강조 */
+  font-weight: 700;
+  color: #000;            /* 🔹 명확한 대비 */
+=======
+>>>>>>> develop
 }
 
 #daily-forecast-style-wrapper {
@@ -84,13 +204,21 @@
   border-radius: 1rem;
   padding: 1.25rem;
   box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+<<<<<<< HEAD
+  margin-top: 2rem;
+=======
+>>>>>>> develop
 }
 
 .daily-forecast-cards {
   display: flex;
   overflow-x: auto;
   gap: 1rem;
+<<<<<<< HEAD
+  padding-bottom: 1rem;
+=======
   padding: 1rem 0;
+>>>>>>> develop
 }
 
 .daily-card {
@@ -102,6 +230,12 @@
   font-size: 0.9rem;
 }
 
+<<<<<<< HEAD
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  border-left: 5px solid var(--blue-gray);
+=======
 .weather-section {
   margin-bottom: 3rem;
 }
@@ -110,11 +244,32 @@
   font-size: 1.25rem;
   font-weight: 700;
   border-left: 5px solid #0d6efd;
+>>>>>>> develop
   padding-left: 0.75rem;
   margin-bottom: 1.5rem;
   color: #212529;
 }
 
+<<<<<<< HEAD
+.draggable-scroll {
+  cursor: grab;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.draggable-scroll.scrolling {
+  cursor: grabbing;
+}
+
+/* 예보 테이블 */
+#hourly-forecast-style-table-wrapper {
+  background-color: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+=======
 /* 예보 테이블 */
 #hourly-forecast-style-table-wrapper {
   background-color: rgba(255, 255, 255, 0.9); /* 반투명 백그라운드 */
@@ -123,6 +278,7 @@
   border-radius: 1rem;                        /* 둥근 모서리 */
   padding: 1.25rem;
   box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); /* 그림자 */
+>>>>>>> develop
 }
 
 #hourly-forecast-style-table th,
@@ -183,6 +339,16 @@
   border: 1px solid rgba(0, 0, 0, 0.05);
   border-radius: 1rem;
   padding: 1.25rem;
+<<<<<<< HEAD
+  height: 350px;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.air-quality-card h5 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #212529;
+=======
   box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
   margin-top: 1rem;
 }
@@ -190,25 +356,40 @@
 .air-quality-card h5 {
   font-size: 1.1rem;
   font-weight: 700;
+>>>>>>> develop
 }
 
 .station-info {
   font-size: 0.9rem;
   color: #495057;
   padding-left: 0.25rem;
+<<<<<<< HEAD
+  border-left: 3px solid var(--blue-gray);
+=======
   border-left: 3px solid #0d6efd;
+>>>>>>> develop
   background-color: #f8f9fa;
   border-radius: 0.25rem;
   padding: 0.25rem 0.5rem;
 }
 
 .aqi-emoji-grid {
+<<<<<<< HEAD
+  display: flex;
+  justify-content: space-around;
+  gap: 1rem;
+  padding-top: 1rem;
+  margin-top: 1rem;
+  border-top: 1px solid #dee2e6;
+  flex-wrap: wrap;
+=======
   border-top: 1px solid #dee2e6;
   padding-top: 1rem;
   margin-top: 1rem;
   display: flex;
   justify-content: space-around;
   gap: 1rem;
+>>>>>>> develop
 }
 
 .aqi-item {
@@ -216,37 +397,114 @@
   flex-direction: column;
   align-items: center;
   flex: 1;
+<<<<<<< HEAD
+  min-width: 100px;
+  height: 180px; /* 고정 높이로 통일 */
+  justify-content: space-between;
+  padding: 0.5rem 0;
+=======
+>>>>>>> develop
 }
 
 .aqi-item .label {
   font-weight: 600;
   font-size: 0.9rem;
+<<<<<<< HEAD
+  color: #212529;
+  text-align: center;
+=======
   margin-bottom: 0.5rem;
   color: #212529;
+>>>>>>> develop
 }
 
 .emoji-icon {
   width: 48px;
   height: 48px;
+<<<<<<< HEAD
+  margin: 0.25rem 0;
+=======
   margin-bottom: 0.5rem;
+>>>>>>> develop
 }
 
 .grade-label {
   font-weight: bold;
   font-size: 0.85rem;
   color: #333;
+<<<<<<< HEAD
+  margin-bottom: 0.25rem;
+}
+
+.air-label {
+  color: #212529;
+}
+
+#weather-alert-slider {
+  position: relative;
+  overflow: hidden;
+  height: 2.5rem;
+  padding: 0.5rem 1rem;
+}
+
+#alert-slide-text {
+  position: absolute;
+  white-space: nowrap;
+  font-weight: 600;
+  font-size: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+@keyframes slide-left {
+  from {
+    left: 100%;
+  }
+  to {
+    left: -100%;
+  }
+=======
+>>>>>>> develop
 }
 
 /* 입력창 여유 */
 .input-group {
   margin-bottom: 1rem;
+<<<<<<< HEAD
+  flex-wrap: nowrap;
+}
+
+.round-left-only {
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+
+.round-right-only {
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+}
+
+#searchBtn {
+  white-space: nowrap;
+}
+
+#clearInputBtn {
+  cursor: pointer;
+=======
+>>>>>>> develop
 }
 
 #emojiInfoCard {
   position: absolute;
+<<<<<<< HEAD
+  top: 100%; /* 버튼 바로 아래 */
+  left: 50%; /* 부모 기준 중앙 */
+  transform: translateX(-46%);
+=======
   top: 100%;
   left: 0;
   margin-top: 0.5rem;
+>>>>>>> develop
   background: white;
   padding: 1rem 1.25rem;
   width: 280px;
@@ -256,15 +514,77 @@
   z-index: 1055;
 }
 
+<<<<<<< HEAD
+#emojiInfoCard .small>div {
+=======
 #emojiInfoCard .small > div {
+>>>>>>> develop
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   font-size: 0.8rem;
+<<<<<<< HEAD
+  white-space: nowrap;
+  /* 🔹 줄바꿈 방지 */
+}
+
+#emojiInfoCard .small>div img {
+  margin-bottom: 0.25rem;
+}
+
+#weather-news-style-wrapper {
+  background-color: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  margin-top: 2rem;
+}
+
+.weather-news-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.news-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: white;
+  border: 1px solid #e9ecef;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.05);
+}
+
+.news-title {
+  color: #212529;
+  font-weight: 500;
+  text-decoration: none;
+  flex-grow: 1;
+  margin-right: 1rem;
+}
+
+.news-title:hover {
+  text-decoration: underline;
+}
+
+.news-date {
+  color: #6c757d;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+=======
   white-space: nowrap;  /* 🔹 줄바꿈 방지 */
 }
 
 #emojiInfoCard .small > div img {
   margin-bottom: 0.25rem;
 }
+>>>>>>> develop

@@ -108,8 +108,13 @@
         </li>
         <li class="nav-item"><a class="nav-link" th:href="@{/chart-view}">통계 & 자료</a></li>
         <li class="nav-item"><a class="nav-link" th:href="@{/pages/map/traffic}">지도</a></li>
+<<<<<<< HEAD
+        <li class="nav-item"><a class="nav-link" href="http://localhost:5001/news" target="_blank">뉴스</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/pages/weather}">날씨</a></li>
+=======
         <li class="nav-item"><a class="nav-link" th:href="@{/news-view}">뉴스</a></li>
         <li class="nav-item"><a class="nav-link" href="#weather">날씨</a></li>
+>>>>>>> develop
       </ul>
     </div>
   </nav>
@@ -126,7 +131,10 @@
       <button id="sidebarBikeBtn" title="따릉이 대여소"><i class="fas fa-bicycle popup-box bike-popup"></i></button>
       <button id="sidebarSubwayBtn" title="지하철"><i class="fas fa-train-subway"></i></button>
       <button id="sidebarParkingBtn" title="주차장"><i class="fas fa-p"></i></button>
+<<<<<<< HEAD
+=======
       <button id="sidebarVslBtn" title="가변형 속도제한표지정보"><i class="fa-solid fa-traffic-light"></i></button>
+>>>>>>> develop
     </aside>
 
     <!-- 지도 -->
@@ -168,10 +176,25 @@
 
     <!-- CCTV 검색 패널 -->
     <div id="cctvFilterPanel" class="cctv-panel" style="display: none;">
+<<<<<<< HEAD
+      <!-- ✅ 상단 탭 버튼 -->
+=======
+>>>>>>> develop
       <div class="cctv-tab-bar">
         <button id="tabHighway" class="btn btn-outline-primary btn-sm w-100 mx-1">고속도로</button>
         <button id="tabNormalroad" class="btn btn-outline-primary btn-sm w-100 mx-1">국도</button>
       </div>
+<<<<<<< HEAD
+      <!-- ✅ 도로 리스트 (기본 보임) -->
+      <ul id="roadList" class="list-group cctv-list scrollable-list"></ul>
+
+      <!-- ✅ 지도 타입 버튼 (하단 고정) -->
+      <div id="mapTypeButtons" class="map-type-buttons">
+        <button class="map-type-btn" data-type="NORMAL">일반지도</button>
+        <button class="map-type-btn" data-type="SATELLITE">위성지도</button>
+        <button class="map-type-btn" data-type="HYBRID">항공지도</button>
+      </div>
+=======
       <ul id="roadList" class="list-group cctv-list scrollable-list"></ul>
     </div>
 
@@ -188,6 +211,7 @@
         <hr class="val-tap-divider">
       </div>
       <ul id="vslListPanel" class="list-group cctv-list scrollable-list"></ul>
+>>>>>>> develop
     </div>
 
     <!-- 🚌 정류장 마커 + 버스 추적 통합 패널 -->
@@ -480,7 +504,10 @@
     <script src="/js/subway.js" defer></script>
     <script src="/js/parking.js" defer></script>
     <script src="/js/realtime-traffic.js" defer></script>
+<<<<<<< HEAD
+=======
     <script src="/js/vsl.js" defer></script>
+>>>>>>> develop
     <script src="/js/traffic.js" defer></script> <!-- 메인 -->
 </body>
 

@@ -32,6 +32,8 @@ function clearBusMarkers() {
   busMarkers = [];
 }
 
+<<<<<<< HEAD
+=======
 function getBusIconByTurnaround(bus, stationList) {
   if (!bus.lastStnId || !bus.trnstnid || !Array.isArray(stationList) || stationList.length === 0) {
     console.warn("❌ 방향 판단 실패: 필수 데이터 없음");
@@ -89,6 +91,7 @@ function defaultIcon(direction = "R") {
   };
 }
 
+>>>>>>> develop
 async function showBusPositions({ routeId, routeNumber }) {
   let url = '';
   if (routeId) {
@@ -136,13 +139,25 @@ async function showBusPositions({ routeId, routeNumber }) {
       const carNo = bus.vehId;
 
       if (!isNaN(lat) && !isNaN(lng)) {
+<<<<<<< HEAD
+=======
         const icon = getBusIconByTurnaround(bus, routeStops);
 
+>>>>>>> develop
         const marker = new naver.maps.Marker({
           position: new naver.maps.LatLng(lat, lng),
           map: map,
           title: `버스 번호: ${carNo}`,
+<<<<<<< HEAD
+          icon: {
+            url: '/image/bus/icon-bus.png',
+            size: new naver.maps.Size(24, 24),
+            origin: new naver.maps.Point(0, 0),
+            anchor: new naver.maps.Point(8, 24)
+          }
+=======
           icon
+>>>>>>> develop
         });
 
         naver.maps.Event.addListener(marker, 'click', () => {
@@ -940,6 +955,16 @@ async function loadArrivalAtStop(stopId, arsId) {
   }
 }
 
+<<<<<<< HEAD
+document.body.addEventListener('click', e => {
+  const target = e.target.closest('.arrival-item');
+  if (target && target.dataset.route) {
+    const route = target.dataset.route;
+    stopBusTracking();
+    startBusTracking({ routeNumber: route });  // ✅ 실시간 위치만 표시
+  }
+})
+=======
 document.body.addEventListener('click', async e => {
   const target = e.target.closest('.arrival-item');
   if (!target || !target.dataset.route) return;
@@ -973,6 +998,7 @@ document.body.addEventListener('click', async e => {
   }
 });
 
+>>>>>>> develop
 
 document.addEventListener("click", function (e) {
   const popup = document.getElementById("routeDetailPopup");
