@@ -11,7 +11,12 @@ let panelStates = {
   event: false,
   cctv: false,
   subway: false,
+<<<<<<< HEAD
   parking: false
+=======
+  parking: false,
+  vsl: false
+>>>>>>> develop
 };
 
 function clearAllMapMarkers() {
@@ -30,6 +35,11 @@ function clearAllMapMarkers() {
   window.clearBikeStations?.();
   window.clearSubwayLayer?.();
   window.clearStationMarkers?.();
+<<<<<<< HEAD
+=======
+  window.clearVslPanel?.();
+  window.hideVslMarkers()
+>>>>>>> develop
 
   if (window.userPositionMarker) {
     window.userPositionMarker.setMap(null);
@@ -332,6 +342,22 @@ document.addEventListener('DOMContentLoaded', () => {
         window.clearParkingMarkers?.();
         hideParkingLegend();
       }
+<<<<<<< HEAD
+=======
+    },
+    {
+      id: 'sidebarVslBtn',
+      key: 'vsl',
+      panelId: 'vslFilterPanel',
+      onActivate: () => {
+        document.getElementById("vslFilterPanel").style.display = "block";
+        window.loadVslListPanel && window.loadVslListPanel();
+      },
+      onDeactivate: () => {
+        document.getElementById("vslFilterPanel").style.display = "none";
+        window.hideVslPanel && window.hideVslPanel();
+      }
+>>>>>>> develop
     }
   ];
 

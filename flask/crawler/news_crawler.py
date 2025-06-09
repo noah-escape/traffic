@@ -12,8 +12,8 @@ def get_article_date(detail_url):
 
     meta_tag = soup.find("meta", attrs={"property": "article:published_time"})
     if meta_tag:
-        iso_date = meta_tag.get("content")  # 예: '2025-05-23T11:43:36+09:00'
-        return iso_date[:10].replace("-", ".")  # → '2025.05.23'
+        iso_date = meta_tag.get("content")
+        return iso_date[:10].replace("-", ".")
     return ""
 
 def get_metro_news(url, category):
@@ -35,14 +35,11 @@ def get_metro_news(url, category):
             relative_link = link_tag.get("href")
             full_link = "http://metronews.co.kr" + relative_link
 
-            # ✅ 상세페이지에서 날짜 추출
             date = get_article_date(full_link) or datetime.today().strftime("%Y.%m.%d")
 
-            # ✅ 썸네일 추출
+            thumbnail = ""
             if img_tag and img_tag.get("src"):
                 thumbnail = "http://metronews.co.kr" + img_tag.get("src")
-            else:
-                thumbnail = ""  # 기본값
 
             articles.append({
                 "title": title,
@@ -50,11 +47,10 @@ def get_metro_news(url, category):
                 "link": full_link,
                 "date": date,
                 "source": f"메트로뉴스 - {category}",
-                "thumbnail": thumbnail  # ✅ 추가
+                "thumbnail": thumbnail
             })
 
     return articles
-
 
 def get_all_news():
     all_articles = []
@@ -68,7 +64,6 @@ def get_all_news():
     for category, url in metro_urls.items():
         all_articles.extend(get_metro_news(url, category))
 
-    # 날짜 기준 정렬
     try:
         all_articles.sort(key=lambda x: datetime.strptime(x['date'], "%Y.%m.%d"), reverse=True)
     except:
@@ -76,7 +71,45 @@ def get_all_news():
 
     return all_articles
 
-# 테스트 실행용
+def get_popular_news():
+    """
+    메트로뉴스 '가장 많이 본 뉴스' 영역 크롤링
+    """
+    url = "http://metronews.co.kr/board_list.html?board_id=news&ca_name=지하철"
+    headers = {"User-Agent": "Mozilla/5.0"}
+    res = requests.get(url, headers=headers)
+    soup = BeautifulSoup(res.text, "html.parser")
+
+    popular_articles = []
+    # ✅ 확인된 인기기사 위치
+    items = soup.select("div.favoriteNewsBody ul li")
+
+    for item in items:
+        link_tag = item.select_one("a")
+        if not link_tag:
+            continue
+
+        relative_link = link_tag.get("href")
+        title = link_tag.get_text(strip=True)
+        full_link = "http://metronews.co.kr" + relative_link
+
+        date = get_article_date(full_link) or datetime.today().strftime("%Y.%m.%d")
+
+        popular_articles.append({
+            "title": title,
+            "link": full_link,
+            "date": date,
+            "source": "메트로뉴스 - 인기기사",
+            "summary": "",
+            "thumbnail": ""
+        })
+
+    return popular_articles[:3]
+
+# 테스트 실행
 if __name__ == "__main__":
     from pprint import pprint
+    print("✅ 최신 기사:")
     pprint(get_all_news())
+    print("\n🔥 인기 기사:")
+    pprint(get_popular_news())
