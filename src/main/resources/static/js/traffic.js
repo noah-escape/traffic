@@ -33,7 +33,15 @@ function clearAllMapMarkers() {
   window.clearSubwayLayer?.();
   window.clearStationMarkers?.();
   window.clearVslPanel?.();
-  window.hideVslMarkers()
+  window.hideVslMarkers();
+  window.currentSelectedRoad = null;
+  window.currentSelectedRoadName = null;
+  roadLineVisible = false;
+  window.clearCctvMarkers?.();
+  if (window.roadPolylinesByUfid) {
+    for (const poly of window.roadPolylinesByUfid.values()) poly.setMap(null);
+    window.roadPolylinesByUfid.clear();
+  }
 
   if (window.userPositionMarker) {
     window.userPositionMarker.setMap(null);

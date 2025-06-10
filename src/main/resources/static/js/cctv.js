@@ -1,4 +1,3 @@
-window.roadPolylines = [];
 window.cctvMarkers = [];
 window.currentCctvType = "ex";
 window.currentSelectedRoadName = null;
@@ -6,13 +5,14 @@ window.currentSelectedRoad = null;
 window.cctvOverlays = [];
 let roadLineVisible = false;
 const roadSignThumbCache = {};
+window.roadPolylinesByUfid = new Map();
 
 window.resetCctvPanel = function() {
   window.currentSelectedRoad = null;
   window.currentSelectedRoadName = null;
   roadLineVisible = false;
   window.clearCctvMarkers?.();
-  window.clearRoadLines();
+  clearRoadLines();
   window.closeAllCctvOverlays?.();
   const roadListElem = document.getElementById("roadList");
   if (roadListElem) roadListElem.innerHTML = "";
@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
         await renderRoadLinesInView(window.currentSelectedRoad);
       }
     } else {
-      this.textContent = "🛣️ 도로중심선 보기(실험)";
+      this.textContent = "🛣️ 도로중심선 보기";
       clearRoadLines();
     }
   });
@@ -280,7 +280,7 @@ async function toggleRoadSection(li, road) {
 
 function resetRoadLineBtn() {
   const btn = document.getElementById('toggleRoadLineBtn');
-  if (btn) btn.textContent = "🛣️ 도로중심선 보기(실험)";
+  if (btn) btn.textContent = "🛣️ 도로중심선 보기";
 }
 
 async function renderInViewCctvOnly(roadName = null) {
@@ -294,85 +294,96 @@ async function renderInViewCctvOnly(roadName = null) {
   drawCctvMarkers(cctvs);
 }
 
-function getCoordinateLevelByZoom() {
-  const zoom = window.map.getZoom();
-  if (zoom >= 14) return 13;
-  if (zoom >= 12) return 12;
-  if (zoom >= 11) return 11;
-  if (zoom >= 10) return 10;
-  if (zoom >= 9) return 9;
-  if (zoom >= 8) return 8;
-  return 99;
+// 중심선 증분 방식 렌더링 함수 (핵심!!)
+function renderRoadUfidPolylines(coords) {
+  const group = {};
+  coords.forEach(c => {
+    if (!group[c.roadUfid]) group[c.roadUfid] = [];
+    group[c.roadUfid].push(new naver.maps.LatLng(c.lat, c.lng));
+  });
+
+  const visibleUfids = new Set(Object.keys(group));
+  const prevUfids = new Set(window.roadPolylinesByUfid.keys());
+
+  // 1) 안보이게 된 선 제거
+  for (const ufid of prevUfids) {
+    if (!visibleUfids.has(ufid)) {
+      const poly = window.roadPolylinesByUfid.get(ufid);
+      poly.setMap(null);
+      window.roadPolylinesByUfid.delete(ufid);
+    }
+  }
+  // 2) 새로 보이거나(혹은 path 변경된) 구간 무조건 갱신
+  for (const ufid of visibleUfids) {
+    const path = group[ufid];
+    if (!window.roadPolylinesByUfid.has(ufid)) {
+      // polyline이 없으면 생성
+      const poly = new naver.maps.Polyline({
+        map: window.map,
+        path,
+        strokeColor: "#007bff",
+        strokeOpacity: 0.85,
+        strokeWeight: 6
+      });
+      window.roadPolylinesByUfid.set(ufid, poly);
+    } else {
+      // polyline이 이미 있으면 path 강제 갱신 + 혹시 지도에서 떨어졌으면 다시 붙이기
+      const poly = window.roadPolylinesByUfid.get(ufid);
+      poly.setPath(path);
+      if (!poly.getMap()) poly.setMap(window.map);
+    }
+  }
 }
 
+// 고속도로/국도 공통 (무조건 증분식, level=99)
 async function renderRoadLinesInView(road) {
-  clearRoadLines();
   if (!road) return;
   const bounds = window.map.getBounds();
   const sw = bounds.getSW(), ne = bounds.getNE();
   let coordsUrl = `/api/road-coordinates/in-bounds?swLat=${sw.y}&swLng=${sw.x}&neLat=${ne.y}&neLng=${ne.x}`;
-  if (road.roadType === "its") {
-    coordsUrl += `&roadType=its`;
-    coordsUrl += `&roadNumber=${encodeURIComponent(road.roadNumber)}`;
-    coordsUrl += `&level=99`;
-  } else {
-    const level = getCoordinateLevelByZoom();
-    coordsUrl += `&roadType=ex`;
-    coordsUrl += `&roadName=${encodeURIComponent(road.roadName)}`;
-    coordsUrl += `&level=${level}`;
-  }
-  const coordsRes = await fetch(coordsUrl);
-  const coords = await coordsRes.json();
-  drawRoadLines(coords);
+  coordsUrl += `&roadType=${road.roadType}`;
+  coordsUrl += (road.roadType === "its")
+    ? `&roadNumber=${encodeURIComponent(road.roadNumber)}&level=99`
+    : `&roadName=${encodeURIComponent(road.roadName)}&level=99`;
+
+  const coords = await fetch(coordsUrl).then(r => r.json());
+  renderRoadUfidPolylines(coords);
 }
 
+// 국도 중심선 (도로번호)
 async function renderGukdoCenterlineInView(roadNumber) {
+  if (!roadNumber) return;
   const bounds = window.map.getBounds();
   const sw = bounds.getSW(), ne = bounds.getNE();
   const url =
     `/api/road-coordinates/nationalroad-centerline-in-bounds`
     + `?swLat=${sw.y}&swLng=${sw.x}&neLat=${ne.y}&neLng=${ne.x}&roadNumber=${roadNumber}`;
   const coords = await fetch(url).then(r => r.json());
-  clearRoadLines();
-  if (!coords.length) {
-    alert("국도 " + roadNumber + "호선 중심선 없음");
-    return;
-  }
-  const group = {};
-  coords.forEach(c => {
-    if (!group[c.roadUfid]) group[c.roadUfid] = [];
-    group[c.roadUfid].push(new naver.maps.LatLng(c.lat, c.lng));
-  });
-  Object.values(group).forEach(path => {
-    const polyline = new naver.maps.Polyline({
-      map: window.map,
-      path: path,
-      strokeColor: "#007bff",
-      strokeOpacity: 0.85,
-      strokeWeight: 6
-    });
-    window.roadPolylines.push(polyline);
-  });
+  renderRoadUfidPolylines(coords);
 }
 
-function drawRoadLines(coords) {
+function clearRoadLines() {
+  for (const poly of window.roadPolylinesByUfid.values()) {
+    poly.setMap(null);
+  }
+  window.roadPolylinesByUfid.clear();
+}
+
+window.clearCctvMarkers = function () {
+  console.log("CCTV 마커 지우는 중", window.cctvMarkers?.length);
+  // 마커 지우기
+  window.cctvMarkers?.forEach(marker => marker.setMap(null));
+  window.cctvMarkers = [];
+  // 중심선도 함께 지움!
+  if (window.roadPolylinesByUfid) {
+    for (const poly of window.roadPolylinesByUfid.values()) poly.setMap(null);
+    window.roadPolylinesByUfid.clear();
+  }
+}
+
+function clearAllMapObjects() {
+  clearCctvMarkers();
   clearRoadLines();
-  if (!coords.length) return;
-  const group = {};
-  coords.forEach(c => {
-    if (!group[c.roadUfid]) group[c.roadUfid] = [];
-    group[c.roadUfid].push(new naver.maps.LatLng(c.lat, c.lng));
-  });
-  Object.values(group).forEach(path => {
-    const polyline = new naver.maps.Polyline({
-      map: window.map,
-      path: path,
-      strokeColor: "#007bff",
-      strokeOpacity: 0.85,
-      strokeWeight: 6
-    });
-    window.roadPolylines.push(polyline);
-  });
 }
 
 function drawCctvMarkers(cctvs) {
@@ -399,19 +410,6 @@ function drawCctvMarkers(cctvs) {
       window.cctvMarkers.push(marker);
     } catch (e) {}
   });
-}
-
-function clearRoadLines() {
-  window.roadPolylines.forEach(poly => poly.setMap(null));
-  window.roadPolylines = [];
-}
-window.clearCctvMarkers = function () {
-  window.cctvMarkers.forEach(marker => marker.setMap(null));
-  window.cctvMarkers = [];
-};
-function clearAllMapObjects() {
-  clearCctvMarkers();
-  clearRoadLines();
 }
 
 function showCctvOverlay(cctv, marker) {
