@@ -1,4 +1,5 @@
-window.roadPolylines = [];
+// 파일명: cctv.js
+
 window.cctvMarkers = [];
 window.currentCctvType = "ex";
 window.currentSelectedRoadName = null;
