@@ -1,337 +1,517 @@
-window.ITS_API_KEY;
+// 파일명: cctv.js
 
-let allCctvDataITS = [], allCctvDataEX = [], cctvMarkers = [];
-let hls = null;
-let currentVideoUrl = '', currentCctvType = 'ex';
-let sortAscending = true, isDataLoaded = false;
-let exList = [], itsList = [];
+window.cctvMarkers = [];
+window.currentCctvType = "ex";
+window.currentSelectedRoadName = null;
+window.currentSelectedRoad = null;
+window.cctvOverlays = [];
+let roadLineVisible = false;
+const roadSignThumbCache = {};
 
-function cleanCctvName(raw) {
-  return raw.replace(/\[[^\]]*\]/g, '').trim();
+window.resetCctvPanel = function() {
+  window.currentSelectedRoad = null;
+  window.currentSelectedRoadName = null;
+  roadLineVisible = false;
+  window.clearCctvMarkers?.();
+  window.clearRoadLines();
+  window.closeAllCctvOverlays?.();
+  const roadListElem = document.getElementById("roadList");
+  if (roadListElem) roadListElem.innerHTML = "";
+  resetRoadLineBtn?.();
 }
 
-function extractRoadFromCctv(cctvname) {
-  const match = cctvname.match(/\[(.*?)\]/);
-  if (!match) return null;
-  let name = match[1].replace(/\s/g, '');
-  const suffixExceptions = ['창선', '환선', '지선', '산선', '성선', '양선', '포선'];
-  return (name.endsWith('선') && !suffixExceptions.some(sfx => name.endsWith(sfx)))
-    ? name.replace(/선$/, '고속도로') : name;
-}
+window.closeCctvPanel = function() {
+  resetCctvPanel();
+  document.getElementById('cctvFilterPanel').style.display = 'none';
+};
 
-function findCctvMatch(name, roadName) {
-  const cleaned = cleanCctvName(name);
-  const candidates = [...allCctvDataITS, ...allCctvDataEX].filter(d => cleanCctvName(d.cctvname) === cleaned);
-  if (!candidates.length) return null;
-  const normalized = roadName.replace(/\s/g, '');
-  return candidates.find(d => {
-    const ex = extractRoadFromCctv(d.cctvname);
-    return ex && normalized.includes(ex);
-  }) || candidates.find(d => d.cctvname.replace(/\s/g, '').includes(normalized)) || candidates[0];
-}
+window.openCctvPanel = function() {
+  resetCctvPanel();
+  document.getElementById('cctvFilterPanel').style.display = 'flex';
+  loadRoadList();
+};
 
-function fetchWithRetry(url, retries = 3) {
-  return fetch(url, { credentials: 'omit' }).catch(err => {
-    if (retries > 0) return fetchWithRetry(url, retries - 1);
-    throw err;
-  });
-}
-
-function loadCctvJsonList() {
-  return Promise.all([
-    fetch('/json/ex_list.json').then(r => r.json()),
-    fetch('/json/its_list.json').then(r => r.json())
-  ]).then(([ex, its]) => { exList = ex; itsList = its; });
-}
-
-function preloadAllCctvs() {
-  document.getElementById('loadingSpinner').style.display = 'block';
-  const base = 'https://openapi.its.go.kr:9443/cctvInfo';
-  const buildUrl = type => `${base}?apiKey=${window.ITS_API_KEY}&type=${type}&cctvType=1&minX=124.6&maxX=132.0&minY=33.0&maxY=39.0&getType=json`;
-
-  Promise.all([
-    fetchWithRetry(buildUrl('its')).then(r => r.json()),
-    fetchWithRetry(buildUrl('ex')).then(r => r.json()),
-    loadCctvJsonList()
-  ]).then(async ([itsRes, exRes]) => {
-    allCctvDataITS = itsRes.response?.data || [];
-    allCctvDataEX = exRes.response?.data || [];
-    isDataLoaded = true;
-    await loadRoadList();
-    document.getElementById('loadingSpinner').style.display = 'none';
-  }).catch(err => {
-    console.error('❌ CCTV 로드 실패:', err);
-    document.getElementById('loadingSpinner').style.display = 'none';
-    alert('CCTV 데이터를 불러오지 못했습니다.');
-  });
-}
-
-function generateRoadIconBase64(type, number) {
-  const canvas = document.createElement('canvas');
-  canvas.width = type === 'ex' ? 60 : 100;
-  canvas.height = 60;
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  if (type === 'its') {
-    ctx.beginPath();
-    ctx.ellipse(canvas.width / 2, canvas.height / 2, 50, 20, 0, 0, Math.PI * 2);
-    ctx.fillStyle = '#2166d1';
-    ctx.fill();
-    ctx.lineWidth = 5;
-    ctx.strokeStyle = 'white';
-    ctx.stroke();
+function waitForMapAndBindIdle() {
+  if (!window.map || typeof window.map.getBounds !== 'function') {
+    setTimeout(waitForMapAndBindIdle, 200);
+    return;
   }
-
-  return new Promise(resolve => {
-    if (type === 'ex') {
-      const img = new Image();
-      img.src = '/image/cctv_signs/cctv_ex_signs.png';
-      img.onload = () => {
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        drawText(ctx, number, canvas);
-        resolve(canvas.toDataURL());
-      };
-    } else {
-      drawText(ctx, number, canvas);
-      resolve(canvas.toDataURL());
+  naver.maps.Event.addListener(window.map, 'idle', () => {
+    if (window.currentSelectedRoad && roadLineVisible) {
+      if (window.currentSelectedRoad.roadType === "its") {
+        renderGukdoCenterlineInView(window.currentSelectedRoad.roadNumber);
+      } else {
+        renderRoadLinesInView(window.currentSelectedRoad);
+      }
+    }
+    if (window.currentSelectedRoad) {
+      renderInViewCctvOnly(window.currentSelectedRoad.roadName);
     }
   });
 }
+waitForMapAndBindIdle();
 
-function drawText(ctx, number, canvas) {
-  ctx.font = 'bold 28px sans-serif';
-  ctx.fillStyle = 'white';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(number, canvas.width / 2, canvas.height / 2);
-}
-
-async function loadRoadList() {
-  const list = document.getElementById('roadList');
-  if (!list) return;
-  list.innerHTML = '';
-
-  const roads = currentCctvType === 'ex' ? exList : itsList;
-  const sortedRoads = roads.sort((a, b) =>
-    parseInt(a.road_number.replace(/\D/g, '')) - parseInt(b.road_number.replace(/\D/g, ''))
-  );
-
-  const roadElements = await Promise.all(sortedRoads.map(async road => {
-    const iconUrl = await generateRoadIconBase64(currentCctvType, road.road_number);
-    const li = document.createElement('li');
-    li.className = 'list-group-item list-group-item-action';
-    li.innerHTML = `
-      <div style="display:flex; flex-direction:column;">
-        <div style="display:flex; align-items:center; justify-content:space-between;">
-          <div style="display:flex; align-items:center; gap:8px;">
-            <img src="${iconUrl}" style="width:36px;height:36px;flex-shrink:0;" />
-            <strong>${road.road_name}</strong>
-          </div>
-          <button class="btn btn-sm btn-outline-secondary sort-btn" style="display:none;" title="정렬 순서 변경">↕</button>
-        </div>
-        <div class="road-section-summary" style="font-size:0.9em; color:#666; margin-left:44px;"></div>
-      </div>
-    `;
-    li.addEventListener('click', () => toggleSection(li, road));
-    return li;
-  }));
-
-  roadElements.forEach(el => list.appendChild(el));
-}
-
-function toggleSection(li, road) {
-  const sectionEl = li.nextElementSibling;
-  const summary = li.querySelector('.road-section-summary');
-
-  if (sectionEl?.classList.contains('road-section')) {
-    clearCctvMarkers();
-    sectionEl.remove();
-    summary.textContent = '';
-    li.querySelector('.sort-btn').style.display = 'none';
-    return;
+function createRoadSignThumb(roadType, roadNo) {
+  let width = 56, height = 31;
+  if (roadType === "ex") { width = 46; height = 46; }
+  const cacheKey = roadType + "_" + roadNo;
+  if (roadSignThumbCache[cacheKey]) {
+    const imgElem = document.createElement("img");
+    imgElem.src = roadSignThumbCache[cacheKey];
+    imgElem.className = roadType === "ex" ? "road-thumb-ex" : "road-thumb-its";
+    imgElem.width = width;
+    imgElem.height = height;
+    return imgElem;
   }
-
-  loadRoadCctvMarkers(road);
-  summary.innerHTML = `<strong>${road.route_section}</strong>`;
-  const ul = document.createElement('ul');
-  ul.className = 'road-section';
-
-  const cctvs = sortAscending ? road.cctvs : [...road.cctvs].reverse();
-  cctvs.forEach(name => {
-    const data = findCctvMatch(name, road.road_name);
-    if (!data) return;
-    const sub = document.createElement('li');
-    sub.className = 'list-group-item';
-    sub.textContent = name;
-    sub.addEventListener('click', e => {
-      e.stopPropagation();
-      playVideo(data.cctvurl, data.cctvname, new naver.maps.LatLng(+data.coordy, +data.coordx));
-    });
-    ul.appendChild(sub);
-  });
-
-  li.insertAdjacentElement('afterend', ul);
-
-  const sortBtn = li.querySelector('.sort-btn');
-  sortBtn.style.display = 'inline-block';
-  sortBtn.onclick = e => {
-    e.stopPropagation();
-    sortAscending = !sortAscending;
-    ul.remove();
-    summary.textContent = '';
-    toggleSection(li, road);
+  const imgSrc = roadType === "ex"
+    ? "/image/cctv_signs/cctv_ex_signs.png"
+    : "/image/cctv_signs/cctv_its_signs.png";
+  const canvas = document.createElement("canvas");
+  canvas.width = width; canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  const img = new window.Image(); img.src = imgSrc;
+  const imgElem = document.createElement("img");
+  imgElem.className = roadType === "ex" ? "road-thumb-ex" : "road-thumb-its";
+  imgElem.width = width; imgElem.height = height;
+  img.onload = function () {
+    ctx.clearRect(0, 0, width, height);
+    ctx.drawImage(img, 0, 0, width, height);
+    ctx.font = "bold 19px Pretendard, Arial, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#fff";
+    ctx.strokeStyle = "#444";
+    ctx.lineWidth = 3;
+    ctx.strokeText(String(roadNo), width / 2, height / 2 + 2);
+    ctx.fillText(String(roadNo), width / 2, height / 2 + 2);
+    const dataUrl = canvas.toDataURL();
+    roadSignThumbCache[cacheKey] = dataUrl;
+    imgElem.src = dataUrl;
   };
+  return imgElem;
 }
 
-function loadRoadCctvMarkers(road) {
-  clearCctvMarkers();
-  const bounds = new naver.maps.LatLngBounds();
-
-  road.cctvs?.forEach(name => {
-    const data = findCctvMatch(name, road.road_name);
-    if (!data || isNaN(+data.coordx) || isNaN(+data.coordy)) return;
-    const position = new naver.maps.LatLng(+data.coordy, +data.coordx);
-    const marker = new naver.maps.Marker({
-      map,
-      position,
-      title: name,
-      icon: {
-        url: '/image/cctv-icon.png',
-        size: new naver.maps.Size(44, 66),
-        anchor: new naver.maps.Point(22, 22)
-      }
-    });
-    naver.maps.Event.addListener(marker, 'click', () => playVideo(data.cctvurl, data.cctvname, position));
-    cctvMarkers.push(marker);
-    bounds.extend(position);
-  });
-
-  if (cctvMarkers.length) map.fitBounds(bounds);
-}
-
-function playVideo(url, name, position) {
-  const container = document.getElementById('videoContainer');
-  const video = document.getElementById('cctvVideo');
-  const title = document.getElementById('videoTitle');
-
-  title.textContent = name;
-  currentVideoUrl = url;
-
-  if (hls) hls.destroy();
-  hls = new Hls();
-  hls.loadSource(url);
-  hls.attachMedia(video);
-  hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(console.warn));
-
-  container.style.display = 'block';
-  video.style.display = 'block';
-  map.panTo(position);
-
-  const rect = document.getElementById('map').getBoundingClientRect();
-  container.style.left = `${rect.left + rect.width / 2 - container.offsetWidth / 2}px`;
-  container.style.top = `${rect.top + rect.height / 2 - container.offsetHeight / 2 + 130}px`;
-
-  document.getElementById('closeVideoBtn').onclick = hideVideo;
-  document.getElementById('fullscreenBtn').onclick = () => video.requestFullscreen?.();
-  document.getElementById('openNewTabBtn').onclick = () => openInNewTab(currentVideoUrl, name);
-  makeVideoContainerDraggable();
-}
-
-function openInNewTab(url, title) {
-  const win = window.open('', '_blank', 'width=800,height=600');
-  win.document.write(`
-    <html><head><title>${title}</title>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <style>body{margin:0;background:#000;}video{width:100%;height:100vh;object-fit:contain;}</style>
-    </head><body>
-    <video id="video" controls autoplay muted></video>
-    <script>
-      const video = document.getElementById('video');
-      if (Hls.isSupported()) {
-        const hls2 = new Hls();
-        hls2.loadSource('${url}');
-        hls2.attachMedia(video);
-        hls2.on(Hls.Events.MANIFEST_PARSED, ()=>video.play());
-      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        video.src='${url}'; video.play();
-      }
-    </script></body></html>`);
-}
-
-function hideVideo() {
-  if (hls) hls.destroy();
-  hls = null;
-  document.getElementById('videoContainer').style.display = 'none';
-}
-
-function clearCctvMarkers() {
-  cctvMarkers.forEach(m => m.setMap(null));
-  cctvMarkers = [];
-}
-
-function makeVideoContainerDraggable() {
-  const container = document.getElementById('videoContainer');
-  const header = container.querySelector('.video-header');
-  let dragging = false, offsetX = 0, offsetY = 0;
-
-  container.style.position = 'absolute';
-  header.style.cursor = 'grab';
-
-  header.addEventListener('mousedown', e => {
-    if (e.clientY - header.getBoundingClientRect().top > header.offsetHeight / 2) return;
-    dragging = true;
-    const rect = container.getBoundingClientRect();
-    offsetX = e.clientX - rect.left;
-    offsetY = e.clientY - rect.top;
-    header.style.cursor = 'grabbing';
-    e.preventDefault();
-  });
-
-  document.addEventListener('mousemove', e => {
-    if (!dragging) return;
-    const nx = Math.min(Math.max(0, e.clientX - offsetX), window.innerWidth - container.offsetWidth);
-    const ny = Math.min(Math.max(0, e.clientY - offsetY), window.innerHeight - container.offsetHeight);
-    requestAnimationFrame(() => {
-      container.style.left = `${nx}px`;
-      container.style.top = `${ny}px`;
-    });
-  });
-
-  document.addEventListener('mouseup', () => {
-    dragging = false;
-    header.style.cursor = 'grab';
-  });
-}
-
-// 초기화
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('highway')?.addEventListener('click', () => {
-    currentCctvType = 'ex';
-    loadRoadList();
-  });
+  ['highway', 'tabHighway'].forEach(id =>
+    document.getElementById(id)?.addEventListener('click', () => setRoadType('ex')));
+  ['normalroad', 'tabNormalroad'].forEach(id =>
+    document.getElementById(id)?.addEventListener('click', () => setRoadType('its')));
+  loadRoadList();
 
-  document.getElementById('normalroad')?.addEventListener('click', () => {
-    currentCctvType = 'its';
-    loadRoadList();
+  document.getElementById('toggleRoadLineBtn')?.addEventListener('click', async function () {
+    if (!window.currentSelectedRoad) {
+      alert('먼저 도로를 선택하세요!');
+      return;
+    }
+    roadLineVisible = !roadLineVisible;
+    if (roadLineVisible) {
+      this.textContent = "🛣️ 도로중심선 숨기기";
+      if (window.currentSelectedRoad.roadType === "its") {
+        await renderGukdoCenterlineInView(window.currentSelectedRoad.roadNumber);
+      } else {
+        await renderRoadLinesInView(window.currentSelectedRoad);
+      }
+    } else {
+      this.textContent = "🛣️ 도로중심선 보기(실험)";
+      clearRoadLines();
+    }
   });
-
-  document.getElementById('tabHighway')?.addEventListener('click', () => {
-    currentCctvType = 'ex';
-    clearCctvMarkers();
-    loadRoadList();
-  });
-
-  document.getElementById('tabNormalroad')?.addEventListener('click', () => {
-    currentCctvType = 'its';
-    clearCctvMarkers();
-    loadRoadList();
-  });
-
-  preloadAllCctvs();
 });
 
-// 전역 등록
-window.loadRoadList = loadRoadList;
-window.clearCctvMarkers = clearCctvMarkers;
-window.hideVideo = hideVideo;
+function setRoadType(type) {
+  if (window.currentCctvType === type) return;
+  window.currentCctvType = type;
+  window.currentSelectedRoadName = null;
+  window.currentSelectedRoad = null;
+  roadLineVisible = false;
+  clearAllMapObjects();
+  loadRoadList();
+  resetRoadLineBtn();
+}
+
+window.loadRoadList = async function (type = window.currentCctvType) {
+  const listElem = document.getElementById("roadList");
+  listElem.innerHTML = "<li>로딩 중...</li>";
+  try {
+    const url = `/api/cctvs/roads?roadType=${type}`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      listElem.innerHTML = `<li>로드 실패 (${response.status})</li>`;
+      return;
+    }
+    const roads = await response.json();
+    listElem.innerHTML = "";
+    for (const road of roads) {
+      const li = document.createElement("li");
+      li.className = "list-group-item list-group-item-action road-list-item";
+      const rowDiv = document.createElement("div");
+      rowDiv.style.display = "flex";
+      rowDiv.style.alignItems = "center";
+      rowDiv.style.gap = "8px";
+      rowDiv.style.width = "100%";
+      rowDiv.appendChild(createRoadSignThumb(road.roadType || window.currentCctvType, road.roadNumber));
+      const nameElem = document.createElement("strong");
+      nameElem.textContent = road.roadName;
+      rowDiv.appendChild(nameElem);
+
+      const reverseBtn = document.createElement("button");
+      reverseBtn.className = "reverse-order-btn";
+      reverseBtn.innerHTML = "🔄";
+      reverseBtn.title = "정렬 순서 반전";
+      reverseBtn.style.marginLeft = "auto";
+      reverseBtn.style.border = "none";
+      reverseBtn.style.background = "none";
+      reverseBtn.style.cursor = "pointer";
+      reverseBtn.style.fontSize = "27px";
+      reverseBtn.style.opacity = "0.96";
+      reverseBtn.style.color = "#1d5cff";
+      reverseBtn.style.display = "none";
+
+      rowDiv.appendChild(reverseBtn);
+      li.appendChild(rowDiv);
+
+      li.onclick = (e) => {
+        e.stopPropagation();
+        toggleRoadSection(li, road);
+        document.querySelectorAll(".reverse-order-btn").forEach(b => b.style.display = "none");
+        reverseBtn.style.display = "inline-block";
+      };
+
+      reverseBtn.onclick = (e) => {
+        e.stopPropagation();
+        const next = li.nextElementSibling;
+        if (next && next.classList.contains('road-section-wrap')) {
+          const ul = next.querySelector('ul.road-section');
+          if (!ul) return;
+          const items = Array.from(ul.children);
+          ul.innerHTML = '';
+          items.reverse().forEach(child => ul.appendChild(child));
+        }
+      };
+
+      listElem.appendChild(li);
+    }
+  } catch (e) {
+    listElem.innerHTML = "<li>로드 실패(예외)</li>";
+  }
+};
+
+async function toggleRoadSection(li, road) {
+  const next = li.nextElementSibling;
+  if (next && next.classList.contains('road-section-wrap')) {
+    next.remove();
+    clearCctvMarkers();
+    clearRoadLines();
+    window.currentSelectedRoadName = null;
+    window.currentSelectedRoad = null;
+    resetRoadLineBtn();
+    renderInViewCctvOnly();
+    return;
+  }
+  document.querySelectorAll('.road-section-wrap').forEach(el => el.remove());
+  clearCctvMarkers();
+  clearRoadLines();
+
+  window.currentSelectedRoad = road;
+  window.currentSelectedRoadName = road.roadName;
+
+  const url = `/api/cctvs/by-road-name?roadName=${encodeURIComponent(road.roadName)}`;
+  const response = await fetch(url);
+  let cctvs = await response.json();
+
+  const wrapDiv = document.createElement("div");
+  wrapDiv.className = "road-section-wrap";
+  wrapDiv.style.position = "relative";
+  wrapDiv.style.background = "#f8f9fa";
+  wrapDiv.style.paddingTop = "8px";
+
+  function renderCctvList(list) {
+    const oldUl = wrapDiv.querySelector("ul.road-section");
+    if (oldUl) oldUl.remove();
+
+    const ul = document.createElement('ul');
+    ul.className = "road-section";
+    ul.style.background = "#f8f9fa";
+    ul.style.padding = "5px 20px 5px 48px";
+    ul.style.margin = "0";
+    ul.style.borderBottom = "1px solid #eee";
+
+    if (list.length === 0) {
+      const noneLi = document.createElement("li");
+      noneLi.className = "list-group-item text-danger";
+      noneLi.textContent = "[CCTV 없음]";
+      ul.appendChild(noneLi);
+    } else {
+      for (const cctv of list) {
+        const cctvLi = document.createElement("li");
+        cctvLi.className = "list-group-item";
+        cctvLi.style.cursor = "pointer";
+        cctvLi.textContent = cctv.cctvSpot || cctv.name;
+        cctvLi.onclick = (e) => {
+          e.stopPropagation();
+          if (window.map && cctv.lat && cctv.lng) {
+            window.map.setCenter(new naver.maps.LatLng(Number(cctv.lat), Number(cctv.lng)));
+          }
+          showCctvOverlay(cctv);
+        };
+        ul.appendChild(cctvLi);
+      }
+    }
+    wrapDiv.appendChild(ul);
+  }
+
+  renderCctvList(cctvs);
+
+  li.insertAdjacentElement('afterend', wrapDiv);
+
+  if (cctvs.length > 0 && window.map && cctvs[0].lat && cctvs[0].lng) {
+    window.map.setCenter(new naver.maps.LatLng(Number(cctvs[0].lat), Number(cctvs[0].lng)));
+    window.map.setZoom(14);
+  }
+  renderInViewCctvOnly(road.roadName);
+
+  if (roadLineVisible) {
+    if (road.roadType === "its") {
+      await renderGukdoCenterlineInView(road.roadNumber);
+    } else {
+      await renderRoadLinesInView(road);
+    }
+  }
+}
+
+function resetRoadLineBtn() {
+  const btn = document.getElementById('toggleRoadLineBtn');
+  if (btn) btn.textContent = "🛣️ 도로중심선 보기(실험)";
+}
+
+async function renderInViewCctvOnly(roadName = null) {
+  const bounds = window.map.getBounds();
+  const sw = bounds.getSW(), ne = bounds.getNE();
+  let cctvUrl = `/api/cctvs/in-bounds?swLat=${sw.y}&swLng=${sw.x}&neLat=${ne.y}&neLng=${ne.x}`;
+  if (roadName) cctvUrl += `&roadName=${encodeURIComponent(roadName)}`;
+  if (window.currentCctvType) cctvUrl += `&roadType=${window.currentCctvType}`;
+  const cctvRes = await fetch(cctvUrl);
+  const cctvs = await cctvRes.json();
+  drawCctvMarkers(cctvs);
+}
+
+function getCoordinateLevelByZoom() {
+  const zoom = window.map.getZoom();
+  if (zoom >= 14) return 13;
+  if (zoom >= 12) return 12;
+  if (zoom >= 11) return 11;
+  if (zoom >= 10) return 10;
+  if (zoom >= 9) return 9;
+  if (zoom >= 8) return 8;
+  return 99;
+}
+
+async function renderRoadLinesInView(road) {
+  clearRoadLines();
+  if (!road) return;
+  const bounds = window.map.getBounds();
+  const sw = bounds.getSW(), ne = bounds.getNE();
+  let coordsUrl = `/api/road-coordinates/in-bounds?swLat=${sw.y}&swLng=${sw.x}&neLat=${ne.y}&neLng=${ne.x}`;
+  if (road.roadType === "its") {
+    coordsUrl += `&roadType=its`;
+    coordsUrl += `&roadNumber=${encodeURIComponent(road.roadNumber)}`;
+    coordsUrl += `&level=99`;
+  } else {
+    const level = getCoordinateLevelByZoom();
+    coordsUrl += `&roadType=ex`;
+    coordsUrl += `&roadName=${encodeURIComponent(road.roadName)}`;
+    coordsUrl += `&level=${level}`;
+  }
+  const coordsRes = await fetch(coordsUrl);
+  const coords = await coordsRes.json();
+  drawRoadLines(coords);
+}
+
+async function renderGukdoCenterlineInView(roadNumber) {
+  const bounds = window.map.getBounds();
+  const sw = bounds.getSW(), ne = bounds.getNE();
+  const url =
+    `/api/road-coordinates/nationalroad-centerline-in-bounds`
+    + `?swLat=${sw.y}&swLng=${sw.x}&neLat=${ne.y}&neLng=${ne.x}&roadNumber=${roadNumber}`;
+  const coords = await fetch(url).then(r => r.json());
+  clearRoadLines();
+  if (!coords.length) {
+    alert("국도 " + roadNumber + "호선 중심선 없음");
+    return;
+  }
+  const group = {};
+  coords.forEach(c => {
+    if (!group[c.roadUfid]) group[c.roadUfid] = [];
+    group[c.roadUfid].push(new naver.maps.LatLng(c.lat, c.lng));
+  });
+  Object.values(group).forEach(path => {
+    const polyline = new naver.maps.Polyline({
+      map: window.map,
+      path: path,
+      strokeColor: "#007bff",
+      strokeOpacity: 0.85,
+      strokeWeight: 6
+    });
+    window.roadPolylines.push(polyline);
+  });
+}
+
+function drawRoadLines(coords) {
+  clearRoadLines();
+  if (!coords.length) return;
+  const group = {};
+  coords.forEach(c => {
+    if (!group[c.roadUfid]) group[c.roadUfid] = [];
+    group[c.roadUfid].push(new naver.maps.LatLng(c.lat, c.lng));
+  });
+  Object.values(group).forEach(path => {
+    const polyline = new naver.maps.Polyline({
+      map: window.map,
+      path: path,
+      strokeColor: "#007bff",
+      strokeOpacity: 0.85,
+      strokeWeight: 6
+    });
+    window.roadPolylines.push(polyline);
+  });
+}
+
+function drawCctvMarkers(cctvs) {
+  clearCctvMarkers();
+  if (!cctvs.length) return;
+  cctvs.forEach((cctv, idx) => {
+    try {
+      const lat = Number(cctv.lat), lng = Number(cctv.lng);
+      if (isNaN(lat) || isNaN(lng)) return;
+      const marker = new naver.maps.Marker({
+        position: new naver.maps.LatLng(lat, lng),
+        map: window.map,
+        title: cctv.name,
+        icon: {
+          url: "/image/cctv-icon.png",
+          size: new naver.maps.Size(36, 36),
+          origin: new naver.maps.Point(0, 0),
+          anchor: new naver.maps.Point(18, 18)
+        }
+      });
+      marker.addListener("click", () => {
+        showCctvOverlay(cctv, marker);
+      });
+      window.cctvMarkers.push(marker);
+    } catch (e) {}
+  });
+}
+
+function clearRoadLines() {
+  window.roadPolylines.forEach(poly => poly.setMap(null));
+  window.roadPolylines = [];
+}
+window.clearCctvMarkers = function () {
+  window.cctvMarkers.forEach(marker => marker.setMap(null));
+  window.cctvMarkers = [];
+};
+function clearAllMapObjects() {
+  clearCctvMarkers();
+  clearRoadLines();
+}
+
+function showCctvOverlay(cctv, marker) {
+  window.closeAllCctvOverlays?.();
+  const videoHtml = `
+    <div class="video-container">
+      <div class="video-header">
+        <span class="video-title">${cctv.cctvSpot || cctv.name || ""}</span>
+        <button class="cctvOverlayCloseBtn video-close-btn">&times;</button>
+      </div>
+      <video class="cctvVideoPlayer cctv-video" controls autoplay>
+        <source src="${cctv.videoUrl}" type="application/x-mpegURL">
+        영상 지원 안됨
+      </video>
+      <div class="video-footer">
+        <button class="fullscreenBtn video-bottom-btn">전체화면</button>
+        <button class="cctvOverlayPopBtn video-bottom-btn">새창</button>
+      </div>
+    </div>
+  `;
+  const overlay = new naver.maps.InfoWindow({
+    content: videoHtml,
+    borderWidth: 0,
+    disableAnchor: true,
+    backgroundColor: "transparent",
+    pixelOffset: new naver.maps.Point(0, 390)
+  });
+
+  const lat = Number(cctv.lat), lng = Number(cctv.lng);
+  const pos = marker
+    ? marker.getPosition()
+    : (lat && lng ? new naver.maps.LatLng(lat, lng) : null);
+  if (!pos) return;
+
+  overlay.open(window.map, pos);
+
+  window.cctvOverlays = [overlay];
+
+  setTimeout(() => {
+    const root = overlay.getElement ? overlay.getElement() : document;
+    const video = root.querySelector(".cctvVideoPlayer");
+    if (video && window.Hls && Hls.isSupported()) {
+      overlay._hls = new Hls();
+      overlay._hls.loadSource(cctv.videoUrl);
+      overlay._hls.attachMedia(video);
+    }
+    root.querySelector(".fullscreenBtn")?.addEventListener("click", () => {
+      video.requestFullscreen();
+    });
+    root.querySelector(".cctvOverlayCloseBtn")?.addEventListener("click", () => {
+      overlay.close();
+      if (overlay._hls) { overlay._hls.destroy(); overlay._hls = null; }
+      window.cctvOverlays = [];
+    });
+    root.querySelector(".cctvOverlayPopBtn")?.addEventListener("click", () => {
+      if (!window.cctvNewTab || window.cctvNewTab.closed) {
+        window.cctvNewTab = window.open('', "_blank");
+      }
+      const url = cctv.videoUrl;
+      const videoPage = `
+        <html>
+        <head>
+          <title>CCTV 영상 새창 재생</title>
+          <style>
+            body { margin:0; background: #111; display:flex; justify-content:center; align-items:center; height:100vh;}
+            video { width:90vw; height:90vh; background:#000; }
+          </style>
+          <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.12/dist/hls.min.js"></script>
+        </head>
+        <body>
+          <video id="cctvVideo" controls autoplay muted></video>
+          <script>
+            var video = document.getElementById('cctvVideo');
+            var src = ${JSON.stringify(url)};
+            if (video.canPlayType('application/vnd.apple.mpegurl')) {
+              video.src = src;
+            } else if (window.Hls) {
+              var hls = new Hls();
+              hls.loadSource(src);
+              hls.attachMedia(video);
+            } else {
+              video.outerHTML = '<div style="color:#fff;font-size:20px;">HLS.js 미지원 브라우저입니다.</div>';
+            }
+          <\/script>
+        </body>
+        </html>
+      `;
+      window.cctvNewTab.document.write(videoPage);
+      window.cctvNewTab.document.close();
+    });
+  }, 180);
+
+  window.closeAllCctvOverlays = function () {
+    if (window.cctvOverlays && Array.isArray(window.cctvOverlays)) {
+      window.cctvOverlays.forEach(overlay => {
+        overlay.close();
+        if (overlay._hls) { overlay._hls.destroy(); overlay._hls = null; }
+      });
+      window.cctvOverlays = [];
+    }
+  };
+}

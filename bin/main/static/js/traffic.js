@@ -11,7 +11,8 @@ let panelStates = {
   event: false,
   cctv: false,
   subway: false,
-  parking: false
+  parking: false,
+  vsl: false
 };
 
 function clearAllMapMarkers() {
@@ -23,6 +24,7 @@ function clearAllMapMarkers() {
   window.clearRouteDisplay?.();
   window.removeRouteEvents?.();
   window.clearEventMarkers?.();
+  window.closeAllCctvOverlays?.();
   window.clearCctvMarkers?.();
   window.hideVideo?.();
   window.clearParkingMarkers?.();
@@ -30,6 +32,8 @@ function clearAllMapMarkers() {
   window.clearBikeStations?.();
   window.clearSubwayLayer?.();
   window.clearStationMarkers?.();
+  window.clearVslPanel?.();
+  window.hideVslMarkers()
 
   if (window.userPositionMarker) {
     window.userPositionMarker.setMap(null);
@@ -41,22 +45,52 @@ function clearAllMapMarkers() {
     window.customMarkers = [];
   }
 
-  console.log('🧹 모든 마커 제거 완료');
+  // console.log('🧹 모든 마커 제거 완료');
 }
 
 function resetPanelsAndCloseVideo() {
   // 🔄 모든 패널 상태 비활성화 및 UI 숨김
   for (const k in panelStates) {
     panelStates[k] = false;
-    document.getElementById(`sidebar${capitalize(k)}Btn`)?.classList.remove('active');
     document.getElementById(`${k}FilterPanel`)?.style.setProperty('display', 'none');
   }
 
   document.getElementById('eventListPanel')?.style.setProperty('display', 'none');
   hideVideoContainer();
 
-  // ✅ [2단계] 마커 및 레이어 초기화 통합 호출
+  // ✅ 길찾기 리소스 및 상태 초기화
+  window.routeActive = false;
+  window.popupLocked = false;
+
+  if (window.mapClickListener) {
+    naver.maps.Event.removeListener(window.mapClickListener);
+    window.mapClickListener = null;
+  }
+
+  window.directionPolyline?.setMap(null);
+  window.directionInfoWindow?.setMap(null);
+  window.routeClickMarker?.setMap(null);
+  window.routeClickInfoWindow?.setMap(null);
+  window.startMarker?.setMap(null);
+  window.goalMarker?.setMap(null);
+  window.myLocationMarker?.setMap(null);
+  window.userPositionMarker?.setMap(null);
+
+  window.directionPolyline = null;
+  window.directionInfoWindow = null;
+  window.routeClickMarker = null;
+  window.routeClickInfoWindow = null;
+  window.startMarker = null;
+  window.goalMarker = null;
+  window.myLocationMarker = null;
+
+  window.routeStart = { lat: null, lng: null, label: "내 위치" };
+  window.routeGoal = { lat: null, lng: null, label: "" };
+
+  // ✅ 마커 및 레이어 초기화
   clearAllMapMarkers();
+
+  adjustLegendPositions();
 
   // 🗺️ 지도 중심 및 줌 초기화
   resetMapView();
@@ -76,6 +110,10 @@ function resetPanelsAndCloseVideo() {
   if (routePanel && bootstrap?.Offcanvas?.getInstance(routePanel)) {
     bootstrap.Offcanvas.getInstance(routePanel).hide();
   }
+
+  // ✅ 장소 리스트 초기화 (optional)
+  const placeList = document.getElementById('nearbyPlaceList');
+  if (placeList) placeList.innerHTML = '<div class="text-muted">장소를 검색하세요.</div>';
 }
 
 function resetMapView() {
@@ -161,19 +199,12 @@ document.addEventListener('DOMContentLoaded', () => {
   updateZoomSliderFromMap();
 
   // ✅ CCTV 패널
-  let cctvLoaded = false;
-  const sidebarCctvBtn = document.getElementById('sidebarCctvBtn');
-  sidebarCctvBtn?.addEventListener('click', () => {
+  document.getElementById('sidebarCctvBtn').addEventListener('click', () => {
     const panel = document.getElementById('cctvFilterPanel');
     if (!panel) return;
 
     panel.style.display = panel.style.display === 'flex' ? 'none' : 'flex';
     if (panel.style.display === 'flex') {
-      if (!cctvLoaded && window.preloadAllCctvs) {
-        window.preloadAllCctvs();
-        cctvLoaded = true;
-      }
-      window.loadRoadList?.();
     } else {
       window.clearCctvMarkers?.();
       window.hideVideo?.();
@@ -221,11 +252,35 @@ document.addEventListener('DOMContentLoaded', () => {
       onActivate: () => {
         resetPanelsAndCloseVideo();
         panelStates.route = true;
-        document.getElementById('routeFilterPanel')?.style.setProperty('display', 'flex');
+
+        const panel = document.getElementById('routeFilterPanel');
+        if (panel) {
+          panel.style.display = 'flex';
+          requestAnimationFrame(() => panel.classList.add('active'));
+          panel.classList.remove('hidden');
+        }
+
         window.setStartToCurrentLocation?.();
         window.initRouteEvents?.();
+
+        const range = document.getElementById('radiusRange');
+        if (range) updateRadiusLabel(range.value);
+
+        const list = document.getElementById('nearbyPlaceList');
+        if (list) list.innerHTML = '<div class="text-muted">카테고리를 선택하거나 원하는 장소를 검색하세요.</div>';
       },
       onDeactivate: () => {
+        panelStates.route = false;
+
+        const panel = document.getElementById('routeFilterPanel');
+        if (panel) {
+          panel.classList.add('hidden');
+          setTimeout(() => {
+            panel.classList.remove('active');
+            panel.style.display = 'none';
+          }, 300);
+        }
+
         window.clearRoute?.();
         window.clearRouteMarkers?.();
         window.removeRouteEvents?.();
@@ -269,13 +324,11 @@ document.addEventListener('DOMContentLoaded', () => {
         resetPanelsAndCloseVideo();
         panelStates.cctv = true;
         document.getElementById('cctvFilterPanel')?.style.setProperty('display', 'flex');
-        window.applyCctvFilter?.();
+        window.loadRoadList?.();
       },
       onDeactivate: () => {
         panelStates.cctv = false;
-        window.clearCctvMarkers?.();
-        const roadList = document.getElementById('roadList');
-        if (roadList) roadList.innerHTML = '';
+        window.resetCctvPanel?.();
       }
     },
     {
@@ -312,25 +365,53 @@ document.addEventListener('DOMContentLoaded', () => {
       onActivate: () => {
         resetPanelsAndCloseVideo();
         panelStates.parking = true;
+
+        // 주차 패널 표시
         document.getElementById('parkingFilterPanel')?.style.setProperty('display', 'flex');
 
+        // 주차 데이터 로드 및 위치 표시
         const promise = window.loadSeoulCityParking?.();
+        window.showCurrentLocationOnMap?.();
 
-        if (typeof window.showCurrentLocationOnMap === 'function') {
-          window.showCurrentLocationOnMap();
-        }
-
+        // 지도 리사이즈
         adjustMapSizeToSidebar();
         setTimeout(() => {
           naver.maps.Event.trigger(map, 'resize');
         }, 300);
-        showParkingLegend();
+
+        // ✅ 주차 범례 보이기
+        document.getElementById('parkingLegendBox').style.display = 'block';
+
+        // ✅ 위치 자동 조정
+        adjustLegendPositions();
+
         return promise;
       },
       onDeactivate: () => {
         panelStates.parking = false;
         window.clearParkingMarkers?.();
-        hideParkingLegend();
+
+        // ✅ 주차 범례 숨기기
+        const parkingLegend = document.getElementById('parkingLegendBox');
+        parkingLegend.style.display = 'none';
+
+        // ✅ 위치 재조정: 교통 범례가 켜져 있으면 오른쪽으로 복귀
+        setTimeout(() => {
+          adjustLegendPositions();  // 💥 꼭 timeout 안에서 실행
+        }, 10);
+      }
+    },
+    {
+      id: 'sidebarVslBtn',
+      key: 'vsl',
+      panelId: 'vslFilterPanel',
+      onActivate: () => {
+        document.getElementById("vslFilterPanel").style.display = "block";
+        window.loadVslListPanel && window.loadVslListPanel();
+      },
+      onDeactivate: () => {
+        document.getElementById("vslFilterPanel").style.display = "none";
+        window.hideVslPanel && window.hideVslPanel();
       }
     }
   ];
@@ -343,14 +424,21 @@ document.addEventListener('DOMContentLoaded', () => {
     button.addEventListener('click', () => {
       const isAlreadyActive = panelStates[key];
 
-      // 모든 상태 false 및 초기화
+      // 패널 상태 및 UI 초기화
       resetPanelsAndCloseVideo();
 
+      // 모든 버튼에서 .active 제거 (reset에서 하지 말고 여기서만!)
+      document.querySelectorAll('.sidebar-button').forEach(btn => {
+        btn.classList.remove('active');
+      });
+
       if (!isAlreadyActive) {
-        // 이 버튼만 활성화
         panelStates[key] = true;
         button.classList.add('active');
         onActivate?.();
+      } else {
+        panelStates[key] = false;
+        onDeactivate?.();
       }
     });
   });
@@ -507,11 +595,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 document.addEventListener('DOMContentLoaded', () => {
   const trafficBtn = document.getElementById('toggleTrafficLayer');
-  const legendBox = document.getElementById('trafficLegendBox');
   let trafficVisible = false;
 
   trafficBtn.addEventListener('click', () => {
     trafficVisible = !trafficVisible;
+
+    const legendBox = document.getElementById('trafficLegendBox'); // ✅ 매번 새로 가져오기
 
     if (trafficVisible) {
       if (!window.trafficLayer) {
@@ -519,10 +608,12 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       window.trafficLayer.setMap(window.map);
       legendBox.style.display = 'block';
+      adjustLegendPositions(); // ✅ 위치 동기화
       trafficBtn.classList.add('active');
     } else {
       window.trafficLayer?.setMap(null);
       legendBox.style.display = 'none';
+      adjustLegendPositions(); // ✅ 위치 복귀
       trafficBtn.classList.remove('active');
     }
   });

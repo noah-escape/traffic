@@ -86,11 +86,10 @@ public class SecurityConfig {
                 "/css/**", "/js/**", "/image/**", "/favicon.ico",
                 "/json/**", "/pages/**", "/api/**", "/api/weather/**",
                 "/member/find/**", "/find-id", "/find-password",
-                "/board/list/**", "/board/view/**",
-
-                "/chart-view", "/chart/**", "/pages/map/**", "/news-view/**"
-
-                )
+                "/board/list/**", "/board/view/**", "/naver-driving-path/**",
+                "/chart-view", "/chart/**", "/pages/map/**", "/news-view/**",
+                "/api/road-cctv-mapping/**", "/api/roads/**",  "api/cctvs/**",
+                "/api/road-coordinates/**")
             .permitAll()
             .anyRequest().authenticated())
         .formLogin(form -> form

@@ -137,3 +137,11 @@ body.dark-mode .bg-warning {
   background-color: #e0c147 !important;
   color: #222;
 }
+
+
+
+
+.card-body a:hover {
+  color: #6495ED;
+  text-decoration: underline;
+}
