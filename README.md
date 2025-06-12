@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&height=300&section=header&text=Team%20OnRoad&fontSize=80&fontAlignY=40&desc=풀스택%20웹%20개발자%20|%20실시간%20교통정보%20서비스%20제작&descAlignY=65&animation=fadeIn" />
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&height=300&section=header&text=풀스택%20웹%20개발자%20|%20실시간%20교통정보%20서비스%20제작" />
 </p>
 
 <h3 align="center">🏆 Most Used Languages 🏆</h3>
@@ -13,25 +13,12 @@
   
 <br/>
 
-<h3 align="center">👥 팀원별 GitHub Stats 👥</h3>
+<h3 align="center">👥 GitHub Stats 👥</h3>
 <p align="center" style="margin: 0 0 0 0;">
-  <a href="https://github.com/Hoooouuuuu" target="_blank" rel="noopener noreferrer" style="display: inline-block; margin-right: 0;">
-    <img src="https://github-readme-stats.vercel.app/api?username=Hoooouuuuu&show_icons=true&theme=dark" alt="Hoooouuuuu GitHub Stats" width="400" />
-  </a>
   <a href="https://github.com/noah-escape" target="_blank" rel="noopener noreferrer" style="display: inline-block;">
     <img src="https://github-readme-stats.vercel.app/api?username=noah-escape&show_icons=true&theme=radical" alt="noah-escape GitHub Stats" width="400" />
   </a>
 </p>
-
-<p align="center" style="margin: 0;">
-  <a href="https://github.com/HONGHONGPYO" target="_blank" rel="noopener noreferrer" style="display: inline-block; margin-right: 0;">
-    <img src="https://github-readme-stats.vercel.app/api?username=HONGHONGPYO&show_icons=true&theme=dark" alt="HONGHONGPYO GitHub Stats" width="400" />
-  </a>
-  <a href="https://github.com/dahyeon6433" target="_blank" rel="noopener noreferrer" style="display: inline-block;">
-    <img src="https://github-readme-stats.vercel.app/api?username=dahyeon6433&show_icons=true&theme=dark" alt="dahyeon6433 GitHub Stats" width="400" />
-  </a>
-</p>
-
 <br/>
 
 <h3 align="center">💻 Backend 💻</h3>
