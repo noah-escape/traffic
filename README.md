@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&height=300&section=header&text=풀스택%20웹%20개발자&fontSize=40&fontAlignY=40&desc=%20실시간%20교통정보%20서비스%20제작&descAlignY=65&animation=fadeIn" />
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&height=300&section=header&text=풀스택%20웹%20개발자&fontSize=60&fontAlignY=40&desc=%20실시간%20교통정보%20서비스%20제작&descAlignY=65&descFontSize=30&animation=fadeIn" />
 </p>
 
 <h3 align="center">🏆 Most Used Languages 🏆</h3>
