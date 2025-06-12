@@ -1,135 +1,118 @@
+<!-- 💫 헤더 배너: 따뜻한 톤 -->
 <p align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&height=300&section=header&text=풀스택%20웹%20개발자&fontSize=60&fontAlignY=40&desc=%20실시간%20교통정보%20서비스%20제작&descAlignY=65&descFontSize=45&animation=fadeIn" />
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=ffb4a2,ffdac1,ffe5d9&height=240&section=header&text=SEO%20SEONG%20IN&fontSize=40&fontAlignY=40&desc=백엔드%20웹%20개발자%20|%20실시간%20교통정보%20서비스%20제작&descAlignY=65&animation=fadeIn&fontColor=fff4e6&descColor=ffdcc4" />
 </p>
 
-<h3 align="center">🏆 Most Used Languages 🏆</h3>
-<div align="center">
-  <!-- ex: GitHub readme stats 언어 비율 카드 (옵션) -->
-  <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; max-width: 400px; margin: 0 auto;">
-  <div style="flex: 1 1 500; max-width: 500px;">
-  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=Hoooouuuuu&repo=trafficRoad&layout=compact&theme=github_dark" style="width: 500px; height: auto; display: block;" />
-  </div>
-</div>
-  
-<br/>
-
-<h3 align="center">👥 GitHub Stats 👥</h3>
-<p align="center" style="margin: 0 0 0 0;">
-  <a href="https://github.com/noah-escape" target="_blank" rel="noopener noreferrer" style="display: inline-block;">
-    <img src="https://github-readme-stats.vercel.app/api?username=noah-escape&show_icons=true&theme=radical" alt="noah-escape GitHub Stats" width="400" />
-  </a>
-</p>
-<br/>
-
-<h3 align="center">💻 Backend 💻</h3>
 <p align="center">
-  <a href="https://www.java.com/" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/badge/Java-007396?style=for-the-badge&logo=java&logoColor=white" alt="Java" height="40" />
-  </a>
-  <a href="https://spring.io/projects/spring-boot" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/badge/Spring_Boot-6DB33F?style=for-the-badge&logo=spring&logoColor=white" alt="Spring Boot" height="40" />
-  </a>
-  <a href="https://www.python.org/" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python" height="40" />
-  </a>
-</p>
-<p align="center">
-  <a href="https://flask.palletsprojects.com/" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/badge/Flask-000000?style=for-the-badge&logo=flask&logoColor=white" alt="Flask" height="40" />
-  </a>
-  <a href="https://oauth.net/" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/badge/OAuth-000000?style=for-the-badge&logo=oauth&logoColor=white" alt="OAuth" height="40" />
-  </a>
-  <a href="https://restfulapi.net/" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/badge/REST_API-61DAFB?style=for-the-badge&logo=rest&logoColor=black" alt="REST API" height="40" />
-  </a>
-  <a href="https://mail.google.com/" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/badge/Gmail-D14836?style=for-the-badge&logo=gmail&logoColor=white" alt="Gmail" height="40" />
-  </a>
-</p>
-    
-<h3 align="center">🌐 Frontend 🌐</h3>
-<p align="center">
-  <a href="https://developer.mozilla.org/en-US/docs/Web/HTML" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white" alt="HTML5" height="40" />
-  </a>
-  <a href="https://developer.mozilla.org/en-US/docs/Web/CSS" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white" alt="CSS3" height="40" />
-  </a>
-  <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript" height="40" />
-  </a>
-</p>
-<p align="center">
-  <a href="https://navermaps.github.io/" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/badge/Naver_Maps-03C75A?style=for-the-badge&logo=naver&logoColor=white" alt="Naver Maps" height="40" />
-  </a>
-  <a href="https://apis.map.kakao.com/" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/badge/Kakao_Map-FFCD00?style=for-the-badge&logo=kakaotalk&logoColor=black" alt="Kakao Map" height="40" />
-  </a>
-  <a href="https://matplotlib.org/" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/badge/Matplotlib-11557C?style=for-the-badge&logo=python&logoColor=white" alt="Matplotlib" height="40" />
-  </a>
-  <a href="https://plotly.com/javascript/" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/badge/Plotly-3F4F75?style=for-the-badge&logo=plotly&logoColor=white" alt="Plotly" height="40" />
-  </a>
+  🧑‍💻 Backend Dev | 🚇 실시간 교통 정보 시스템 개발자 | 📊 데이터 시각화 Enthusiast
 </p>
 
-<h3 align="center">🛢️ Database 🛢️</h3>
-<p align="center">
-  <a href="https://www.mysql.com/" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL" height="40" />
-  </a>
-  <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/jdbc/" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/badge/JDBC-007396?style=for-the-badge&logo=java&logoColor=white" alt="JDBC" height="40" />
-  </a>
-  <a href="https://pymysql.readthedocs.io/en/latest/" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/badge/PyMySQL-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="PyMySQL" height="40" />
-  </a>
-</p>
-    
+---
 
-<p align="center">🗺️ 외부 API 연동 🗺️</h3>
-<p align="center">
-  <a href="https://data.seoul.go.kr/" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/badge/Seoul_Bus-0099FF?style=for-the-badge&logo=bus&logoColor=white" alt="Seoul Bus" height="40" />
-  </a>
-  <a href="https://data.seoul.go.kr/" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/badge/Seoul_Subway-FFD400?style=for-the-badge&logo=subway&logoColor=black" alt="Seoul Subway" height="40" />
-  </a>
-  <a href="https://www.bikeseoul.com/" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/badge/Dareungi_Bike-7BC043?style=for-the-badge&logo=bicycle&logoColor=white" alt="Dareungi Bike" height="40" />
-  </a>
-</p>
-<p align="center">
-  <a href="#" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/badge/Parking_API-008080?style=for-the-badge&logo=parking&logoColor=white" alt="Parking API" height="40" />
-  </a>
-  <a href="#" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/badge/ITS_API-FF6F61?style=for-the-badge&logo=car&logoColor=white" alt="ITS API" height="40" />
-  </a>
-  <a href="https://navermaps.github.io/" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/badge/Naver_Maps-03C75A?style=for-the-badge&logo=naver&logoColor=white" alt="Naver Maps" height="40" />
-  </a>
-</p>
-<p align="center">
-  <a href="https://apis.map.kakao.com/" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/badge/Kakao_Maps-FFCD00?style=for-the-badge&logo=kakaotalk&logoColor=black" alt="Kakao Maps" height="40" />
-  </a>
-  <a href="https://www.kma.go.kr/" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/badge/KMA_Weather-004D99?style=for-the-badge&logo=weather&logoColor=white" alt="KMA Weather" height="40" />
-  </a>
-  <a href="#" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/badge/RSS_News-FF6600?style=for-the-badge&logo=rss&logoColor=white" alt="RSS News" height="40" />
-  </a>
+## 💬 About Me
+
+- 🎓 소프트웨어 개발을 공부하며 실용적인 웹 서비스를 구현하고 있습니다.
+- 🚦 실시간 교통 정보를 활용한 데이터 기반 시스템에 관심이 많습니다.
+- 🛠 Spring Boot와 Flask 기반 백엔드 개발 경험이 있으며, 실제 프로젝트에 적용해 보았습니다.
+- 🔍 웹 크롤링을 통해 공공데이터를 수집·자동화하고, 시각화까지 구현했습니다.
+- 💡 실생활에 도움이 되는 서비스를 개발하는 것이 저의 목표입니다.
+
+---
+
+## 🎯 Focus & Goals
+
+- 📡 위치 기반 교통 서비스 고도화
+- 📊 데이터 시각화 및 자동화된 크롤링 시스템
+- ☁️ Flask + Spring Boot 멀티 백엔드 구조 실험
+- 💪 실전 프로젝트를 통해 실무 역량 업그레이드
+
+---
+
+## 🧰 Tech Stack
+
+### ☕ Backend
+<p>
+  <img src="https://img.shields.io/badge/Java-17-b47149?style=flat&logo=java&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Spring_Boot-3.0-a3bf72?style=flat&logo=springboot&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Python-3.9-daa25a?style=flat&logo=python&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Flask-Web-5c4033?style=flat&logo=flask&logoColor=white"/>
+  <img src="https://img.shields.io/badge/REST_API-Designed-ea907a?style=flat"/>
+  <img src="https://img.shields.io/badge/OAuth-Integrated-cb997e?style=flat"/>
 </p>
 
-<p align="center">🎤 프로젝트 소개 & 시연 영상 & 🎥</h3>
-<div align="center" style="display: flex; justify-content: center; gap: 10px;">
-  <a href="https://screeching-honesty-e2e.notion.site/ON-ROAD-20dd183a8d3e8030b26ff596d63e44b8" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/badge/Notion-000000?style=for-the-badge&logo=notion&logoColor=white" alt="Notion" width="175" />
-  </a>
-  <a href="https://www.youtube.com/watch?v=XCrXzT-H2WQ&feature=youtu.be" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/badge/YouTube-FF0000?style=flat-square&logo=youtube&logoColor=white" alt="YouTube" width="180" />
-  </a>
-</div>
+### 🎨 Frontend & Visualization
+<p>
+  <img src="https://img.shields.io/badge/HTML5-E07A5F?style=flat&logo=html5&logoColor=white"/>
+  <img src="https://img.shields.io/badge/CSS3-81B29A?style=flat&logo=css3&logoColor=white"/>
+  <img src="https://img.shields.io/badge/JavaScript-ES6-F2CC8F?style=flat&logo=javascript&logoColor=black"/>
+  <img src="https://img.shields.io/badge/Naver_Maps-API-B7B7A4?style=flat"/>
+  <img src="https://img.shields.io/badge/Kakao_Map-API-F4A261?style=flat"/>
+  <img src="https://img.shields.io/badge/Matplotlib-Chart-CDB4DB?style=flat"/>
+  <img src="https://img.shields.io/badge/Plotly-Graph-DDBEA9?style=flat"/>
+</p>
+
+### 🗄️ Database
+<p>
+  <img src="https://img.shields.io/badge/MySQL-8.0-9A8C98?style=flat&logo=mysql&logoColor=white"/>
+  <img src="https://img.shields.io/badge/JDBC-Connector-BC6C25?style=flat"/>
+  <img src="https://img.shields.io/badge/PyMySQL-Driver-CFC0A7?style=flat"/>
+</p>
+
+### 🔗 Public Data & API Integration
+<p>
+  <img src="https://img.shields.io/badge/Seoul_Bus_API-Active-D88C9A?style=flat"/>
+  <img src="https://img.shields.io/badge/Seoul_Subway_API-Active-E5989B?style=flat"/>
+  <img src="https://img.shields.io/badge/Dareungi_Bike_API-Active-F6BD60?style=flat"/>
+  <img src="https://img.shields.io/badge/Parking_API-Active-F7A072?style=flat"/>
+  <img src="https://img.shields.io/badge/ITS_API-Active-B5838D?style=flat"/>
+  <img src="https://img.shields.io/badge/KMA_Weather_API-Active-E0A899?style=flat"/>
+  <img src="https://img.shields.io/badge/RSS_News-Parser-DEB887?style=flat"/>
+</p>
+
+---
+
+## 🚀 주요 프로젝트
+
+### 🧭 교통 정보 통합 플랫폼
+
+> 실시간 교통 데이터를 통합하여 시각화하고, 사용자에게 위치 기반 추천 및 경로 안내 기능을 제공하는 웹 플랫폼입니다.
+
+- 🚇 실시간 지하철 위치, 교통 정책 뉴스, 공공 자전거 대여소 등 다양한 교통 데이터 통합
+- 📍 Naver 지도 API 기반 위치 시각화 및 길찾기 기능
+- 🔄 Flask 기반 뉴스 크롤링 자동화
+- 📊 Pandas & Chart.js 기반 데이터 통계 시각화
+
+**🔗 관련 링크**  
+[![GitHub](https://img.shields.io/badge/GitHub-Repo-4e342e?logo=github&logoColor=white)](https://github.com/Hoooouuuuu/trafficRoad)
+[![Notion](https://img.shields.io/badge/Notion-문서-8d6e63?logo=notion&logoColor=white)](https://your-notion-link.com)
+[![YouTube](https://img.shields.io/badge/YouTube-시연영상-d2691e?logo=youtube&logoColor=white)](https://your-youtube-demo-link.com)
+
+---
+
+## 📊 GitHub Stats
+
+<p align="center">
+  <img src="https://github-readme-stats.vercel.app/api?username=noah-escape&show_icons=true&theme=gruvbox_light" height="150"/>
+  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=noah-escape&layout=compact&theme=gruvbox_light" height="150"/>
+</p>
+
+---
+
+## 📈 GitHub 활동 그래프
+
+[![Activity Graph](https://github-readme-activity-graph.vercel.app/graph?username=noah-escape&theme=gruvbox_light)](https://github.com/ashutosh00710/github-readme-activity-graph)
+
+---
+
+## 📫 Contact
+
+- 📧 Email: [skfj24@gmail.com](mailto:skfj24@gmail.com)
+
+<p align="center">
+  <img src="https://komarev.com/ghpvc/?username=noah-escape&style=flat-square&color=ffb4a2" alt="Profile Views" />
+</p>
+
+<p align="center">
+  🙇‍♂️ 방문해 주셔서 감사합니다!<br>
+  ✨ 더 좋은 서비스를 만들기 위해 매일 꾸준히 공부하고 있습니다.
+</p>
