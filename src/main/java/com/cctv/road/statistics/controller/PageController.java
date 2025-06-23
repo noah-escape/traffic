@@ -10,4 +10,9 @@ public class PageController { // 여러 페이지 보여줄 때 범용적으로 
     public String newsWrapper() {
         return "pages/statistics/news-wrapper"; // templates/news-wrapper.html
     }
+
+        @GetMapping("/news_v2")
+    public String newsV2Wrapper() {
+        return "pages/statistics/news-wrapper_v2"; // SQLite_마이그레이션
+    }
 }

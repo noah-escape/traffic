@@ -5,7 +5,6 @@
   let lastSelectedRoad = null;
   const roadSignThumbCache = {};
 
-  // 썸네일 그리기 (base64 img로 중복 OK)
   function createRoadSignThumb(roadType, roadNo) {
     let width = 56, height = 31;
     if (roadType === "ex") {
@@ -14,7 +13,6 @@
     }
     const cacheKey = roadType + "_" + roadNo;
 
-    // base64 데이터가 이미 있으면 바로 img 반환
     if (roadSignThumbCache[cacheKey]) {
       const imgElem = document.createElement("img");
       imgElem.src = roadSignThumbCache[cacheKey];
@@ -34,7 +32,6 @@
     const img = new window.Image();
     img.src = imgSrc;
 
-    // img.onload 안에서 base64 변환 후 캐싱 & img 반환
     const imgElem = document.createElement("img");
     imgElem.className = roadType === "ex" ? "road-thumb-ex" : "road-thumb-its";
     imgElem.width = width;
@@ -55,7 +52,6 @@
       roadSignThumbCache[cacheKey] = dataUrl;
       imgElem.src = dataUrl;
     };
-    // 처음엔 빈 img, onload 후 src 세팅됨
     return imgElem;
   }
 
@@ -76,7 +72,6 @@
     return text.replace(/\(결빙[^)]*\)/g, "").trim();
   }
 
-  // 🚦 아코디언형 노선/세부리스트 패널 뿌리기
   async function loadVslListPanel(roadType = "ex") {
     const listElem = document.getElementById("vslListPanel");
     if (!listElem) return;
@@ -94,11 +89,9 @@
       roadList.forEach(road => {
         const li = document.createElement("li");
         li.className = "vsl-road-list-item";
-        // 썸네일 + 도로명
         const thumb = createRoadSignThumb(road.roadType, road.roadNo);
         li.appendChild(thumb);
 
-        // 도로명만 텍스트 (번호 X)
         const labelSpan = document.createElement("span");
         labelSpan.className = "vsl-road-label";
         labelSpan.textContent = road.roadName;

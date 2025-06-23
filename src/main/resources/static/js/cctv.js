@@ -17,7 +17,7 @@ window.resetCctvPanel = function() {
   const roadListElem = document.getElementById("roadList");
   if (roadListElem) roadListElem.innerHTML = "";
   resetRoadLineBtn?.();
-}
+};
 
 window.closeCctvPanel = function() {
   resetCctvPanel();
@@ -294,7 +294,6 @@ async function renderInViewCctvOnly(roadName = null) {
   drawCctvMarkers(cctvs);
 }
 
-// 중심선 증분 방식 렌더링 함수 (핵심!!)
 function renderRoadUfidPolylines(coords) {
   const group = {};
   coords.forEach(c => {
@@ -305,7 +304,6 @@ function renderRoadUfidPolylines(coords) {
   const visibleUfids = new Set(Object.keys(group));
   const prevUfids = new Set(window.roadPolylinesByUfid.keys());
 
-  // 1) 안보이게 된 선 제거
   for (const ufid of prevUfids) {
     if (!visibleUfids.has(ufid)) {
       const poly = window.roadPolylinesByUfid.get(ufid);
@@ -313,11 +311,9 @@ function renderRoadUfidPolylines(coords) {
       window.roadPolylinesByUfid.delete(ufid);
     }
   }
-  // 2) 새로 보이거나(혹은 path 변경된) 구간 무조건 갱신
   for (const ufid of visibleUfids) {
     const path = group[ufid];
     if (!window.roadPolylinesByUfid.has(ufid)) {
-      // polyline이 없으면 생성
       const poly = new naver.maps.Polyline({
         map: window.map,
         path,
@@ -327,7 +323,6 @@ function renderRoadUfidPolylines(coords) {
       });
       window.roadPolylinesByUfid.set(ufid, poly);
     } else {
-      // polyline이 이미 있으면 path 강제 갱신 + 혹시 지도에서 떨어졌으면 다시 붙이기
       const poly = window.roadPolylinesByUfid.get(ufid);
       poly.setPath(path);
       if (!poly.getMap()) poly.setMap(window.map);
@@ -335,31 +330,53 @@ function renderRoadUfidPolylines(coords) {
   }
 }
 
-// 고속도로/국도 공통 (무조건 증분식, level=99)
 async function renderRoadLinesInView(road) {
   if (!road) return;
   const bounds = window.map.getBounds();
   const sw = bounds.getSW(), ne = bounds.getNE();
   let coordsUrl = `/api/road-coordinates/in-bounds?swLat=${sw.y}&swLng=${sw.x}&neLat=${ne.y}&neLng=${ne.x}`;
-  coordsUrl += `&roadType=${road.roadType}`;
-  coordsUrl += (road.roadType === "its")
-    ? `&roadNumber=${encodeURIComponent(road.roadNumber)}&level=99`
-    : `&roadName=${encodeURIComponent(road.roadName)}&level=99`;
-
-  const coords = await fetch(coordsUrl).then(r => r.json());
+  if (road.roadType === "its") {
+    coordsUrl += `&roadType=its`;
+    coordsUrl += `&roadNumber=${encodeURIComponent(road.roadNumber)}`;
+    coordsUrl += `&level=99`;  // 확장성 고려해서 레벨 지정
+  } else {
+    coordsUrl += `&roadType=ex`;
+    coordsUrl += `&roadName=${encodeURIComponent(road.roadName)}`;
+    coordsUrl += `&level=99`;
+  }
+  const coordsRes = await fetch(coordsUrl);
+  const coords = await coordsRes.json();
   renderRoadUfidPolylines(coords);
 }
 
-// 국도 중심선 (도로번호)
 async function renderGukdoCenterlineInView(roadNumber) {
   if (!roadNumber) return;
+
   const bounds = window.map.getBounds();
   const sw = bounds.getSW(), ne = bounds.getNE();
+
   const url =
     `/api/road-coordinates/nationalroad-centerline-in-bounds`
-    + `?swLat=${sw.y}&swLng=${sw.x}&neLat=${ne.y}&neLng=${ne.x}&roadNumber=${roadNumber}`;
-  const coords = await fetch(url).then(r => r.json());
-  renderRoadUfidPolylines(coords);
+    + `?swLat=${sw.y}&swLng=${sw.x}`
+    + `&neLat=${ne.y}&neLng=${ne.x}`
+    + `&roadNumber=${encodeURIComponent(roadNumber)}`;
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      clearRoadLines();
+      return;
+    }
+    const coords = await response.json();
+    if (!coords.length) {
+      alert("국도 " + roadNumber + "호선 중심선 데이터 없음");
+      clearRoadLines();
+      return;
+    }
+    renderRoadUfidPolylines(coords);
+  } catch (err) {
+    clearRoadLines();
+  }
 }
 
 function clearRoadLines() {
@@ -370,16 +387,10 @@ function clearRoadLines() {
 }
 
 window.clearCctvMarkers = function () {
-  console.log("CCTV 마커 지우는 중", window.cctvMarkers?.length);
-  // 마커 지우기
   window.cctvMarkers?.forEach(marker => marker.setMap(null));
   window.cctvMarkers = [];
-  // 중심선도 함께 지움!
-  if (window.roadPolylinesByUfid) {
-    for (const poly of window.roadPolylinesByUfid.values()) poly.setMap(null);
-    window.roadPolylinesByUfid.clear();
-  }
-}
+  clearRoadLines();
+};
 
 function clearAllMapObjects() {
   clearCctvMarkers();
@@ -389,7 +400,7 @@ function clearAllMapObjects() {
 function drawCctvMarkers(cctvs) {
   clearCctvMarkers();
   if (!cctvs.length) return;
-  cctvs.forEach((cctv, idx) => {
+  cctvs.forEach((cctv) => {
     try {
       const lat = Number(cctv.lat), lng = Number(cctv.lng);
       if (isNaN(lat) || isNaN(lng)) return;
