@@ -18,14 +18,7 @@ public class VslDto {
     private Double lat;
     private String sectionDesc;
     private String enforcement;
-<<<<<<< HEAD
-    private String roadType; // "ex" or "its"
-    private Integer currLmtSpeed; // 실시간 제한속도 (API연동값, 없으면 null)
-    private String fullList; // ★ 추가!
-=======
     private String roadType;
     private Integer currLmtSpeed;
     private String fullList;
->>>>>>> develop
-
 }
