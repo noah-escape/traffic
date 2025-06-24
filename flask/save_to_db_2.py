@@ -1,7 +1,27 @@
+# SQLite_마이그레이션
 import sqlite3
 from datetime import datetime
 from crawler.news_crawler_v2 import get_all_news
 from apscheduler.schedulers.blocking import BlockingScheduler
+
+def to_datetime_str(date_str):
+    try:
+        if '.' in date_str and len(date_str) == 10:
+            dt = datetime.strptime(date_str, "%Y.%m.%d")
+            return dt.strftime("%Y-%m-%d 00:00:00")
+        elif '-' in date_str and len(date_str) == 10:
+            dt = datetime.strptime(date_str, "%Y-%m-%d")
+            return dt.strftime("%Y-%m-%d 00:00:00")
+        elif len(date_str) > 10:  # 시간까지 있음
+            try:
+                dt = datetime.strptime(date_str, "%Y.%m.%d %H:%M:%S")
+            except:
+                dt = datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
+            return dt.strftime("%Y-%m-%d %H:%M:%S")
+        else:
+            return date_str
+    except Exception:
+        return date_str
 
 def save_articles_to_db():
     conn = sqlite3.connect("news.db")
@@ -11,6 +31,7 @@ def save_articles_to_db():
 
     for article in articles:
         try:
+            date_val = to_datetime_str(article["date"])
             cursor.execute("""
             INSERT OR IGNORE INTO news_articles
             (title, summary, link, date, category, source, thumbnail)
@@ -19,7 +40,7 @@ def save_articles_to_db():
                 article["title"],
                 article["summary"],
                 article["link"],
-                article["date"],
+                date_val,
                 article["category"],
                 article["source"],
                 article["thumbnail"]
@@ -40,7 +61,7 @@ if __name__ == "__main__":
     print("🟢 자동 뉴스 크롤러(10분마다) 실행 시작")
     scheduler = BlockingScheduler()
     scheduler.add_job(scheduled_job, "interval", minutes=10, id="news_job")
-    scheduled_job()  # 최초 1회 즉시 실행
+    scheduled_job()
     try:
         scheduler.start()
     except (KeyboardInterrupt, SystemExit):

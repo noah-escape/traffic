@@ -19,7 +19,7 @@ def init_db():
         title TEXT,
         summary TEXT,
         link TEXT UNIQUE,
-        date TEXT,
+        date DATETIME,
         category TEXT,
         source TEXT,
         thumbnail TEXT

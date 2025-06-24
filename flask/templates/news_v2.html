@@ -27,19 +27,36 @@
     <h1 class="mb-3">📢 최신 그룹 뉴스</h1>
 
     <div class="d-flex justify-content-between align-items-center mb-3">
-      <div>
+      <div class="d-flex align-items-center">
         {% for cat in ['전체', '지하철', '택시', '교통정책'] %}
         <a href="{{ url_for('news_v2.news_page_v2') }}?category={{ cat }}"
           class="btn btn-sm {% if selected == cat %}btn-primary{% else %}btn-outline-primary{% endif %} me-2">
           {{ cat }}
         </a>
         {% endfor %}
+        {#
+        <a href="{{ url_for('news_v2.news_stats') }}" class="btn btn-outline-success btn-sm ms-2">
+          📊 통계 보기
+        </a>
+        #}
       </div>
-      {# 
-      <a href="{{ url_for('news_v2.news_stats') }}" class="btn btn-outline-success btn-sm">
-        📊 통계 보기
-      </a>
-      #}
+      <!-- 🔍 검색 폼 (제목/내용/기간) -->
+      <form method="get" action="{{ url_for('news_v2.news_search_v2') }}" class="d-flex align-items-center gap-2 mb-0">
+        <input type="hidden" name="category" value="{{ selected }}">
+        <input type="text" name="q" value="{{ q or '' }}" placeholder="검색어 입력" class="form-control form-control-sm"
+          style="width: 180px;">
+        <select name="field" class="form-select form-select-sm" style="width: 95px;">
+          <option value="all" {% if field=='all' %}selected{% endif %}>제목+내용</option>
+          <option value="title" {% if field=='title' %}selected{% endif %}>제목</option>
+          <option value="summary" {% if field=='summary' %}selected{% endif %}>내용</option>
+        </select>
+        <input type="date" name="start_date" value="{{ start_date or '' }}" class="form-control form-control-sm"
+          style="width: 120px;">
+        <span>~</span>
+        <input type="date" name="end_date" value="{{ end_date or '' }}" class="form-control form-control-sm"
+          style="width: 120px;">
+        <button type="submit" class="btn btn-sm btn-primary">검색</button>
+      </form>
     </div>
 
     <div class="row">

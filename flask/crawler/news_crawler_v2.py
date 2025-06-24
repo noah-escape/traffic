@@ -4,9 +4,6 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 
 def get_article_date(detail_url):
-    """
-    상세 페이지에서 <meta property="article:published_time"> 태그에서 날짜 추출
-    """
     headers = {"User-Agent": "Mozilla/5.0"}
     res = requests.get(detail_url, headers=headers)
     soup = BeautifulSoup(res.text, "html.parser")
@@ -14,7 +11,12 @@ def get_article_date(detail_url):
     meta_tag = soup.find("meta", attrs={"property": "article:published_time"})
     if meta_tag:
         iso_date = meta_tag.get("content")
-        return iso_date[:10].replace("-", ".")
+        try:
+            dt = datetime.fromisoformat(iso_date.replace("T", " "))
+            return dt.strftime("%Y-%m-%d %H:%M:%S")
+        except Exception as e:
+            print("[date 파싱에러]", iso_date, e)
+            return iso_date[:10].replace("-", ".") + " 00:00:00"
     return ""
 
 def get_metro_news(url, category):
