@@ -83,9 +83,8 @@
 - 📊 Pandas & Chart.js 기반 데이터 통계 시각화
 
 **🔗 관련 링크**  
-[![GitHub](https://img.shields.io/badge/GitHub-Repo-4e342e?logo=github&logoColor=white)](https://github.com/Hoooouuuuu/trafficRoad)
-[![Notion](https://img.shields.io/badge/Notion-문서-8d6e63?logo=notion&logoColor=white)](https://your-notion-link.com)
-[![YouTube](https://img.shields.io/badge/YouTube-시연영상-d2691e?logo=youtube&logoColor=white)](https://your-youtube-demo-link.com)
+[![GitHub](https://img.shields.io/badge/GitHub-Repo-4e342e?logo=github&logoColor=white)](https://github.com/Noah-escape/traffic)
+[![YouTube](https://img.shields.io/badge/YouTube-시연영상-d2691e?logo=youtube&logoColor=white)](https://youtu.be/iM9ddIA-qCs?si=M_UQBEud1JmmBqsq)
 
 ---
 
